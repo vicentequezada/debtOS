@@ -275,7 +275,7 @@ async function fetchPublicDebt(token) {
   // Una sola query por token (NUNCA exponemos owner_user_id al cliente)
   const { data: debt, error: e1 } = await sb
     .from('debts')
-    .select('id,name,description,type,total_amount,interest_rate,start_date,months,direction,public_token,borrower_name,cc_balance')
+    .select('id,name,description,type,total_amount,interest_rate,start_date,months,direction,public_token,borrower_name,cc_balance,has_amort')
     .eq('public_token', token)
     .eq('direction', 'incoming')
     .maybeSingle();
@@ -329,6 +329,12 @@ function renderError(msg, sub) {
 function renderPublic(data) {
   const { debt, amorts, payments, instPays } = data;
   window._debtData = data; // guardar para modales
+
+  // Determinar si tiene tabla de amortización
+  // Si has_amort es null/undefined, inferir por presencia de amorts o months
+  const hasAmort = (debt.has_amort === false) ? false
+                 : (debt.has_amort === true)  ? true
+                 : (amorts && amorts.length > 0) || (+debt.months || 0) > 0;
 
   // Filtrar SOLO pagos aprobados para cálculos de saldo
   const isApproved = p => !p.status || p.status === 'approved';
@@ -418,10 +424,10 @@ function renderPublic(data) {
     <div class="kc bl"><div class="klbl">Monto Total</div><div class="kval">${fmt(total, true)}</div><div class="ksub">capital original</div></div>
     <div class="kc gn"><div class="klbl">Pagado</div><div class="kval" style="color:var(--gn)">${fmt(totalPaid, true)}</div><div class="ksub">${pct.toFixed(1)}% completado</div></div>
     <div class="kc ${remaining > 0 ? 'rd' : 'gn'}"><div class="klbl">Saldo Pendiente</div><div class="kval" style="color:${remaining > 0 ? 'var(--rd)' : 'var(--gn)'}">${fmt(remaining, true)}</div><div class="ksub">${remaining > 0 ? 'aún por pagar' : '¡Liquidada!'}</div></div>
-    <div class="kc ${overdueRows.length > 0 ? 'rd' : 'am'}"><div class="klbl">Cuotas Atrasadas</div><div class="kval">${overdueRows.length}</div><div class="ksub">${overdueRows.length === 0 ? 'al día' : 'requieren atención'}</div></div>
+    ${hasAmort ? `<div class="kc ${overdueRows.length > 0 ? 'rd' : 'am'}"><div class="klbl">Cuotas Atrasadas</div><div class="kval">${overdueRows.length}</div><div class="ksub">${overdueRows.length === 0 ? 'al día' : 'requieren atención'}</div></div>` : `<div class="kc bl"><div class="klbl">Tipo</div><div class="kval" style="font-size:14px">💸 Pago libre</div><div class="ksub">sin cuotas fijas</div></div>`}
   </div>
 
-  ${overdueRows.length > 0 ? `
+  ${(hasAmort && overdueRows.length > 0) ? `
   <!-- Overdue alert -->
   <div class="card" style="border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,var(--rdd) 0%,var(--bg2) 60%)">
     <div class="card-ti" style="color:var(--rd)">⚠️ Cuotas Atrasadas — Requieren Atención</div>
@@ -439,7 +445,7 @@ function renderPublic(data) {
     </table></div>
   </div>` : ''}
 
-  ${upcoming.length > 0 ? `
+  ${(hasAmort && upcoming.length > 0) ? `
   <!-- Upcoming -->
   <div class="card">
     <div class="card-ti">📅 Próximas Cuotas</div>
@@ -457,7 +463,7 @@ function renderPublic(data) {
   </div>` : ''}
 
   <!-- Full schedule -->
-  ${annotated.length > 0 ? `
+  ${(hasAmort && annotated.length > 0) ? `
   <div class="card">
     <div class="card-ti">📋 Plan Completo de Pagos</div>
     <div class="tw"><table>
@@ -532,11 +538,26 @@ function modalReportPayment() {
   const debt = data.debt;
   const today = new Date().toISOString().split('T')[0];
 
-  // Sugerencia: cuota más próxima pendiente
-  const annotated = annotateAmorts(data.amorts, data.instPays.filter(p => !p.status || p.status==='approved'));
-  const nextRow = annotated.find(a => a.status === 'pending' || a.status === 'overdue' || a.status === 'partial');
-  const suggestedAmt = nextRow ? nextRow.total.toFixed(2) : '';
-  const suggestedNote = nextRow ? `Pago cuota #${nextRow.n}` : '';
+  // ¿La deuda tiene tabla de amortización?
+  const hasAmort = (debt.has_amort === false) ? false
+                 : (debt.has_amort === true)  ? true
+                 : (data.amorts && data.amorts.length > 0) || (+debt.months || 0) > 0;
+
+  // Calcular saldo pendiente (solo aprobados)
+  const isApproved = p => !p.status || p.status === 'approved';
+  const totalPaid = (data.payments  || []).filter(isApproved).reduce((s,p)=>s+(+p.amount||0), 0)
+                  + (data.instPays  || []).filter(isApproved).reduce((s,p)=>s+(+p.amount||0), 0);
+  const remaining = Math.max(0, (+debt.total_amount||0) - totalPaid);
+
+  // Sugerencia inteligente: si hay cuotas, sugerir la próxima; si no, dejar vacío
+  let suggestedAmt = '';
+  let suggestedNote = '';
+  if (hasAmort) {
+    const annotated = annotateAmorts(data.amorts, data.instPays.filter(isApproved));
+    const nextRow = annotated.find(a => a.status === 'pending' || a.status === 'overdue' || a.status === 'partial');
+    suggestedAmt  = nextRow ? nextRow.total.toFixed(2) : '';
+    suggestedNote = nextRow ? `Pago cuota #${nextRow.n}` : '';
+  }
 
   document.getElementById('modal-container').innerHTML = `<div class="mover" onclick="if(event.target===this) closeModal()"><div class="modal">
     <div class="mhd">
@@ -546,7 +567,7 @@ function modalReportPayment() {
     <div class="mbd">
       <div class="alrt-info">
         <strong>${debt.name}</strong>${debt.borrower_name ? ' · ' + debt.borrower_name : ''}<br>
-        <span style="font-size:11px;opacity:.85">Tu pago aparecerá como "Por aprobar" hasta que el acreedor lo confirme.</span>
+        <span style="font-size:11px;opacity:.85">${hasAmort ? 'Tu pago aparecerá como "Por aprobar" hasta que el acreedor lo confirme.' : `Saldo pendiente: <strong>${fmt(remaining)}</strong>. Puedes abonar el monto que quieras. Tu pago aparecerá como "Por aprobar".`}</span>
       </div>
 
       <div class="frow">

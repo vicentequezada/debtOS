@@ -859,6 +859,20 @@ const Fin = {
   remaining(d)         { return Math.max(0, (+d.total_amount || 0) - Fin.totalPaid(d.id)); },
   overdueCount(debtId) { return Fin.annotated(debtId).filter(a => a.status === 'overdue' || a.status === 'partial').length; },
 
+  /* ── TIPO DE DEUDA ──
+     hasAmort = true → tabla de amortización (cuotas)
+     hasAmort = false → pago libre con abonos
+  */
+  hasAmort(debt) {
+    if (!debt) return true;
+    if (debt.has_amort === false) return false;
+    if (debt.has_amort === true)  return true;
+    // Backward compat: si no tiene el campo, inferir por la existencia de amorts o por months
+    const debtAmorts = S.amorts.filter(a => a.debt_id === debt.id);
+    if (debtAmorts.length > 0) return true;
+    return (+debt.months || 0) > 0;
+  },
+
   // ── DIRECTION HELPERS ──
   isIncoming(debt)     { return debt?.direction === 'incoming'; },
   isOutgoing(debt)     { return !debt || debt.direction !== 'incoming'; }, // default = outgoing for backward compat
@@ -913,6 +927,44 @@ const Fin = {
   },
   // FLUJO LEGACY (solo ingresos manuales - pagos outgoing) para gráficos compatibles
   monthlyFlowLegacy(month) { return Fin.totalIncome(month) - Fin.totalExpenses(month); },
+
+  /* ── DISTRIBUCIÓN DE PAGO EN CUOTAS ──
+     Calcula CÓMO se distribuiría un monto en las cuotas pendientes,
+     SIN aplicar nada (es un dry-run para mostrar el preview).
+     Retorna: { allocations: [{amort_id, n, owed, allocated, willComplete}], extraAmount }
+  */
+  planPaymentDistribution(debtId, amount) {
+    const annotated = Fin.annotated(debtId);
+    // Cuotas pendientes ordenadas por número (más antiguas primero)
+    const pending = annotated
+      .filter(a => a.status !== 'paid')
+      .sort((a, b) => a.n - b.n);
+
+    let remaining = +amount || 0;
+    const allocations = [];
+
+    for (const a of pending) {
+      if (remaining <= 0.005) break;
+      // Cuánto falta pagar de esta cuota (considerando solo APROBADOS)
+      const owed = Math.max(0, a.total - (a.instTotal || 0));
+      if (owed <= 0.005) continue;
+
+      const alloc = Math.min(remaining, owed);
+      const willComplete = alloc >= owed - 0.005;
+      allocations.push({
+        amort_id: a.id,
+        n: a.n,
+        due: a.due,
+        owed,
+        allocated: alloc,
+        willComplete,
+        partialAfter: !willComplete,
+      });
+      remaining -= alloc;
+    }
+
+    return { allocations, extraAmount: Math.max(0, remaining) };
+  },
 
   // Last 6 months
   last6Months() {
@@ -1158,6 +1210,64 @@ const DB = {
     S.payments.push(p);
     if (sb) await sb.from('payments').insert(p);
     return p;
+  },
+
+  /* Aplica distribución automática: crea instPayments por cada cuota cubierta y
+     marca como pagadas las que se completaron. Si sobra, crea un payment genérico
+     "abono extra".
+     - amount: total a distribuir
+     - meta: { date, notes, receipt_url, status, reported_by, part_id }
+  */
+  async applyDistributedPayment(debtId, amount, meta) {
+    const plan = Fin.planPaymentDistribution(debtId, amount);
+    const status      = meta.status      || 'approved';
+    const reported_by = meta.reported_by || 'owner';
+    const debt        = S.debts.find(d => d.id === debtId);
+    const created = { instPayments: [], genericPayments: [], markedPaid: [] };
+
+    // 1) Crear instPayments por cuota cubierta
+    for (const a of plan.allocations) {
+      const ip = {
+        id: 'ip-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+        debt_id: debtId,
+        amort_id: a.amort_id,
+        part_id: meta.part_id || null,
+        user_id: meta.user_id || (debt?.owner_user_id) || null,
+        amount: a.allocated,
+        paid_date: meta.date,
+        notes: meta.notes ? `${meta.notes} (cuota #${a.n})` : `Distribuido — cuota #${a.n}`,
+        receipt_url: meta.receipt_url || null,
+        status, reported_by,
+      };
+      S.instPayments.push(ip);
+      created.instPayments.push(ip);
+      if (sb) await sb.from('installment_payments').insert(ip);
+
+      // Solo marcar pagada si está aprobado Y completó la cuota
+      if (a.willComplete && status === 'approved') {
+        await DB.markAmortPaid(a.amort_id, meta.date);
+        created.markedPaid.push(a.n);
+      }
+    }
+
+    // 2) Si sobró dinero, registrar como pago genérico "extra"
+    if (plan.extraAmount > 0.005) {
+      const gp = {
+        id: 'gp-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+        debt_id: debtId,
+        user_id: meta.user_id || null,
+        amount: plan.extraAmount,
+        payment_date: meta.date,
+        notes: meta.notes ? `${meta.notes} (excedente sin cuota)` : 'Excedente sin cuota',
+        receipt_url: meta.receipt_url || null,
+        status, reported_by,
+      };
+      S.payments.push(gp);
+      created.genericPayments.push(gp);
+      if (sb) await sb.from('payments').insert(gp);
+    }
+
+    return { plan, created };
   },
 
   async updatePayment(table, id, patch) {
@@ -1692,8 +1802,12 @@ function renderDebts() {
   document.getElementById('content').innerHTML = `<div class="dcgrid">${debts.map(d => {
     const paid = Fin.totalPaid(d.id), rem = Fin.remaining(d), pct = Fin.pct(paid, d.total_amount), ov = Fin.overdueCount(d.id);
     const parts = S.parts.filter(p => p.debt_id === d.id);
+    const hasA  = Fin.hasAmort(d);
+    const subtypeChip = hasA
+      ? '<span style="display:inline-block;font-size:9px;color:var(--am);background:var(--amd);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">📋 Con cuotas</span>'
+      : '<span style="display:inline-block;font-size:9px;color:var(--bl);background:var(--bld);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">💸 Libre</span>';
     return `<div class="dc" oncontextmenu="ctxDebt(event,'${d.id}')">
-      <div class="dc-type ${d.type}">${{ loan: 'Préstamo', credit_card: 'Tarjeta', personal: 'Personal' }[d.type] || d.type}</div>
+      <div class="dc-type ${d.type}">${{ loan: 'Préstamo', credit_card: 'Tarjeta', personal: 'Personal' }[d.type] || d.type}${subtypeChip}</div>
       <div class="dc-name">${d.name}</div>
       <div class="dc-desc">${d.description || '—'}</div>
       <div class="dc-total">${Fin.fmt(d.total_amount)}</div>
@@ -1703,11 +1817,11 @@ function renderDebts() {
       <div class="dc-meta">
         <div class="dc-mi"><strong>${d.interest_rate || 0}%</strong>Tasa</div>
         <div class="dc-mi"><strong class="txt-gn">${Fin.fmt(paid, true)}</strong>Pagado</div>
-        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : 'Al día'}</strong>Estado</div>
+        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : (hasA?'Al día':'—')}</strong>Estado</div>
         ${parts.length ? `<div class="dc-mi"><strong class="txt-bl">${parts.length}</strong>Part.</div>` : ''}
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">
-        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">📋 Cuotas</button>
+        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">${hasA?'📋 Cuotas':'💸 Pagos'}</button>
         <button class="btn bg btn-sm" onclick="modalGenericPay('${d.id}')">+ Abono</button>
         <button class="btn bs btn-sm" onclick="modalEditDebt('${d.id}')" title="Editar">✏️</button>
         <button class="btn bs btn-sm" onclick="go('participants','${d.id}')" title="Participantes">👥</button>
@@ -1757,8 +1871,12 @@ function renderReceivables() {
 
   document.getElementById('content').innerHTML = kpis + `<div class="dcgrid">${debts.map(d => {
     const paid = Fin.totalPaid(d.id), rem = Fin.remaining(d), pct = Fin.pct(paid, d.total_amount), ov = Fin.overdueCount(d.id);
+    const hasA = Fin.hasAmort(d);
+    const subtypeChip = hasA
+      ? '<span style="display:inline-block;font-size:9px;color:var(--am);background:var(--amd);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">📋 Con cuotas</span>'
+      : '<span style="display:inline-block;font-size:9px;color:var(--bl);background:var(--bld);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">💸 Libre</span>';
     return `<div class="dc" style="border-left:3px solid var(--gn)">
-      <div class="dc-type" style="background:var(--gnd);color:var(--gn)">Me deben</div>
+      <div class="dc-type" style="background:var(--gnd);color:var(--gn)">Me deben${subtypeChip}</div>
       <div class="dc-name">${d.name}</div>
       <div class="dc-desc">${d.borrower_name ? '👤 '+d.borrower_name : (d.description || '—')}${d.borrower_email ? ' · '+d.borrower_email : ''}</div>
       <div class="dc-total txt-gn">${Fin.fmt(d.total_amount)}</div>
@@ -1768,10 +1886,10 @@ function renderReceivables() {
       <div class="dc-meta">
         <div class="dc-mi"><strong>${d.interest_rate || 0}%</strong>Tasa</div>
         <div class="dc-mi"><strong class="txt-gn">${Fin.fmt(paid, true)}</strong>Cobrado</div>
-        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : 'Al día'}</strong>Estado</div>
+        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : (hasA?'Al día':'—')}</strong>Estado</div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">
-        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">📋 Cuotas</button>
+        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">${hasA?'📋 Cuotas':'💸 Cobros'}</button>
         <button class="btn bg btn-sm" onclick="modalGenericPay('${d.id}')">+ Cobro</button>
         <button class="btn bp btn-sm" onclick="copyPublicLink('${d.id}')" title="Copiar link público">🔗 Link</button>
         <button class="btn bs btn-sm" onclick="modalEditDebt('${d.id}')" title="Editar">✏️</button>
@@ -1866,11 +1984,18 @@ function renderAmort(debtId) {
     ${debtId ? `
       <button class="btn bg btn-sm" onclick="modalGenericPay('${debtId}')">+ Abono</button>
       <button class="btn bs btn-sm" onclick="modalEditDebt('${debtId}')" title="Editar deuda">✏️</button>
-      <button class="btn bs btn-sm" onclick="modalImportCSV('${debtId}')">📂 CSV</button>` : ''}`;
+      ${(() => { const d = S.debts.find(x => x.id === debtId); return Fin.hasAmort(d) ? `<button class="btn bs btn-sm" onclick="modalImportCSV('${debtId}')">📂 CSV</button>` : ''; })()}` : ''}`;
 
   if (!debtId) { document.getElementById('content').innerHTML = UI.empty('📋', 'Selecciona una deuda', 'Elige del selector de arriba', '', ''); return; }
   const debt  = S.debts.find(d => d.id === debtId);
   if (!debt) { document.getElementById('content').innerHTML = '<div class="alrt ae">Deuda no encontrada</div>'; return; }
+
+  // ─────────────────────────────────────────────────────────
+  // VARIANTE: deuda SIN amortización (pago libre)
+  // ─────────────────────────────────────────────────────────
+  if (!Fin.hasAmort(debt)) {
+    return renderAmortFreeForm(debtId, debt);
+  }
 
   const rows  = Fin.annotated(debtId);
   const paid  = rows.filter(r => r.status === 'paid').length;
@@ -1978,6 +2103,79 @@ function renderAmort(debtId) {
           ${parts.length ? `<td>${ppBadges || '<span class="txt-mu" style="font-size:9px">—</span>'}</td>` : ''}
         </tr>`;
       }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:28px">Sin cuotas. <a style="color:var(--am);cursor:pointer" onclick="modalImportCSV(\''+debtId+'\')">Importar CSV →</a></td></tr>'}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ── Render para deuda SIN amortización (pago libre) ── */
+function renderAmortFreeForm(debtId, debt) {
+  const total      = +debt.total_amount || 0;
+  const paid       = Fin.totalPaid(debtId);
+  const remaining  = Math.max(0, total - paid);
+  const pct        = total ? Math.min(100, paid/total*100) : 0;
+  const isCC       = debt.type === 'credit_card';
+  const isIn       = Fin.isIncoming(debt);
+  const allPays = [
+    ...S.payments.filter(p => p.debt_id === debtId).map(p => ({ ...p, _kind:'generic', date: p.payment_date })),
+    ...S.instPayments.filter(p => p.debt_id === debtId).map(p => ({ ...p, _kind:'inst',    date: p.paid_date    })),
+  ].sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  document.getElementById('content').innerHTML = `
+  <div class="kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    ${UI.kc('am','Deuda', `<span style="font-size:13px">${debt.name.length>15?debt.name.slice(0,13)+'…':debt.name}</span>`, UI.typeChip(debt.type), '')}
+    ${UI.kc('bl','Total', Fin.fmt(total, true), 'monto original', '🏦')}
+    ${UI.kc('gn','Pagado', Fin.fmt(paid, true), pct.toFixed(1)+'%', '✅')}
+    ${UI.kc(remaining>0?'rd':'gn','Restante', Fin.fmt(remaining, true), remaining>0?'por pagar':'¡liquidada!', '⏳')}
+  </div>
+
+  <div class="card mb4">
+    <div class="card-hd">
+      <div>
+        <div class="card-ti">💸 Pago Libre — sin tabla de amortización</div>
+        <div class="card-su">${isIn ? 'Esta cuenta se cobra con abonos a libre demanda' : 'Esta deuda se paga con abonos cuando puedas, sin cuotas fijas'}${debt.start_date ? ' · Inicio: '+debt.start_date : ''}${debt.interest_rate ? ' · Tasa: '+debt.interest_rate+'% anual' : ''}</div>
+      </div>
+      <button class="btn ${isIn?'bg':'bp'} btn-sm" onclick="modalGenericPay('${debtId}')">${isIn?'+ Cobro':'+ Abono'}</button>
+    </div>
+    <div style="background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+        <div>
+          <div style="font-size:9px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Progreso</div>
+          <div style="font-family:var(--fmono);font-size:18px;font-weight:600">${Fin.fmt(paid, true)} <span style="color:var(--tx3);font-size:13px;font-weight:400">/ ${Fin.fmt(total)}</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Restante</div>
+          <div style="font-family:var(--fmono);font-size:18px;font-weight:600;color:${remaining>0?'var(--rd)':'var(--gn)'}">${Fin.fmt(remaining, true)}</div>
+        </div>
+      </div>
+      <div class="pbar"><div class="pfill ${pct>=100?'gn':''}" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--tx3);text-align:right;margin-top:3px">${pct.toFixed(1)}% completado</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div><div class="card-ti">Historial de ${isIn?'Cobros':'Abonos'}</div><div class="card-su">${allPays.length} ${isIn?'cobro':'abono'}${allPays.length!==1?'s':''} registrado${allPays.length!==1?'s':''}</div></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Notas</th><th class="tdc">📎</th><th>Estado</th><th class="tdn">Monto</th><th></th></tr></thead>
+      <tbody>${allPays.length ? allPays.map(p => {
+        const receiptCell = p.receipt_url
+          ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')" title="Ver comprobante">📎</button>`
+          : '<span class="txt-mu" style="font-size:10px">—</span>';
+        const statusCell = Fin.isPending(p)
+          ? '<span class="chip cam">⏳ Pendiente</span>'
+          : Fin.isRejected(p)
+            ? '<span class="chip crd">✕ Rechazado</span>'
+            : (p.reported_by==='borrower' ? '<span class="chip cgn">✓ Aprobado</span>' : '<span class="chip cgn">✓ OK</span>');
+        return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
+          <td>${p.date||'—'}</td>
+          <td style="color:var(--tx3)">${p.notes||'—'}</td>
+          <td class="tdc">${receiptCell}</td>
+          <td class="tdc">${statusCell}</td>
+          <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${Fin.fmt(p.amount)}</td>
+          <td><button class="btn bghost btn-xs" onclick="modalEditPayment('${p.id}')" title="${Fin.isPending(p)?'Revisar':'Editar'}">${Fin.isPending(p)?'⏳':'✏️'}</button></td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:28px">Sin pagos registrados todavía. <a style="color:var(--am);cursor:pointer" onclick="modalGenericPay('${debtId}')">Registrar primer abono →</a></td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2116,15 +2314,19 @@ function modalGenericPay(debtId) {
   const today = new Date().toISOString().split('T')[0];
   const isCC  = debt?.type === 'credit_card';
   const isIn  = Fin.isIncoming(debt);
+  // ¿Tiene cuotas pendientes? Solo entonces tiene sentido ofrecer distribución
+  const hasPendingInst = Fin.hasAmort(debt) && Fin.annotated(debtId).some(a => a.status !== 'paid');
+
   const titleVerb = isIn ? 'Cobro Recibido' : (isCC ? 'Abono a Tarjeta' : 'Abono a Capital');
   const btnLbl    = isIn ? '📥 Registrar Cobro' : 'Registrar Abono';
   const noteDef   = isIn ? `Cobro de ${debt?.borrower_name || 'deudor'}` : (isCC ? 'Abono tarjeta' : 'Abono a capital');
-  UI.modal(`<div class="mover"><div class="modal">
+
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:540px">
     <div class="mhd"><div class="mti">${titleVerb} — ${debt?.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ${isIn?'as_':'ai'}">${isIn?'💚 Saldo por cobrar':'Saldo pendiente'}: <strong>${Fin.fmt(rem)}</strong>${isIn && debt?.borrower_name ? ' · 👤 '+debt.borrower_name : ''}</div>
       <div class="frow c2">
-        <div class="fg"><label>Monto ($)</label><input type="number" id="gp-amt" placeholder="500.00" min="0.01" step="0.01" oninput="document.getElementById('gp-info').textContent='Saldo después: '+('$'+Math.max(0,${rem}-parseFloat(this.value||0)).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2}))"></div>
+        <div class="fg"><label>Monto ($)</label><input type="number" id="gp-amt" placeholder="500.00" min="0.01" step="0.01" oninput="updateGpPreview('${debtId}')"></div>
         <div class="fg"><label>Fecha</label><input type="date" id="gp-date" value="${today}"></div>
       </div>
       <div class="fg"><label>Notas</label><textarea id="gp-notes">${noteDef}</textarea></div>
@@ -2133,17 +2335,76 @@ function modalGenericPay(debtId) {
         <input type="file" id="gp-receipt" accept="image/*,.pdf" capture="environment" onchange="previewReceipt(this,'gp-prev')" style="font-size:12px">
         <div id="gp-prev"></div>
       </div>
+
+      ${hasPendingInst ? `
+      <div class="fg" style="display:flex;align-items:center;gap:8px;background:var(--bg3s);border:1px solid var(--bd);padding:10px 12px;border-radius:6px;margin-top:8px">
+        <input type="checkbox" id="gp-distribute" checked style="accent-color:var(--am);cursor:pointer" onchange="updateGpPreview('${debtId}')">
+        <label for="gp-distribute" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;color:var(--tx);cursor:pointer">
+          <strong>Distribuir automáticamente en cuotas pendientes</strong>
+          <div style="font-size:10px;color:var(--tx3);font-weight:400;margin-top:2px">Marca como pagadas las cuotas que alcance, deja la última como parcial si sobra</div>
+        </label>
+      </div>
+      <div id="gp-preview" style="margin-top:8px"></div>
+      `: ''}
+
       <div id="gp-info" style="font-size:11px;color:var(--tx3);margin-top:4px"></div>
       <div id="gp-err" class="alrt ae hidden"></div>
     </div>
     <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn ${isIn?'bg':'bp'}" onclick="saveGenericPay('${debtId}')" id="bgp">${btnLbl}</button></div>
   </div></div>`);
 }
+
+// Preview en vivo de la distribución mientras escribes el monto
+function updateGpPreview(debtId) {
+  const amt = parseFloat(document.getElementById('gp-amt')?.value) || 0;
+  const distChk = document.getElementById('gp-distribute');
+  const preview = document.getElementById('gp-preview');
+  const info    = document.getElementById('gp-info');
+  const debt    = S.debts.find(d => d.id === debtId);
+  const rem     = Fin.remaining(debt);
+
+  if (info) info.textContent = amt > 0 ? `Saldo después: ${Fin.fmt(Math.max(0, rem - amt))}` : '';
+
+  if (!preview || !distChk) return;
+  if (!distChk.checked || amt <= 0) { preview.innerHTML = ''; return; }
+
+  const plan = Fin.planPaymentDistribution(debtId, amt);
+  if (!plan.allocations.length && plan.extraAmount <= 0) { preview.innerHTML = ''; return; }
+
+  const rows = plan.allocations.map(a => {
+    const stChip = a.willComplete
+      ? '<span class="chip cgn">✓ Completa</span>'
+      : '<span class="chip cam">⊘ Parcial</span>';
+    return `<tr>
+      <td>Cuota #${a.n} <span style="color:var(--tx3);font-size:10px">(${a.due})</span></td>
+      <td class="tdn" style="font-size:11px;color:var(--tx3)">${Fin.fmt(a.owed)}</td>
+      <td class="tdn fw7 txt-gn">${Fin.fmt(a.allocated)}</td>
+      <td>${stChip}</td>
+    </tr>`;
+  }).join('');
+
+  const extraRow = plan.extraAmount > 0.005
+    ? `<tr style="background:rgba(245,158,11,.08)">
+        <td colspan="2" style="font-style:italic;color:var(--am)">💰 Excedente (sin cuota específica)</td>
+        <td class="tdn fw7 txt-am">${Fin.fmt(plan.extraAmount)}</td>
+        <td><span class="chip cam">Extra</span></td>
+      </tr>` : '';
+
+  preview.innerHTML = `<div style="background:var(--bg3s);border:1px solid var(--bd);border-radius:6px;padding:8px 10px">
+    <div style="font-size:10px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:600">📊 Distribución prevista</div>
+    <table style="width:100%;font-size:11px;min-width:auto">
+      <thead><tr><th style="padding:4px 6px;font-size:9px">Cuota</th><th style="padding:4px 6px;font-size:9px" class="tdn">Falta</th><th style="padding:4px 6px;font-size:9px" class="tdn">Aplicado</th><th style="padding:4px 6px;font-size:9px">Estado</th></tr></thead>
+      <tbody>${rows}${extraRow}</tbody>
+    </table>
+  </div>`;
+}
+
 async function saveGenericPay(debtId) {
   const amt   = parseFloat(document.getElementById('gp-amt').value);
   const date  = document.getElementById('gp-date').value;
   const notes = document.getElementById('gp-notes').value.trim();
   const file  = document.getElementById('gp-receipt')?.files[0];
+  const distribute = document.getElementById('gp-distribute')?.checked;
   if (!amt || !date) { const e = document.getElementById('gp-err'); e.textContent = 'Monto y fecha requeridos'; e.classList.remove('hidden'); return; }
   document.getElementById('bgp').disabled = true;
   try {
@@ -2152,11 +2413,33 @@ async function saveGenericPay(debtId) {
       UI.toast('📤 Subiendo comprobante...', 'success');
       receiptUrl = await DB.uploadReceipt(file, debtId);
     }
-    await DB.createGenericPayment({ debt_id: debtId, user_id: user.id, amount: amt, payment_date: date, notes, receipt_url: receiptUrl });
     const debt = S.debts.find(d => d.id === debtId);
     const isIn = Fin.isIncoming(debt);
-    UI.cm(); go(S.view, S.selDebt);
-    UI.toast(`${isIn?'📥 Cobro de':'Abono de'} ${Fin.fmt(amt)} registrado${receiptUrl?' · 📎 con comprobante':''}`);
+
+    if (distribute) {
+      // Modo distribución: aplica en cuotas y/o crea excedente
+      const { plan, created } = await DB.applyDistributedPayment(debtId, amt, {
+        date, notes, receipt_url: receiptUrl,
+        user_id: user.id,
+        status: 'approved', reported_by: 'owner',
+      });
+      UI.cm(); updateBadge(); go(S.view, S.selDebt);
+      const completed = created.markedPaid.length;
+      const partial   = plan.allocations.filter(a => !a.willComplete).length;
+      const extra     = plan.extraAmount > 0.005;
+      let msg = `${isIn?'📥 Cobro de':'Abono de'} ${Fin.fmt(amt)} aplicado`;
+      const parts = [];
+      if (completed) parts.push(`${completed} cuota${completed>1?'s':''} pagada${completed>1?'s':''}`);
+      if (partial)   parts.push(`${partial} parcial`);
+      if (extra)     parts.push(`${Fin.fmt(plan.extraAmount,true)} excedente`);
+      if (parts.length) msg += ` · ${parts.join(', ')}`;
+      UI.toast(msg);
+    } else {
+      // Modo clásico: solo registra pago genérico
+      await DB.createGenericPayment({ debt_id: debtId, user_id: user.id, amount: amt, payment_date: date, notes, receipt_url: receiptUrl });
+      UI.cm(); go(S.view, S.selDebt);
+      UI.toast(`${isIn?'📥 Cobro de':'Abono de'} ${Fin.fmt(amt)} registrado${receiptUrl?' · 📎':''}`);
+    }
   } catch (e) { const el = document.getElementById('gp-err'); el.textContent = e.message || 'Error'; el.classList.remove('hidden'); document.getElementById('bgp').disabled = false; }
 }
 
@@ -2226,6 +2509,16 @@ function modalEditPayment(paymentId) {
         <input type="text" id="ep-rnote" placeholder="Razón si rechazas, o nota libre">
       </div>`:''}
 
+      ${isPending && p._kind === 'generic' && Fin.annotated(p.debt_id).some(a => a.status !== 'paid') ? `
+      <div class="fg" style="display:flex;align-items:center;gap:8px;background:var(--gnd);border:1px solid var(--gn);padding:10px 12px;border-radius:6px">
+        <input type="checkbox" id="ep-distribute" checked style="accent-color:var(--gn);cursor:pointer">
+        <label for="ep-distribute" style="margin:0;text-transform:none;letter-spacing:0;font-size:12px;color:var(--tx);cursor:pointer">
+          <strong>Distribuir automáticamente al aprobar</strong>
+          <div style="font-size:10px;color:var(--tx3);font-weight:400;margin-top:2px">Aplicar a cuotas pendientes (las cubiertas se marcarán pagadas)</div>
+        </label>
+      </div>
+      `:''}
+
       <div id="ep-err" class="alrt ae hidden"></div>
     </div>
     <div class="mft" style="flex-wrap:wrap;gap:6px">
@@ -2274,26 +2567,58 @@ async function saveEditedPayment(paymentId) {
 async function approvePayment(paymentId) {
   const p = findPayment(paymentId);
   if (!p) return;
-  const note = document.getElementById('ep-rnote')?.value.trim() || null;
-  const patch = {
-    status: 'approved',
-    reviewed_at: new Date().toISOString(),
-    reviewer_note: note,
-  };
-  // Si el monto/fecha/notas se editaron en el modal, también guardarlos
-  const amtEl = document.getElementById('ep-amt');
-  const dateEl = document.getElementById('ep-date');
-  const notesEl = document.getElementById('ep-notes');
-  if (amtEl && parseFloat(amtEl.value) !== +p.amount) patch.amount = parseFloat(amtEl.value);
-  if (dateEl) {
-    const dateField = p._kind === 'inst' ? 'paid_date' : 'payment_date';
-    if (dateEl.value !== p[dateField]) patch[dateField] = dateEl.value;
-  }
-  if (notesEl && notesEl.value.trim() !== (p.notes||'')) patch.notes = notesEl.value.trim();
+  const note     = document.getElementById('ep-rnote')?.value.trim() || null;
+  const amtEl    = document.getElementById('ep-amt');
+  const dateEl   = document.getElementById('ep-date');
+  const notesEl  = document.getElementById('ep-notes');
+  const distChk  = document.getElementById('ep-distribute');
+  const distribute = distChk && distChk.checked && p._kind === 'generic';
 
-  await DB.updatePayment(p._table, paymentId, patch);
-  UI.cm(); updateBadge(); go(S.view, S.selDebt);
-  UI.toast(`✅ Pago de ${Fin.fmt(patch.amount || p.amount)} aprobado`);
+  // Valores finales (puede haber sido editado en el modal)
+  const finalAmt   = amtEl   ? parseFloat(amtEl.value) : +p.amount;
+  const dateField  = p._kind === 'inst' ? 'paid_date' : 'payment_date';
+  const finalDate  = dateEl  ? dateEl.value : p[dateField];
+  const finalNotes = notesEl ? notesEl.value.trim() : (p.notes || '');
+
+  if (distribute) {
+    // 1) Borrar el pago pendiente original (era genérico)
+    await DB.deletePayment(paymentId);
+    // 2) Aplicar distribución con los datos finales
+    const { plan, created } = await DB.applyDistributedPayment(p.debt_id, finalAmt, {
+      date: finalDate, notes: finalNotes || 'Pago aprobado del deudor',
+      receipt_url: p.receipt_url || null,
+      user_id: null,
+      status: 'approved', reported_by: 'borrower',
+    });
+    // Notas de revisión: las guardamos en cada pago creado
+    if (note) {
+      for (const ip of created.instPayments) await DB.updatePayment('installment_payments', ip.id, { reviewer_note: note, reviewed_at: new Date().toISOString() });
+      for (const gp of created.genericPayments) await DB.updatePayment('payments', gp.id, { reviewer_note: note, reviewed_at: new Date().toISOString() });
+    }
+    UI.cm(); updateBadge(); go(S.view, S.selDebt);
+    const completed = created.markedPaid.length;
+    let msg = `✅ Pago aprobado y distribuido`;
+    const parts = [];
+    if (completed) parts.push(`${completed} cuota${completed>1?'s':''} pagada${completed>1?'s':''}`);
+    if (plan.allocations.some(a => !a.willComplete)) parts.push('1 parcial');
+    if (plan.extraAmount > 0.005) parts.push(`${Fin.fmt(plan.extraAmount,true)} excedente`);
+    if (parts.length) msg += ` · ${parts.join(', ')}`;
+    UI.toast(msg);
+  } else {
+    // Comportamiento antiguo: solo cambiar status
+    const patch = {
+      status: 'approved',
+      reviewed_at: new Date().toISOString(),
+      reviewer_note: note,
+    };
+    if (amtEl && finalAmt !== +p.amount) patch.amount = finalAmt;
+    if (dateEl && finalDate !== p[dateField]) patch[dateField] = finalDate;
+    if (notesEl && finalNotes !== (p.notes||'')) patch.notes = finalNotes;
+
+    await DB.updatePayment(p._table, paymentId, patch);
+    UI.cm(); updateBadge(); go(S.view, S.selDebt);
+    UI.toast(`✅ Pago de ${Fin.fmt(finalAmt)} aprobado`);
+  }
 }
 
 async function rejectPayment(paymentId) {
@@ -2843,6 +3168,7 @@ function modalDebtForm(opts) {
     ccAmort: debt.cc_has_amort || false,
     bname:   debt.borrower_name || '',
     bemail:  debt.borrower_email || '',
+    hasAmort: isEdit ? Fin.hasAmort(debt) : true, // por defecto en crear: con cuotas
   };
 
   const title = isEdit
@@ -2855,7 +3181,8 @@ function modalDebtForm(opts) {
       <div id="derr" class="alrt ae hidden"></div>
 
       ${isEdit ? `<div class="alrt ai" style="font-size:11px;margin-bottom:12px">
-        ⚠️ Si cambias <strong>monto</strong>, <strong>tasa</strong>, <strong>plazo</strong> o <strong>fecha de inicio</strong>, te preguntaremos si quieres regenerar la tabla de amortización (los pagos registrados se conservan por número de cuota).
+        ⚠️ Si cambias <strong>monto</strong>, <strong>tasa</strong>, <strong>plazo</strong> o <strong>fecha de inicio</strong>, te preguntaremos si quieres regenerar la tabla de amortización (los pagos registrados se conservan por número de cuota).<br>
+        🔒 La <strong>estructura de pago</strong> (con/sin cuotas) no se puede cambiar después de crear.
       </div>` : `
       <!-- Direction selector (solo en CREAR) -->
       <div class="fg">
@@ -2870,8 +3197,23 @@ function modalDebtForm(opts) {
             <div><div style="font-weight:600;color:var(--gn)">💚 Me deben</div><div style="font-size:10px;color:var(--tx3)">Alguien me debe a mí</div></div>
           </label>
         </div>
+      </div>
+
+      <!-- Estructura de pago (solo en CREAR) -->
+      <div class="fg">
+        <label>¿Cómo se paga?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${v.hasAmort?'var(--am)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="amrt-yes-lbl">
+            <input type="radio" name="dhas_amort" value="yes" ${v.hasAmort?'checked':''} onchange="onAmortKindChange()" style="accent-color:var(--am)">
+            <div><div style="font-weight:600;color:var(--am)">📋 Con cuotas</div><div style="font-size:10px;color:var(--tx3)">Tabla de amortización fija</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${!v.hasAmort?'var(--bl)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="amrt-no-lbl">
+            <input type="radio" name="dhas_amort" value="no" ${!v.hasAmort?'checked':''} onchange="onAmortKindChange()" style="accent-color:var(--bl)">
+            <div><div style="font-weight:600;color:var(--bl)">💸 Sin cuotas</div><div style="font-size:10px;color:var(--tx3)">Se paga con abonos libres</div></div>
+          </label>
+        </div>
       </div>`}
-      ${isEdit ? `<input type="hidden" name="ddir" value="${dir}">` : ''}
+      ${isEdit ? `<input type="hidden" name="ddir" value="${dir}"><input type="hidden" name="dhas_amort" value="${v.hasAmort?'yes':'no'}">` : ''}
 
       <div class="frow c2">
         <div class="fg" style="grid-column:1/-1"><label>Nombre</label><input type="text" id="dn" placeholder="Ej: Préstamo Banco Pichincha" value="${v.name.replace(/"/g,'&quot;')}"></div>
@@ -2891,13 +3233,13 @@ function modalDebtForm(opts) {
 
       <div class="frow c3">
         <div class="fg"><label>Tipo</label>
-          <select id="dtype" onchange="onDebtTypeChange()" ${isEdit?'':''}>
+          <select id="dtype" onchange="onDebtTypeChange()">
             <option value="loan" ${v.type==='loan'?'selected':''}>Préstamo</option>
             <option value="credit_card" ${v.type==='credit_card'?'selected':''}>Tarjeta de Crédito</option>
             <option value="personal" ${v.type==='personal'?'selected':''}>Personal</option>
           </select></div>
         <div class="fg"><label>Monto Total ($)</label><input type="number" id="damt" placeholder="10000" min="0" step="0.01" value="${v.amt}" oninput="calcCuota()"></div>
-        <div class="fg"><label>Tasa Anual (%)</label><input type="number" id="drate" placeholder="12" min="0" step="0.01" value="${v.rate}" oninput="calcCuota()"></div>
+        <div class="fg" id="rate-fg"><label>Tasa Anual (%)</label><input type="number" id="drate" placeholder="12" min="0" step="0.01" value="${v.rate}" oninput="calcCuota()"></div>
       </div>
       <div id="cc-opts" class="${v.type==='credit_card'?'':'hidden'}">
         <div class="frow c2">
@@ -2908,14 +3250,24 @@ function modalDebtForm(opts) {
           </div>
         </div>
       </div>
-      <div id="amort-opts" class="${v.type==='credit_card' && !v.ccAmort ? 'hidden':''}">
+      <div id="amort-opts" class="${(!v.hasAmort) || (v.type==='credit_card' && !v.ccAmort) ? 'hidden':''}">
         <div class="frow c3">
           <div class="fg"><label>Fecha Inicio</label><input type="date" id="dstart" value="${v.start}"></div>
           <div class="fg"><label>Plazo (meses)</label><input type="number" id="dmonths" placeholder="24" min="1" value="${v.months}" oninput="calcCuota()"></div>
           <div class="fg"><label>Cuota estimada</label><input type="text" id="dcuota" readonly style="opacity:.5" placeholder="Auto"></div>
         </div>
       </div>
-      ${!isEdit ? `<div class="alrt aw" style="margin-top:4px;font-size:11px">💡 La tabla de amortización se genera automáticamente (sistema francés) · O puedes importarla desde CSV después</div>` : ''}
+      <div id="noamort-opts" class="${v.hasAmort ? 'hidden':''}">
+        <div class="frow c2">
+          <div class="fg"><label>Fecha Inicio</label><input type="date" id="dstart-na" value="${v.start}"></div>
+          <div class="fg" style="padding-top:20px">
+            <div class="alrt as_" style="font-size:11px;margin:0">
+              💡 Esta deuda <strong>no tiene cuotas fijas</strong>. Se irá pagando con abonos libres hasta liquidar el saldo.
+            </div>
+          </div>
+        </div>
+      </div>
+      ${!isEdit ? `<div class="alrt aw" style="margin-top:4px;font-size:11px" id="amort-hint">💡 La tabla de amortización se genera automáticamente (sistema francés) · O puedes importarla desde CSV después</div>` : ''}
     </div>
     <div class="mft">
       <button class="btn bs" onclick="UI.cm()">Cancelar</button>
@@ -2925,6 +3277,22 @@ function modalDebtForm(opts) {
 
   // Calcular cuota inicial si estamos editando
   if (isEdit) setTimeout(calcCuota, 50);
+}
+
+// Toggle de "con/sin cuotas"
+function onAmortKindChange() {
+  const hasAmort = document.querySelector('input[name="dhas_amort"]:checked')?.value === 'yes';
+  document.getElementById('amort-opts')?.classList.toggle('hidden', !hasAmort);
+  document.getElementById('noamort-opts')?.classList.toggle('hidden', hasAmort);
+  // Update visual styling
+  const yes = document.getElementById('amrt-yes-lbl'), no = document.getElementById('amrt-no-lbl');
+  if (yes) yes.style.borderColor = hasAmort ? 'var(--am)' : 'var(--bd2)';
+  if (no)  no.style.borderColor  = hasAmort ? 'var(--bd2)' : 'var(--bl)';
+  // Hint
+  const hint = document.getElementById('amort-hint');
+  if (hint) hint.textContent = hasAmort
+    ? '💡 La tabla de amortización se genera automáticamente (sistema francés) · O puedes importarla desde CSV después'
+    : '💡 No se generará tabla de cuotas. Registrarás abonos libres y la deuda se liquidará cuando el saldo llegue a cero.';
 }
 
 function onDirectionChange() {
@@ -2959,27 +3327,36 @@ async function saveDebt() {
   const type   = document.getElementById('dtype').value;
   const amt    = parseFloat(document.getElementById('damt').value);
   const rate   = parseFloat(document.getElementById('drate').value) || 0;
-  const start  = document.getElementById('dstart').value;
-  const months = parseInt(document.getElementById('dmonths').value) || 0;
   const desc   = document.getElementById('dd').value.trim();
   const ccBal  = parseFloat(document.getElementById('dcc-bal')?.value) || 0;
   const ccAmort= document.getElementById('dcc-amort')?.checked || false;
   const direction = document.querySelector('input[name="ddir"]:checked')?.value || 'outgoing';
+  const hasAmort  = (document.querySelector('input[name="dhas_amort"]:checked')?.value || 'yes') === 'yes';
   const borrowerName  = document.getElementById('d-bname')?.value.trim() || null;
   const borrowerEmail = document.getElementById('d-bemail')?.value.trim() || null;
+
+  // Fecha de inicio: depende de si hay amortización
+  const start  = hasAmort
+    ? document.getElementById('dstart').value
+    : (document.getElementById('dstart-na')?.value || new Date().toISOString().split('T')[0]);
+  const months = hasAmort ? (parseInt(document.getElementById('dmonths').value) || 0) : 0;
+
   if (!name || !amt) { const e = document.getElementById('derr'); e.textContent = 'Nombre y monto requeridos'; e.classList.remove('hidden'); return; }
   if (direction === 'incoming' && !borrowerName) { const e = document.getElementById('derr'); e.textContent = 'El nombre del deudor es requerido'; e.classList.remove('hidden'); return; }
+  if (hasAmort && (!start || !months)) { const e = document.getElementById('derr'); e.textContent = 'Para deuda con cuotas: fecha de inicio y plazo son requeridos'; e.classList.remove('hidden'); return; }
+
   document.getElementById('bsd').disabled = true;
   try {
     const fwd = n => { const d = new Date(start + 'T12:00:00'); d.setMonth(d.getMonth() + n); return d.toISOString().split('T')[0]; };
     const publicToken = direction === 'incoming' ? ('tok_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36)) : null;
     await DB.createDebt({
       name, type, total_amount: amt, interest_rate: rate, start_date: start,
-      end_date_estimated: months ? fwd(months) : null, description: desc,
-      months: (type !== 'credit_card' || ccAmort) ? months : 0,
+      end_date_estimated: (hasAmort && months) ? fwd(months) : null, description: desc,
+      months: (hasAmort && (type !== 'credit_card' || ccAmort)) ? months : 0,
       cc_balance: ccBal, cc_has_amort: ccAmort,
       direction, public_token: publicToken,
       borrower_name: borrowerName, borrower_email: borrowerEmail,
+      has_amort: hasAmort,
     });
     UI.cm(); updateBadge();
     go(direction === 'incoming' ? 'receivables' : 'debts');
@@ -2995,27 +3372,30 @@ async function saveEditedDebt(debtId) {
   const type   = document.getElementById('dtype').value;
   const amt    = parseFloat(document.getElementById('damt').value);
   const rate   = parseFloat(document.getElementById('drate').value) || 0;
-  const start  = document.getElementById('dstart').value;
-  const months = parseInt(document.getElementById('dmonths').value) || 0;
   const desc   = document.getElementById('dd').value.trim();
   const ccBal  = parseFloat(document.getElementById('dcc-bal')?.value) || 0;
   const ccAmort= document.getElementById('dcc-amort')?.checked || false;
   const direction = debt.direction || 'outgoing';
+  const hasAmort  = Fin.hasAmort(debt); // ← se preserva, no se puede cambiar al editar
   const borrowerName  = document.getElementById('d-bname')?.value.trim() || null;
   const borrowerEmail = document.getElementById('d-bemail')?.value.trim() || null;
+
+  // Si la deuda es sin amortización, leer fecha del input alternativo
+  const start  = hasAmort ? document.getElementById('dstart').value : (document.getElementById('dstart-na')?.value || debt.start_date);
+  const months = hasAmort ? (parseInt(document.getElementById('dmonths').value) || 0) : 0;
 
   if (!name || !amt) { const e = document.getElementById('derr'); e.textContent = 'Nombre y monto requeridos'; e.classList.remove('hidden'); return; }
   if (direction === 'incoming' && !borrowerName) { const e = document.getElementById('derr'); e.textContent = 'El nombre del deudor es requerido'; e.classList.remove('hidden'); return; }
 
-  // Detectar si cambian campos que afectan amortización
-  const amortChanged = (
+  // Detectar si cambian campos que afectan amortización (solo si tiene amort)
+  const amortChanged = hasAmort && (
     (+debt.total_amount !== +amt) ||
     (+(debt.interest_rate || 0) !== +rate) ||
     (+(debt.months || 0) !== +months) ||
     (debt.start_date !== start)
   );
-  const debtMonths = (type !== 'credit_card' || ccAmort) ? months : 0;
-  const willHaveAmort = debtMonths > 0 && amt > 0 && start;
+  const debtMonths = hasAmort ? ((type !== 'credit_card' || ccAmort) ? months : 0) : 0;
+  const willHaveAmort = hasAmort && debtMonths > 0 && amt > 0 && start;
 
   let regen = false;
   if (amortChanged && willHaveAmort) {
@@ -3035,6 +3415,7 @@ async function saveEditedDebt(debtId) {
       months: debtMonths, end_date_estimated: debtMonths ? fwd(debtMonths) : null,
       cc_balance: ccBal, cc_has_amort: ccAmort,
       borrower_name: borrowerName, borrower_email: borrowerEmail,
+      has_amort: hasAmort,
     };
     await DB.updateDebt(debtId, patch);
     if (regen) await DB.regenerateAmort(debtId, amt, rate, debtMonths, start);
