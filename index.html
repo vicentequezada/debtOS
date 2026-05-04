@@ -1,1 +1,3077 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DebtOS — Control Financiero</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════════ */
+[data-theme="dark"]{
+  --bg:#08090f; --bg2:#0d0f1a; --bg3s:#131626; --bg3:#131626;
+  --bd:#1c1f33; --bd2:#272b48;
+  --tx:#dde0f0; --tx2:#7880a8; --tx3:#3e4460;
+  --am:#f59e0b; --am2:#fbbf24; --amd:#261800;
+  --gn:#10b981; --gnd:#052015;
+  --rd:#ef4444; --rdd:#200808;
+  --bl:#3b82f6; --bld:#060e24;
+  --pu:#8b5cf6; --pud:#0f0920;
+  --cy:#06b6d4; --cyd:#021018;
+  --sh:0 8px 32px rgba(0,0,0,.6);
+  --sh2:0 2px 8px rgba(0,0,0,.4);
+  --ctx:#131626;
+  --gradient-hero: linear-gradient(135deg,#0d0f1a 0%,#111528 100%);
+}
+[data-theme="light"]{
+  --bg:#f2f4f9; --bg2:#ffffff; --bg3s:#f7f8fc; --bg3:#f7f8fc;
+  --bd:#e2e5f0; --bd2:#c8ccde;
+  --tx:#161828; --tx2:#40497a; --tx3:#8890b8;
+  --am:#d97706; --am2:#f59e0b; --amd:#fef3c7;
+  --gn:#059669; --gnd:#d1fae5;
+  --rd:#dc2626; --rdd:#fee2e2;
+  --bl:#2563eb; --bld:#dbeafe;
+  --pu:#7c3aed; --pud:#ede9fe;
+  --cy:#0891b2; --cyd:#cffafe;
+  --sh:0 4px 20px rgba(0,0,0,.08);
+  --sh2:0 1px 4px rgba(0,0,0,.06);
+  --ctx:#ffffff;
+  --gradient-hero: linear-gradient(135deg,#ffffff 0%,#f7f8fc 100%);
+}
+:root{
+  --r:8px; --r2:12px; --r3:16px;
+  --fh:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --fm:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --fmono:'JetBrains Mono','Menlo',monospace;
+  --sidebar-w:206px;
+  --topbar-h:50px;
+}
 
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--fm);font-size:13px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{transition:background .2s,color .2s;letter-spacing:-.005em}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--tx3)}
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════════ */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--bg2);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;z-index:20;
+  transition:transform .25s ease,width .25s ease,min-width .25s ease,background .2s,border-color .2s;
+}
+#sidebar.collapsed{width:0;min-width:0;transform:translateX(-100%)}
+.slogo{
+  padding:14px 14px 12px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.slogo-wrap{overflow:hidden}
+.slogo-mark{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--am);letter-spacing:-.5px;white-space:nowrap}
+.slogo-sub{font-size:9px;color:var(--tx3);letter-spacing:1.4px;text-transform:uppercase;margin-top:1px;white-space:nowrap;font-weight:500}
+.slogo-ver{font-size:9px;color:var(--tx3);font-family:var(--fmono);margin-top:1px}
+.snav{flex:1;padding:6px 6px;overflow-y:auto}
+.snav-lbl{font-size:9px;color:var(--tx3);letter-spacing:1.6px;text-transform:uppercase;padding:8px 8px 3px;font-weight:600}
+.ni{
+  display:flex;align-items:center;gap:9px;padding:7px 9px;
+  border-radius:var(--r);cursor:pointer;color:var(--tx2);font-size:12.5px;
+  transition:all .13s;margin-bottom:1px;border:1px solid transparent;
+  white-space:nowrap;overflow:hidden;font-weight:500;
+}
+.ni:hover{background:var(--bg3s);color:var(--tx)}
+.ni.on{background:var(--amd);color:var(--am);border-color:rgba(245,158,11,.2)}
+.ni .ic{font-size:13px;width:15px;text-align:center;flex-shrink:0}
+.ni .bdg{margin-left:auto;background:var(--rd);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;flex-shrink:0;font-weight:600}
+.sfooter{padding:9px 14px 12px;border-top:1px solid var(--bd)}
+.savatar{width:24px;height:24px;background:var(--amd);border:1px solid var(--am);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--am);font-weight:700;flex-shrink:0}
+#btn-logout{width:100%;padding:5px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);color:var(--tx3);cursor:pointer;font-family:var(--fm);font-size:11px;transition:all .13s;white-space:nowrap;font-weight:500}
+#btn-logout:hover{border-color:var(--rd);color:var(--rd)}
+
+/* Connection status indicator */
+.conn-status{
+  display:flex;align-items:center;gap:6px;padding:5px 9px;
+  background:var(--bg3s);border:1px solid var(--bd);border-radius:6px;
+  margin:6px 0 9px;font-size:10px;color:var(--tx3);
+}
+.conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.conn-dot.ok{background:var(--gn);box-shadow:0 0 6px rgba(16,185,129,.4)}
+.conn-dot.bad{background:var(--rd)}
+.conn-dot.sync{background:var(--am);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.conn-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+
+/* OVERLAY for mobile */
+#sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:15;display:none}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;border-bottom:1px solid var(--bd);background:var(--bg2);
+  height:var(--topbar-h);min-height:var(--topbar-h);flex-shrink:0;
+  transition:background .2s,border-color .2s;
+  gap:12px;
+}
+.topbar-left{display:flex;align-items:center;gap:11px;min-width:0}
+.menu-btn{
+  background:none;border:none;cursor:pointer;color:var(--tx2);
+  padding:5px;border-radius:var(--r);font-size:18px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .13s;flex-shrink:0;
+}
+.menu-btn:hover{background:var(--bg3s);color:var(--tx)}
+.topbar-title{font-family:var(--fh);font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.tbar-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:16px 18px;scroll-behavior:smooth}
+
+/* ═══════════════════════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════════════════════ */
+.tbtn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px;border-radius:var(--r);
+  border:1px solid var(--bd2);background:transparent;
+  color:var(--tx2);font-size:12px;cursor:pointer;font-family:var(--fm);
+  transition:all .13s;
+}
+.tbtn:hover{border-color:var(--am);color:var(--am)}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH SCREEN
+═══════════════════════════════════════════════════════════ */
+#auth-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:100;
+}
+.acard{
+  background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:var(--r3);padding:36px;width:min(380px,90vw);
+  box-shadow:var(--sh);
+}
+.alogo{font-family:var(--fh);font-size:24px;font-weight:700;color:var(--am);letter-spacing:-.02em}
+.atag{color:var(--tx3);font-size:11px;margin-top:3px;margin-bottom:22px}
+.atabs{display:flex;margin-bottom:16px;border-bottom:1px solid var(--bd)}
+.atab{padding:7px 16px;cursor:pointer;color:var(--tx3);font-size:12px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .13s;font-weight:500}
+.atab.on{color:var(--am);border-color:var(--am)}
+
+/* ═══════════════════════════════════════════════════════════
+   FORMS
+═══════════════════════════════════════════════════════════ */
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:10px;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;font-weight:600}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:var(--bg3s);border:1px solid var(--bd2);
+  border-radius:var(--r);padding:7px 10px;color:var(--tx);
+  font-family:var(--fm);font-size:12.5px;outline:none;
+  transition:border-color .13s,box-shadow .13s;
+}
+.fg input[type="number"],.fg input[type="date"]{font-family:var(--fmono);font-variant-numeric:tabular-nums}
+.fg input:focus,.fg select:focus,.fg textarea:focus{
+  border-color:var(--am);box-shadow:0 0 0 3px rgba(245,158,11,.12);
+}
+.fg textarea{resize:vertical;min-height:52px}
+.fg select option{background:var(--bg3s)}
+.frow{display:grid;gap:9px}
+.frow.c2{grid-template-columns:1fr 1fr}
+.frow.c3{grid-template-columns:1fr 1fr 1fr}
+.frow.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:600px){.frow.c2,.frow.c3,.frow.c4{grid-template-columns:1fr}}
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 12px;border-radius:var(--r);
+  font-family:var(--fm);font-size:12.5px;font-weight:500;
+  cursor:pointer;border:1px solid transparent;
+  transition:all .13s;white-space:nowrap;letter-spacing:-.005em;
+}
+.bp{background:var(--am);color:#100800;border-color:var(--am);font-weight:600}
+.bp:hover{background:var(--am2)}
+.bs{background:transparent;color:var(--tx2);border-color:var(--bd2)}
+.bs:hover{border-color:var(--am);color:var(--am)}
+.bg{background:var(--gn);color:#021008;border-color:var(--gn);font-weight:600}
+.bg:hover{opacity:.85}
+.bd_{background:transparent;color:var(--rd);border-color:rgba(239,68,68,.3)}
+.bd_:hover{background:var(--rdd)}
+.bghost{background:transparent;color:var(--tx3);border-color:transparent;padding:4px 7px}
+.bghost:hover{color:var(--tx)}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.bfull{width:100%;justify-content:center}
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════════════════════ */
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:14px 16px;transition:background .2s,border-color .2s}
+.card-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px;gap:8px}
+.card-ti{font-family:var(--fh);font-size:13px;font-weight:600;letter-spacing:-.01em}
+.card-su{font-size:11px;color:var(--tx3);margin-top:2px;font-weight:400}
+
+/* ═══════════════════════════════════════════════════════════
+   KPI CARDS
+═══════════════════════════════════════════════════════════ */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.kcard{
+  background:var(--bg2);border:1px solid var(--bd);
+  border-radius:var(--r2);padding:11px 14px;
+  position:relative;overflow:hidden;
+  transition:background .2s,border-color .2s,transform .15s;
+}
+.kcard:hover{transform:translateY(-1px);border-color:var(--bd2)}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r2) var(--r2) 0 0}
+.k-am::before{background:var(--am)}.k-gn::before{background:var(--gn)}
+.k-rd::before{background:var(--rd)}.k-bl::before{background:var(--bl)}
+.k-pu::before{background:var(--pu)}.k-cy::before{background:var(--cy)}
+.klbl{font-size:9px;color:var(--tx3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px;font-weight:500}
+.kval{font-family:var(--fmono);font-size:17px;font-weight:600;line-height:1.1;letter-spacing:-.3px}
+.ksub{font-size:10px;color:var(--tx3);margin-top:3px}
+.kico{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:22px;opacity:.06;pointer-events:none}
+.ktrend{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 6px;border-radius:10px;margin-top:5px}
+.ktrend.up{background:var(--gnd);color:var(--gn)}
+.ktrend.dn{background:var(--rdd);color:var(--rd)}
+.ktrend.neu{background:var(--bg3s);color:var(--tx3)}
+
+/* ═══════════════════════════════════════════════════════════
+   TABLES
+═══════════════════════════════════════════════════════════ */
+.tw{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;min-width:420px;font-size:12.5px}
+thead tr{background:var(--bg3s)}
+th{
+  text-align:left;padding:7px 11px;font-size:10px;
+  color:var(--tx3);letter-spacing:.6px;text-transform:uppercase;
+  font-weight:600;border-bottom:1px solid var(--bd);white-space:nowrap;
+  user-select:none;
+}
+td{padding:7px 11px;font-size:12.5px;color:var(--tx2);border-bottom:1px solid var(--bd)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(128,128,255,.025);transition:background .1s}
+.tdm{color:var(--tx);font-weight:500}
+.tdn{text-align:right;font-family:var(--fmono);font-variant-numeric:tabular-nums;font-size:12.5px}
+.tdc{text-align:center}
+
+/* Row states */
+.rp>td{opacity:.42}
+.ro>td{background:var(--rdd)!important;color:var(--rd)!important}
+.ro:hover>td{background:rgba(239,68,68,.14)!important}
+.ro>.tdm{color:var(--rd)!important;font-weight:600}
+.rpartial>td{background:rgba(245,158,11,.05)!important}
+
+/* ═══════════════════════════════════════════════════════════
+   CHIPS / BADGES
+═══════════════════════════════════════════════════════════ */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap}
+.cgn{background:var(--gnd);color:var(--gn);border:1px solid rgba(16,185,129,.2)}
+.crd{background:var(--rdd);color:var(--rd);border:1px solid rgba(239,68,68,.2)}
+.cam{background:var(--amd);color:var(--am);border:1px solid rgba(245,158,11,.2)}
+.cbl{background:var(--bld);color:var(--bl);border:1px solid rgba(59,130,246,.2)}
+.cpu{background:var(--pud);color:var(--pu);border:1px solid rgba(139,92,246,.2)}
+.ccy{background:var(--cyd);color:var(--cy);border:1px solid rgba(6,182,212,.2)}
+.pp-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:10px;font-size:9px;background:var(--bg3s);border:1px solid var(--bd2);color:var(--tx2);margin:1px}
+.pp-badge.paid{background:var(--gnd);border-color:rgba(16,185,129,.2);color:var(--gn)}
+.pp-badge.due{background:var(--rdd);border-color:rgba(239,68,68,.2);color:var(--rd)}
+
+/* ═══════════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════════ */
+.mover{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:200;display:flex;align-items:center;justify-content:center;
+  padding:16px;backdrop-filter:blur(4px);
+}
+.modal{
+  background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:var(--r3);width:100%;max-width:600px;
+  max-height:92vh;overflow-y:auto;box-shadow:var(--sh);
+}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--bd)}
+.mti{font-family:var(--fh);font-size:14px;font-weight:700}
+.mcl{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);transition:all .13s}
+.mcl:hover{background:var(--bg3s);color:var(--tx)}
+.mbd{padding:16px 20px}
+.mft{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--bd)}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════════════════════════════════ */
+#ctx{
+  position:fixed;z-index:500;background:var(--ctx);
+  border:1px solid var(--bd2);border-radius:var(--r2);
+  box-shadow:var(--sh);padding:5px;min-width:215px;
+  display:none;animation:fadeIn .1s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.ci{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--tx2);transition:all .11s;user-select:none}
+.ci:hover{background:var(--bg3s);color:var(--tx)}
+.ci.cig:hover{background:var(--gnd);color:var(--gn)}
+.ci.cid:hover{background:var(--rdd);color:var(--rd)}
+.cdiv{height:1px;background:var(--bd);margin:4px 0}
+.clbl{font-size:9px;color:var(--tx3);letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px 1px}
+
+/* ═══════════════════════════════════════════════════════════
+   FILTER BAR
+═══════════════════════════════════════════════════════════ */
+.fbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.fbar select,.fbar input{
+  background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:var(--r);padding:6px 11px;
+  color:var(--tx);font-family:var(--fm);font-size:12px;outline:none;
+  transition:border-color .13s;
+}
+.fbar select:focus,.fbar input:focus{border-color:var(--am)}
+.flbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+
+/* ═══════════════════════════════════════════════════════════
+   PROGRESS
+═══════════════════════════════════════════════════════════ */
+.pbar{height:4px;background:var(--bg3s);border-radius:2px;overflow:hidden}
+.pfill{height:100%;border-radius:2px;background:var(--am);transition:width .5s ease}
+.pfill.gn{background:var(--gn)}.pfill.rd{background:var(--rd)}.pfill.bl{background:var(--bl)}
+
+/* ═══════════════════════════════════════════════════════════
+   ALERTS
+═══════════════════════════════════════════════════════════ */
+.alrt{display:flex;gap:8px;padding:10px 13px;border-radius:var(--r);margin-bottom:11px;font-size:12px}
+.ae{background:var(--rdd);border:1px solid rgba(239,68,68,.25);color:var(--rd)}
+.as_{background:var(--gnd);border:1px solid rgba(16,185,129,.25);color:var(--gn)}
+.aw{background:var(--amd);border:1px solid rgba(245,158,11,.25);color:var(--am)}
+.ai{background:var(--bld);border:1px solid rgba(59,130,246,.25);color:var(--bl)}
+
+/* ═══════════════════════════════════════════════════════════
+   DEBT CARDS
+═══════════════════════════════════════════════════════════ */
+.dcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:12px}
+.dc{
+  background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);
+  padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.dc:hover{border-color:var(--bd2);transform:translateY(-2px);box-shadow:var(--sh)}
+.dc-type{
+  position:absolute;top:0;right:0;padding:3px 9px;
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  border-radius:0 var(--r2) 0 var(--r);
+}
+.dc-type.loan{background:rgba(59,130,246,.13);color:var(--bl)}
+.dc-type.credit_card{background:rgba(139,92,246,.13);color:var(--pu)}
+.dc-type.personal{background:rgba(16,185,129,.13);color:var(--gn)}
+.dc-name{font-family:var(--fh);font-size:13px;font-weight:700;margin-bottom:2px;padding-right:70px}
+.dc-desc{font-size:10px;color:var(--tx3);margin-bottom:10px}
+.dc-total{font-family:var(--fmono);font-size:17px;font-weight:700;margin-bottom:1px;letter-spacing:-.3px}
+.dc-meta{display:flex;gap:10px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bd)}
+.dc-mi{font-size:10px;color:var(--tx3)}
+.dc-mi strong{display:block;font-size:11px;color:var(--tx2);margin-top:1px}
+
+/* ═══════════════════════════════════════════════════════════
+   INCOME MODULE SPECIFICS
+═══════════════════════════════════════════════════════════ */
+.income-cat{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px}
+.cat-salary  {background:var(--bld);color:var(--bl)}
+.cat-extra   {background:var(--gnd);color:var(--gn)}
+.cat-business{background:var(--pud);color:var(--pu)}
+.cat-other   {background:var(--bg3s);color:var(--tx3);border:1px solid var(--bd)}
+.flow-positive{color:var(--gn);font-weight:700}
+.flow-negative{color:var(--rd);font-weight:700}
+.flow-neutral {color:var(--tx3);font-weight:700}
+
+/* ═══════════════════════════════════════════════════════════
+   CHART CARDS
+═══════════════════════════════════════════════════════════ */
+.chart-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r2);padding:18px;transition:background .2s}
+.chart-lbl{font-family:var(--fh);font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+.chart-wrap{position:relative}
+
+/* ═══════════════════════════════════════════════════════════
+   DRAG UPLOAD ZONE
+═══════════════════════════════════════════════════════════ */
+.drop-zone{
+  border:2px dashed var(--bd2);border-radius:var(--r2);
+  padding:32px 20px;text-align:center;cursor:pointer;
+  transition:all .2s;color:var(--tx3);
+}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--am);color:var(--am);background:var(--amd)}
+.drop-zone .drop-icon{font-size:36px;margin-bottom:10px;opacity:.6}
+.drop-zone p{font-size:12px}
+.drop-zone strong{color:var(--am)}
+
+/* ═══════════════════════════════════════════════════════════
+   MONTHLY FLOW SUMMARY
+═══════════════════════════════════════════════════════════ */
+.flow-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-radius:var(--r);background:var(--bg3s);border:1px solid var(--bd);
+  margin-bottom:8px;
+}
+.flow-bar-label{font-size:12px;color:var(--tx2);flex:1;min-width:0}
+.flow-bar-amount{font-family:var(--fh);font-size:14px;font-weight:700;white-space:nowrap}
+.flow-bar-bar{width:120px;flex-shrink:0}
+
+/* ═══════════════════════════════════════════════════════════
+   CC CARD
+═══════════════════════════════════════════════════════════ */
+.cc-card{
+  background:linear-gradient(135deg,var(--pud) 0%,var(--bld) 100%);
+  border:1px solid rgba(139,92,246,.25);border-radius:var(--r2);padding:18px;margin-bottom:14px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SORTABLE COLUMNS
+═══════════════════════════════════════════════════════════ */
+th.sortable{cursor:pointer;user-select:none;position:relative;padding-right:20px}
+th.sortable:hover{color:var(--am)}
+th.sortable::after{
+  content:'⇅';position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  font-size:9px;opacity:.35;transition:opacity .15s;
+}
+th.sortable:hover::after{opacity:.7}
+th.sort-asc::after {content:'▲';opacity:1;color:var(--am);font-size:8px}
+th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+  :root{--sidebar-w:220px}
+  #sidebar{
+    position:fixed;top:0;left:0;height:100%;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+  }
+  #sidebar.mobile-open{transform:translateX(0)}
+  #sidebar-overlay{display:block}
+  #content{padding:14px 14px}
+  .topbar{padding:0 14px}
+  .kgrid{grid-template-columns:1fr 1fr}
+  .dcgrid{grid-template-columns:1fr}
+  .charts-2col{grid-template-columns:1fr!important}
+  .frow.c3{grid-template-columns:1fr 1fr}
+}
+@media(max-width:440px){
+  .kgrid{grid-template-columns:1fr}
+  .frow.c2,.frow.c3,.frow.c4{grid-template-columns:1fr}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MISC UTILITIES
+═══════════════════════════════════════════════════════════ */
+.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}.mb6{margin-bottom:22px}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--bd);margin:14px 0}
+.txt-gn{color:var(--gn)}.txt-rd{color:var(--rd)}.txt-am{color:var(--am)}
+.txt-bl{color:var(--bl)}.txt-mu{color:var(--tx3)}.txt-pu{color:var(--pu)}
+.fw7{font-weight:700}.fw8{font-weight:800}
+.mono{font-family:var(--fmono)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ AUTH ══════════════ -->
+<div id="auth-screen">
+  <div class="acard">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+      <div><div class="alogo">DebtOS</div><div class="atag">Control financiero personal · v5.4</div></div>
+      <button class="tbtn" onclick="toggleTheme()">🌙</button>
+    </div>
+    <div class="atabs">
+      <div class="atab on" onclick="authTab('login')">Iniciar sesión</div>
+      <div class="atab" onclick="authTab('register')">Registrarse</div>
+    </div>
+    <div id="ae" class="alrt ae hidden"></div>
+    <div id="as_" class="alrt as_ hidden"></div>
+    <div id="auth-login">
+      <div class="fg"><label>Email</label><input type="email" id="le" placeholder="tu@email.com"></div>
+      <div class="fg"><label>Contraseña</label><input type="password" id="lp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn bp bfull" onclick="doLogin()" id="bl">Entrar al sistema</button>
+    </div>
+    <div id="auth-reg" class="hidden">
+      <div class="fg"><label>Nombre</label><input type="text" id="rn" placeholder="Tu nombre"></div>
+      <div class="fg"><label>Email</label><input type="email" id="re" placeholder="tu@email.com"></div>
+      <div class="fg"><label>Contraseña</label><input type="password" id="rp" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn bp bfull" onclick="doRegister()" id="br">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app" class="hidden">
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <aside id="sidebar">
+    <div class="slogo">
+      <div class="slogo-wrap">
+        <div class="slogo-mark">DebtOS</div>
+        <div class="slogo-sub">Financial OS · v5.4</div>
+      </div>
+      <button class="tbtn" onclick="toggleTheme()" id="tb" style="padding:4px 7px;font-size:15px">🌙</button>
+    </div>
+    <nav class="snav">
+      <div class="snav-lbl">General</div>
+      <div class="ni on" onclick="go('dashboard')" data-v="dashboard"><span class="ic">📊</span>Dashboard</div>
+      <div class="ni" onclick="go('income')" data-v="income"><span class="ic">💰</span>Ingresos</div>
+      <div class="snav-lbl">Deudas</div>
+      <div class="ni" onclick="go('debts')" data-v="debts"><span class="ic">💳</span>Mis Deudas</div>
+      <div class="ni" onclick="go('receivables')" data-v="receivables"><span class="ic">💚</span>Por Cobrar<span class="bdg hidden" id="rbadge" style="background:var(--gn)">0</span></div>
+      <div class="ni" onclick="go('amort')" data-v="amort"><span class="ic">📋</span>Amortización</div>
+      <div class="ni" onclick="go('payments')" data-v="payments"><span class="ic">💸</span>Pagos</div>
+      <div class="snav-lbl">Control</div>
+      <div class="ni" onclick="go('approvals')" data-v="approvals"><span class="ic">⏳</span>Aprobaciones<span class="bdg hidden" id="abadge" style="background:var(--am)">0</span></div>
+      <div class="ni" onclick="go('participants')" data-v="participants"><span class="ic">👥</span>Participantes</div>
+      <div class="ni" onclick="go('delinquency')" data-v="delinquency"><span class="ic">⚠️</span>Morosidad<span class="bdg hidden" id="dbadge">0</span></div>
+    </nav>
+    <div class="sfooter">
+      <div class="conn-status" id="conn-status" onclick="refreshFromDB(true)" style="cursor:pointer" title="Clic para sincronizar ahora">
+        <div class="conn-dot ok" id="conn-dot"></div>
+        <div class="conn-text" id="conn-text">Conectado</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+        <div class="savatar" id="uav">?</div>
+        <div style="min-width:0;overflow:hidden">
+          <div style="color:var(--tx);font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="uname">Usuario</div>
+          <div style="color:var(--tx3);font-size:10px" id="uemail"></div>
+        </div>
+      </div>
+      <button id="btn-logout" onclick="doLogout()">← Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()" title="Menú">☰</button>
+        <div class="topbar-title" id="ptitle">Dashboard</div>
+      </div>
+      <div class="tbar-right" id="tbactions"></div>
+    </div>
+    <div id="content"></div>
+  </main>
+</div>
+
+<!-- Context Menu -->
+<div id="ctx"></div>
+<!-- Modal Container -->
+<div id="mc"></div>
+<!-- Loader -->
+<div style="position:fixed;inset:0;background:rgba(8,9,15,.85);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px" id="loader">
+  <div style="width:22px;height:22px;border:2px solid var(--bd2);border-top-color:var(--am);border-radius:50%;animation:spin .6s linear infinite"></div>
+  <div style="font-size:12px;color:var(--tx3)">Cargando...</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIG & INIT
+═══════════════════════════════════════════════════════════ */
+const SB_URL = 'https://ziyhgftbkobhuuekuqpc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppeWhnZnRia29iaHV1ZWt1cXBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTAxMzEsImV4cCI6MjA5MzM4NjEzMX0.OojV0IkL7lqgkHMOopn4n2Ep0WzpkULMi8FZqETscIM';
+let sb = null;
+try { sb = supabase.createClient(SB_URL, SB_KEY); } catch(e) {}
+
+let user = null;
+let _charts = {};
+
+// ── STATE ──
+let S = {
+  debts: [],
+  amorts: [],        // {id, debt_id, n, due, cap, int, total, bal, paid_date}
+  instPayments: [],  // {id, debt_id, amort_id, part_id, user_id, amount, paid_date, notes}
+  payments: [],      // generic/abonos {id, debt_id, user_id, amount, payment_date, notes}
+  parts: [],         // {id, debt_id, user_id, name, email, pct}
+  incomes: [],       // {id, user_id, amount, category, description, date, month}
+  view: 'dashboard',
+  selDebt: null,
+  // Sort state per table: { incomes: {col, dir}, payments: {...}, ... }
+  sort: {
+    incomes: { col: 'date', dir: 'desc' },
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   CONNECTION STATUS
+═══════════════════════════════════════════════════════════ */
+let _connState = {
+  online: navigator.onLine,
+  lastSync: null,
+  syncing: false,
+  syncError: null,
+};
+
+function updateConnUI() {
+  const dot  = document.getElementById('conn-dot');
+  const text = document.getElementById('conn-text');
+  if (!dot || !text) return;
+
+  if (!_connState.online) {
+    dot.className = 'conn-dot bad';
+    text.innerHTML = '<strong>Sin conexión</strong>';
+    text.style.color = 'var(--rd)';
+    return;
+  }
+  if (_connState.syncing) {
+    dot.className = 'conn-dot sync';
+    text.innerHTML = 'Sincronizando…';
+    text.style.color = 'var(--am)';
+    return;
+  }
+  if (_connState.syncError) {
+    dot.className = 'conn-dot bad';
+    text.innerHTML = 'Error de sincronización';
+    text.style.color = 'var(--rd)';
+    return;
+  }
+  // OK
+  dot.className = 'conn-dot ok';
+  text.style.color = '';
+  if (_connState.lastSync) {
+    const secs = Math.floor((Date.now() - _connState.lastSync) / 1000);
+    let ago;
+    if (secs < 5)        ago = 'ahora';
+    else if (secs < 60)  ago = `hace ${secs}s`;
+    else if (secs < 3600)ago = `hace ${Math.floor(secs/60)}m`;
+    else                 ago = `hace ${Math.floor(secs/3600)}h`;
+    text.innerHTML = `Conectado · sync ${ago}`;
+  } else {
+    text.innerHTML = 'Conectado';
+  }
+}
+
+function setSyncStart() { _connState.syncing = true; _connState.syncError = null; updateConnUI(); }
+function setSyncOk()    { _connState.syncing = false; _connState.lastSync = Date.now(); _connState.syncError = null; updateConnUI(); }
+function setSyncErr(e)  { _connState.syncing = false; _connState.syncError = e?.message || 'Error'; updateConnUI(); }
+
+window.addEventListener('online',  () => { _connState.online = true;  updateConnUI(); refreshFromDB(false).catch(()=>{}); });
+window.addEventListener('offline', () => { _connState.online = false; updateConnUI(); });
+
+// Refrescar el indicador "hace Xs" cada segundo
+setInterval(updateConnUI, 1000);
+
+/* ═══════════════════════════════════════════════════════════
+   SORTING HELPERS
+═══════════════════════════════════════════════════════════ */
+function toggleSort(tableKey, col, rerender) {
+  if (!S.sort[tableKey]) S.sort[tableKey] = { col, dir: 'asc' };
+  else if (S.sort[tableKey].col === col) {
+    S.sort[tableKey].dir = S.sort[tableKey].dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    S.sort[tableKey] = { col, dir: 'asc' };
+  }
+  if (typeof rerender === 'function') rerender();
+}
+
+function sortRows(rows, sortState, customCompare) {
+  if (!sortState || !sortState.col) return rows;
+  const { col, dir } = sortState;
+  const mult = dir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    if (customCompare) {
+      const c = customCompare(a, b, col);
+      if (c !== undefined) return c * mult;
+    }
+    const va = a[col], vb = b[col];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * mult;
+    // Try numeric parse
+    const na = parseFloat(va), nb = parseFloat(vb);
+    if (!isNaN(na) && !isNaN(nb) && String(va) === String(na) && String(vb) === String(nb)) return (na - nb) * mult;
+    return String(va).localeCompare(String(vb), 'es') * mult;
+  });
+}
+
+function sortHeader(label, col, tableKey, rerenderFn, extraClass) {
+  const st = S.sort[tableKey];
+  const cls = (st && st.col === col) ? `sort-${st.dir}` : '';
+  return `<th class="sortable ${cls} ${extraClass||''}" onclick="toggleSort('${tableKey}','${col}',${rerenderFn})">${label}</th>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = dark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('debtos-theme', next);
+  const ico = next === 'dark' ? '☀️' : '🌙';
+  document.querySelectorAll('.tbtn, #tb').forEach(b => {
+    if (b.id === 'tb' || b.classList.contains('auth-tbtn')) b.textContent = ico;
+    else b.textContent = ico;
+  });
+  if (S.view === 'dashboard') renderDashboard();
+}
+(function () {
+  const t = localStorage.getItem('debtos-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  const ico = t === 'dark' ? '☀️' : '🌙';
+  setTimeout(() => document.querySelectorAll('.tbtn, #tb').forEach(b => b.textContent = ico), 0);
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR (RESPONSIVE)
+═══════════════════════════════════════════════════════════ */
+function toggleSidebar() {
+  const sb_ = document.getElementById('sidebar');
+  const ov  = document.getElementById('sidebar-overlay');
+  if (window.innerWidth <= 768) {
+    sb_.classList.toggle('mobile-open');
+    ov.style.display = sb_.classList.contains('mobile-open') ? 'block' : 'none';
+  } else {
+    sb_.classList.toggle('collapsed');
+  }
+}
+function closeSidebar() {
+  const sb_ = document.getElementById('sidebar');
+  sb_.classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').style.display = 'none';
+}
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').style.display = 'none';
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   RECEIPT HELPERS (preview + viewer)
+═══════════════════════════════════════════════════════════ */
+function previewReceipt(input, previewId) {
+  const file = input.files[0];
+  const prev = document.getElementById(previewId);
+  if (!prev) return;
+  if (!file) { prev.innerHTML = ''; return; }
+  if (file.size > 5 * 1024 * 1024) {
+    prev.innerHTML = '<div style="color:var(--rd);font-size:11px;margin-top:6px">⚠️ Archivo muy grande (máx 5MB)</div>';
+    input.value = ''; return;
+  }
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      prev.innerHTML = `<div style="margin-top:8px;padding:6px;background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);display:flex;gap:8px;align-items:center">
+        <img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:6px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${file.name}</div>
+          <div style="font-size:10px;color:var(--tx3)">${(file.size/1024).toFixed(0)} KB · listo para subir</div>
+        </div>
+      </div>`;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    prev.innerHTML = `<div style="margin-top:8px;padding:8px 10px;background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);font-size:11px">
+      📄 ${file.name} · ${(file.size/1024).toFixed(0)} KB
+    </div>`;
+  }
+}
+
+function viewReceipt(url) {
+  if (!url) return;
+  const isPdf = url.toLowerCase().split('?')[0].endsWith('.pdf');
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:760px">
+    <div class="mhd"><div class="mti">📎 Comprobante de pago</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd" style="text-align:center;background:var(--bg3s)">
+      ${isPdf
+        ? `<iframe src="${url}" style="width:100%;height:70vh;border:none;border-radius:var(--r)"></iframe>`
+        : `<img src="${url}" style="max-width:100%;max-height:70vh;border-radius:var(--r);box-shadow:var(--sh)" alt="Comprobante">`}
+    </div>
+    <div class="mft">
+      <a href="${url}" target="_blank" class="btn bs btn-sm" style="text-decoration:none">↗ Abrir</a>
+      <a href="${url}" download class="btn bs btn-sm" style="text-decoration:none">⬇ Descargar</a>
+      <button class="btn bp" onclick="UI.cm()">Cerrar</button>
+    </div>
+  </div></div>`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FINANCIAL LOGIC
+═══════════════════════════════════════════════════════════ */
+const Fin = {
+  buildAmort(principal, annualRate, months, startDate) {
+    const r = annualRate / 100 / 12;
+    const cuota = r === 0 ? principal / months
+      : principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+    let bal = principal; const rows = [];
+    let d = new Date(startDate + 'T12:00:00');
+    for (let i = 1; i <= months; i++) {
+      const int_ = bal * r;
+      const cap  = Math.min(cuota - int_, bal);
+      bal = Math.max(0, bal - cap);
+      rows.push({ n: i, due: d.toISOString().split('T')[0], cap, int: int_, total: cuota, bal });
+      d = new Date(d); d.setMonth(d.getMonth() + 1);
+    }
+    return rows;
+  },
+
+  annotated(debtId) {
+    const today = new Date().toISOString().split('T')[0];
+    return S.amorts.filter(a => a.debt_id === debtId)
+      .sort((a, b) => a.n - b.n)
+      .map(a => {
+        // Solo considerar pagos APROBADOS para cálculos
+        const allInstPays = S.instPayments.filter(p => p.amort_id === a.id);
+        const instPays = allInstPays.filter(p => Fin.isApproved(p));
+        const pendingPays = allInstPays.filter(p => Fin.isPending(p));
+
+        if (a.paid_date) return { ...a, status: 'paid', instPays, pendingPays, allInstPays };
+
+        const instTotal = instPays.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+        const paidByInst = instTotal >= a.total * 0.99;
+        const partial    = instTotal > 0 && !paidByInst;
+        const partialRemaining = Math.max(0, a.total - instTotal); // ← cuánto FALTA en esta cuota
+        const status = paidByInst ? 'paid' : partial ? 'partial' : a.due < today ? 'overdue' : 'pending';
+        return { ...a, status, instTotal, partialRemaining, instPays, pendingPays, allInstPays };
+      });
+  },
+
+  // ── APPROVAL helpers ──
+  isApproved(p) { return !p.status || p.status === 'approved'; },
+  isPending(p)  { return p.status === 'pending'; },
+  isRejected(p) { return p.status === 'rejected'; },
+
+  pendingPaymentsCount() {
+    return S.payments.filter(Fin.isPending).length + S.instPayments.filter(Fin.isPending).length;
+  },
+  allPendingPayments() {
+    const all = [
+      ...S.payments.filter(Fin.isPending).map(p => ({ ...p, _kind: 'generic' })),
+      ...S.instPayments.filter(Fin.isPending).map(p => ({ ...p, _kind: 'inst' })),
+    ];
+    return all.sort((a, b) => (b.payment_date || b.paid_date || '').localeCompare(a.payment_date || a.paid_date || ''));
+  },
+
+  paidGeneric(debtId)  { return S.payments.filter(p => p.debt_id === debtId && Fin.isApproved(p)).reduce((s, p) => s + (+p.amount || 0), 0); },
+  paidInst(debtId)     { return S.instPayments.filter(p => p.debt_id === debtId && Fin.isApproved(p)).reduce((s, p) => s + (+p.amount || 0), 0); },
+  totalPaid(debtId)    { return Fin.paidGeneric(debtId) + Fin.paidInst(debtId); },
+  remaining(d)         { return Math.max(0, (+d.total_amount || 0) - Fin.totalPaid(d.id)); },
+  overdueCount(debtId) { return Fin.annotated(debtId).filter(a => a.status === 'overdue' || a.status === 'partial').length; },
+
+  // ── DIRECTION HELPERS ──
+  isIncoming(debt)     { return debt?.direction === 'incoming'; },
+  isOutgoing(debt)     { return !debt || debt.direction !== 'incoming'; }, // default = outgoing for backward compat
+  outgoingDebts()      { return S.debts.filter(d => Fin.isOutgoing(d)); },
+  incomingDebts()      { return S.debts.filter(d => Fin.isIncoming(d)); },
+
+  // Total que YO debo (suma de saldos restantes outgoing)
+  totalOwed() {
+    return Fin.outgoingDebts().reduce((s, d) => s + Fin.remaining(d), 0);
+  },
+  // Total que ME DEBEN (suma de saldos restantes incoming)
+  totalReceivable() {
+    return Fin.incomingDebts().reduce((s, d) => s + Fin.remaining(d), 0);
+  },
+  // Cobros recibidos en el mes (de deudas incoming) — SOLO aprobados
+  totalCollected(month) {
+    const incomingIds = new Set(Fin.incomingDebts().map(d => d.id));
+    const all = [...S.payments, ...S.instPayments].filter(p => incomingIds.has(p.debt_id) && Fin.isApproved(p));
+    return all.filter(p => {
+      const date = p.payment_date || p.paid_date;
+      return !month || (date && date.startsWith(month));
+    }).reduce((s, p) => s + (+p.amount || 0), 0);
+  },
+
+  partBalance(debtId, partId) {
+    const part = S.parts.find(p => p.id === partId);
+    const debt = S.debts.find(d => d.id === debtId);
+    if (!part || !debt) return { owes: 0, paid: 0, due: 0 };
+    const share = (parseFloat(part.pct) || 0) / 100;
+    const owes  = (+debt.total_amount || 0) * share;
+    const paid  = S.instPayments.filter(p => p.debt_id === debtId && p.part_id === partId && Fin.isApproved(p)).reduce((s, p) => s + (+p.amount || 0), 0)
+                + S.payments.filter(p => p.debt_id === debtId && p.user_id === part.user_id && Fin.isApproved(p)).reduce((s, p) => s + (+p.amount || 0), 0);
+    return { owes, paid, due: Math.max(0, owes - paid) };
+  },
+
+  /* ── INCOME ── */
+  totalIncome(month) { // month = 'YYYY-MM' or null for all
+    return S.incomes.filter(i => !month || i.month === month).reduce((s, i) => s + (+i.amount || 0), 0);
+  },
+  // GASTOS REALES = solo pagos APROBADOS a deudas OUTGOING (lo que yo pago)
+  totalExpenses(month) {
+    const outgoingIds = new Set(Fin.outgoingDebts().map(d => d.id));
+    const paymentsThisMonth = [...S.payments, ...S.instPayments].filter(p => outgoingIds.has(p.debt_id) && Fin.isApproved(p) && (() => {
+      const date = p.payment_date || p.paid_date;
+      return !month || (date && date.startsWith(month));
+    })());
+    return paymentsThisMonth.reduce((s, p) => s + (+p.amount || 0), 0);
+  },
+  // FLUJO MENSUAL = ingresos manuales + cobros incoming - pagos outgoing
+  monthlyFlow(month) {
+    return Fin.totalIncome(month) + Fin.totalCollected(month) - Fin.totalExpenses(month);
+  },
+  // FLUJO LEGACY (solo ingresos manuales - pagos outgoing) para gráficos compatibles
+  monthlyFlowLegacy(month) { return Fin.totalIncome(month) - Fin.totalExpenses(month); },
+
+  // Last 6 months
+  last6Months() {
+    const months = [];
+    const d = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+      months.push(m.toISOString().slice(0, 7));
+    }
+    return months;
+  },
+
+  fmt(n, short) {
+    if (isNaN(n) || n == null) return '$0.00';
+    const v = Math.abs(parseFloat(n));
+    const sign = n < 0 ? '-' : '';
+    if (short && v >= 1000) return sign + '$' + (v / 1000).toFixed(1) + 'k';
+    return sign + '$' + v.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  },
+  fmtMonth(m) {
+    const [y, mo] = m.split('-');
+    const names = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return names[parseInt(mo) - 1] + ' ' + y.slice(2);
+  },
+  pct(a, b)       { return b ? Math.min(100, Math.max(0, a / b * 100)) : 0; },
+  daysSince(s)    { return Math.floor((Date.now() - new Date(s + 'T12:00:00')) / 86400000); },
+  currentMonth()  { return new Date().toISOString().slice(0, 7); },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════════════ */
+const UI = {
+  load(v)   { document.getElementById('loader').style.display = v ? 'flex' : 'none'; },
+  modal(h)  {
+    const c = document.getElementById('mc'); c.innerHTML = h;
+    c.querySelector('.mover')?.addEventListener('click', e => { if (e.target === e.currentTarget) UI.cm(); });
+  },
+  cm()      { document.getElementById('mc').innerHTML = ''; },
+  chip(l, c_) { return `<span class="chip c${c_ || 'am'}">${l}</span>`; },
+  typeChip(t) {
+    const m = { loan: ['Préstamo', 'bl'], credit_card: ['Tarjeta', 'pu'], personal: ['Personal', 'gn'] };
+    const [l, c_] = m[t] || [t, 'am']; return UI.chip(l, c_);
+  },
+  stChip(s) {
+    const m = { paid: ['Pagada', 'gn'], partial: ['Parcial', 'am'], overdue: ['Atrasada', 'rd'], pending: ['Pendiente', 'am'] };
+    const [l, c_] = m[s] || ['—', 'am']; return UI.chip(l, c_);
+  },
+  catChip(cat) {
+    const m = { salary: ['Salario', 'bl'], extra: ['Extra', 'gn'], business: ['Negocio', 'pu'], other: ['Otro', ''] };
+    const [l, cls] = m[cat] || ['Otro', ''];
+    return `<span class="income-cat cat-${cat || 'other'}">${l}</span>`;
+  },
+  toast(msg, type = 'success') {
+    const cols = { success: ['var(--gnd)', 'var(--gn)'], warn: ['var(--amd)', 'var(--am)'], error: ['var(--rdd)', 'var(--rd)'] };
+    const [bg, fg] = cols[type] || cols.success;
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:18px;right:18px;z-index:999;padding:10px 15px;border-radius:10px;font-size:12px;font-family:var(--fm);box-shadow:var(--sh);background:${bg};color:${fg};border:1px solid ${fg}33;max-width:290px;animation:fadeIn .15s ease`;
+    t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+  },
+  empty(icon, t, m, bl, bf) {
+    return `<div style="text-align:center;padding:48px 20px;color:var(--tx3)">
+      <div style="font-size:40px;margin-bottom:12px;opacity:.3">${icon}</div>
+      <div style="font-family:var(--fh);font-size:15px;color:var(--tx2);margin-bottom:5px">${t}</div>
+      <div style="font-size:12px">${m}</div>
+      ${bl ? `<button class="btn bp" style="margin-top:14px" onclick="${bf}">${bl}</button>` : ''}
+    </div>`;
+  },
+  kc(cls, lbl, val, sub, ico, trend) {
+    return `<div class="kcard k-${cls}">
+      <div class="klbl">${lbl}</div>
+      <div class="kval">${val}</div>
+      ${trend !== undefined ? trend : `<div class="ksub">${sub}</div>`}
+      <div class="kico">${ico}</div>
+    </div>`;
+  },
+  destroyCharts() { Object.keys(_charts).forEach(k => { _charts[k]?.destroy(); delete _charts[k]; }); },
+  cc() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+      tx: dark ? '#7880a8' : '#40497a',
+      grid: dark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.05)',
+      series: ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4'],
+    };
+  },
+  debtSelect(selectedId) {
+    return `<option value="">-- Seleccionar deuda --</option>${S.debts.map(d => `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${d.name}</option>`).join('')}`;
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════════════════════════════════ */
+const Ctx = {
+  show(e, items) {
+    e.preventDefault(); e.stopPropagation();
+    const m = document.getElementById('ctx');
+    m.innerHTML = items.map(it => {
+      if (it === 'div') return `<div class="cdiv"></div>`;
+      if (it.lbl_only) return `<div class="clbl">${it.lbl_only}</div>`;
+      return `<div class="ci ${it.cls || ''}" onclick="Ctx.hide();(${it.fn})()">${it.ico || ''} ${it.lbl}</div>`;
+    }).join('');
+    m.style.display = 'block';
+    const x = Math.min(e.clientX, window.innerWidth - m.offsetWidth - 8);
+    const y = Math.min(e.clientY, window.innerHeight - m.offsetHeight - 8);
+    m.style.left = x + 'px'; m.style.top = y + 'px';
+  },
+  hide() { document.getElementById('ctx').style.display = 'none'; },
+};
+document.addEventListener('click', Ctx.hide);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { Ctx.hide(); UI.cm(); } });
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════════════ */
+function authTab(tab) {
+  document.querySelectorAll('.atab').forEach((t, i) =>
+    t.classList.toggle('on', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+  document.getElementById('auth-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('auth-reg').classList.toggle('hidden', tab !== 'register');
+  ['ae', 'as_'].forEach(id => document.getElementById(id).classList.add('hidden'));
+}
+function authMsg(msg, type) {
+  const el = document.getElementById(type === 'e' ? 'ae' : 'as_');
+  el.textContent = msg; el.classList.remove('hidden');
+}
+
+async function doLogin() {
+  const email = document.getElementById('le').value.trim();
+  const pass  = document.getElementById('lp').value;
+  if (!email || !pass) return authMsg('Ingresa email y contraseña', 'e');
+  if (!sb) return authMsg('Supabase no está configurado', 'e');
+  document.getElementById('bl').disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    user = data.user; await initApp();
+  } catch (e) { authMsg(e.message || 'Error al iniciar sesión', 'e'); document.getElementById('bl').disabled = false; }
+}
+async function doRegister() {
+  const name = document.getElementById('rn').value.trim();
+  const email = document.getElementById('re').value.trim();
+  const pass  = document.getElementById('rp').value;
+  if (!name || !email || !pass) return authMsg('Completa todos los campos', 'e');
+  if (pass.length < 6) return authMsg('Contraseña mínimo 6 caracteres', 'e');
+  if (!sb) return authMsg('Supabase no está configurado', 'e');
+  document.getElementById('br').disabled = true;
+  try {
+    const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+    if (error) throw error;
+    authMsg('Cuenta creada. Revisa tu email para confirmar (o inicia sesión si la confirmación está desactivada).', 's');
+  } catch (e) { authMsg(e.message || 'Error', 'e'); }
+  document.getElementById('br').disabled = false;
+}
+async function doLogout() {
+  if (sb) await sb.auth.signOut();
+  user = null;
+  if (_pollingInterval) { clearInterval(_pollingInterval); _pollingInterval = null; }
+  S = { debts: [], amorts: [], instPayments: [], payments: [], parts: [], incomes: [], view: 'dashboard', selDebt: null };
+  UI.destroyCharts();
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DB LAYER
+═══════════════════════════════════════════════════════════ */
+const DB = {
+  async loadAll() {
+    if (!sb) return;
+    setSyncStart();
+    try {
+      const uid = user.id;
+      const [d, a, p, pp, ip, inc] = await Promise.all([
+        sb.from('debts').select('*').eq('owner_user_id', uid),
+        sb.from('amortizations').select('*'),
+        sb.from('payments').select('*'),
+        sb.from('participants').select('*'),
+        sb.from('installment_payments').select('*'),
+        sb.from('incomes').select('*').eq('user_id', uid),
+      ]);
+      // Si alguno tiene error, considerar como falla
+      const err = [d,a,p,pp,ip,inc].find(r => r.error);
+      if (err && err.error) throw err.error;
+      S.debts = d.data || []; S.amorts = a.data || []; S.payments = p.data || [];
+      S.parts = pp.data || []; S.instPayments = ip.data || []; S.incomes = inc.data || [];
+      setSyncOk();
+    } catch (e) {
+      setSyncErr(e);
+      throw e;
+    }
+  },
+
+  async createDebt(data) {
+    const d = { ...data, id: 'd-' + Date.now(), owner_user_id: user.id };
+    S.debts.push(d);
+    if (data.months && data.total_amount && data.start_date) {
+      Fin.buildAmort(+data.total_amount, +data.interest_rate || 0, +data.months, data.start_date)
+        .forEach((r, i) => S.amorts.push({ ...r, id: `${d.id}_${i}`, debt_id: d.id, paid_date: null }));
+    }
+    if (sb) await sb.from('debts').insert(d);
+    return d;
+  },
+
+  async updateDebt(id, patch) {
+    const idx = S.debts.findIndex(d => d.id === id);
+    if (idx === -1) throw new Error('Deuda no encontrada');
+    S.debts[idx] = { ...S.debts[idx], ...patch };
+    if (sb) {
+      const { error } = await sb.from('debts').update(patch).eq('id', id);
+      if (error) throw error;
+    }
+    return S.debts[idx];
+  },
+
+  // Regenera la amortización conservando los paid_date de cuotas ya pagadas (por número de cuota)
+  async regenerateAmort(debtId, principal, rate, months, startDate) {
+    // Guardar paid_dates por número de cuota
+    const oldPaid = {};
+    S.amorts.filter(a => a.debt_id === debtId).forEach(a => { if (a.paid_date) oldPaid[a.n] = a.paid_date; });
+
+    const newRows = Fin.buildAmort(+principal, +rate || 0, +months, startDate)
+      .map((r, i) => ({ ...r, id: `${debtId}_${i}`, debt_id: debtId, paid_date: oldPaid[r.n] || null }));
+
+    S.amorts = S.amorts.filter(a => a.debt_id !== debtId);
+    newRows.forEach(r => S.amorts.push(r));
+
+    if (sb) {
+      await sb.from('amortizations').delete().eq('debt_id', debtId);
+      if (newRows.length) await sb.from('amortizations').insert(newRows);
+    }
+  },
+
+  async createInstPayment(data) {
+    const p = { ...data, id: 'ip-' + Date.now() };
+    S.instPayments.push(p);
+    if (sb) await sb.from('installment_payments').insert(p);
+    return p;
+  },
+
+  async createGenericPayment(data) {
+    const p = { ...data, id: 'gp-' + Date.now() };
+    S.payments.push(p);
+    if (sb) await sb.from('payments').insert(p);
+    return p;
+  },
+
+  async updatePayment(table, id, patch) {
+    const arr = table === 'installment_payments' ? S.instPayments : S.payments;
+    const idx = arr.findIndex(p => p.id === id);
+    if (idx !== -1) arr[idx] = { ...arr[idx], ...patch };
+    if (sb) await sb.from(table).update(patch).eq('id', id);
+  },
+
+  /* ─── Storage: comprobantes de pago ─── */
+  async uploadReceipt(file, debtId) {
+    if (!sb) throw new Error('Supabase no configurado');
+    if (!file) return null;
+    if (file.size > 5 * 1024 * 1024) throw new Error('La imagen es muy grande (máx. 5MB)');
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    if (!['jpg','jpeg','png','webp','heic','heif','gif','pdf'].includes(ext)) throw new Error('Formato no soportado');
+    // Path: {user_id}/{debt_id}/{timestamp}-{rand}.{ext}
+    const path = `${user.id}/${debtId}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error } = await sb.storage.from('payment-receipts').upload(path, file, {
+      contentType: file.type || 'image/jpeg',
+      upsert: false,
+    });
+    if (error) throw error;
+    const { data: pub } = sb.storage.from('payment-receipts').getPublicUrl(path);
+    return pub.publicUrl;
+  },
+
+  async deleteReceipt(url) {
+    if (!sb || !url) return;
+    // Extraer el path desde la URL pública
+    const m = url.match(/payment-receipts\/(.+)$/);
+    if (!m) return;
+    await sb.storage.from('payment-receipts').remove([m[1]]);
+  },
+
+  async createIncome(data) {
+    const inc = { ...data, id: 'inc-' + Date.now(), user_id: user.id };
+    S.incomes.push(inc);
+    if (sb) await sb.from('incomes').insert(inc);
+    return inc;
+  },
+
+  async deleteIncome(id) {
+    S.incomes = S.incomes.filter(i => i.id !== id);
+    if (sb) await sb.from('incomes').delete().eq('id', id);
+  },
+
+  async deletePayment(id) {
+    S.payments = S.payments.filter(p => p.id !== id);
+    if (sb) await sb.from('payments').delete().eq('id', id);
+  },
+
+  async deleteInstPayment(id) {
+    S.instPayments = S.instPayments.filter(p => p.id !== id);
+    if (sb) await sb.from('installment_payments').delete().eq('id', id);
+  },
+
+  async updateIncome(id, patch) {
+    const idx = S.incomes.findIndex(i => i.id === id);
+    if (idx !== -1) S.incomes[idx] = { ...S.incomes[idx], ...patch };
+    if (sb) await sb.from('incomes').update(patch).eq('id', id);
+  },
+
+  async markAmortPaid(amortId, paidDate) {
+    const a = S.amorts.find(x => x.id === amortId);
+    if (a) a.paid_date = paidDate;
+    if (sb) await sb.from('amortizations').update({ paid_date: paidDate }).eq('id', amortId);
+  },
+
+  async saveParticipants(debtId, list) {
+    S.parts = S.parts.filter(p => p.debt_id !== debtId);
+    list.forEach(p => S.parts.push(p));
+    if (sb) {
+      await sb.from('participants').delete().eq('debt_id', debtId);
+      if (list.length) await sb.from('participants').insert(list);
+    }
+  },
+
+  async deleteDebt(id) {
+    ['debts', 'amorts', 'payments', 'instPayments', 'parts'].forEach(k =>
+      S[k] = S[k].filter(x => (x.id || x.debt_id) !== id && x.debt_id !== id));
+    S.debts = S.debts.filter(d => d.id !== id);
+    if (sb) await sb.from('debts').delete().eq('id', id);
+  },
+
+  async importAmortCSV(debtId, rows) {
+    // Replace existing amorts for this debt
+    S.amorts = S.amorts.filter(a => a.debt_id !== debtId);
+    rows.forEach(r => S.amorts.push({ ...r, debt_id: debtId, paid_date: null }));
+    if (sb) {
+      await sb.from('amortizations').delete().eq('debt_id', debtId);
+      await sb.from('amortizations').insert(rows.map(r => ({ ...r, debt_id: debtId, paid_date: null })));
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+async function initApp() {
+  UI.load(true);
+  try {
+    await DB.loadAll();
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    const name = user.user_metadata?.full_name || user.email || 'Usuario';
+    document.getElementById('uname').textContent = name.split(' ')[0];
+    document.getElementById('uav').textContent = name[0].toUpperCase();
+    document.getElementById('uemail').textContent = user.email || '';
+    updateBadge(); go('dashboard');
+    startPendingPoller();
+  } catch (e) { console.error(e); UI.toast('Error al cargar datos', 'error'); }
+  UI.load(false);
+}
+
+// Polling para sincronizar con Supabase y detectar cambios de otros dispositivos/usuarios
+let _pollingInterval = null;
+let _lastPendingCount = 0;
+function startPendingPoller() {
+  if (_pollingInterval) clearInterval(_pollingInterval);
+  _lastPendingCount = Fin.pendingPaymentsCount();
+  // Cada 30s: full sync para que cambios desde otra compu/usuario aparezcan
+  _pollingInterval = setInterval(async () => {
+    if (!sb || !user || !_connState.online) return;
+    if (document.hidden) return; // no sincronizar cuando la pestaña está oculta
+    try {
+      await DB.loadAll();
+      const newCount = Fin.pendingPaymentsCount();
+      if (newCount > _lastPendingCount) {
+        UI.toast(`🔔 Nuevo pago notificado por aprobar (${newCount} pendientes)`, 'warn');
+      }
+      _lastPendingCount = newCount;
+      updateBadge();
+      // Solo re-renderizar si el usuario está mirando una vista que muestra estos datos
+      if (S.view === 'approvals' || S.view === 'payments' || S.view === 'dashboard') {
+        go(S.view, S.selDebt);
+      }
+    } catch (e) { /* el setSyncErr ya se llamó */ }
+  }, 30000);
+}
+
+// Sincronizar al volver a la pestaña (visibilitychange)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && sb && user && _connState.online) {
+    refreshFromDB(false).catch(() => {});
+  }
+});
+
+function updateBadge() {
+  const outOverdue = Fin.outgoingDebts().reduce((s, d) => s + Fin.overdueCount(d.id), 0);
+  const b = document.getElementById('dbadge');
+  b.textContent = outOverdue; b.classList.toggle('hidden', outOverdue === 0);
+
+  const inCount = Fin.incomingDebts().filter(d => Fin.remaining(d) > 0).length;
+  const rb = document.getElementById('rbadge');
+  if (rb) { rb.textContent = inCount; rb.classList.toggle('hidden', inCount === 0); }
+
+  // Pagos pendientes de aprobar
+  const pendCount = Fin.pendingPaymentsCount();
+  const ab = document.getElementById('abadge');
+  if (ab) { ab.textContent = pendCount; ab.classList.toggle('hidden', pendCount === 0); }
+}
+
+function go(view, extra) {
+  S.view = view; if (extra !== undefined) S.selDebt = extra;
+  document.querySelectorAll('.ni').forEach(el => el.classList.toggle('on', el.dataset.v === view));
+  const titles = { dashboard: 'Dashboard', income: 'Ingresos', debts: 'Mis Deudas', receivables: 'Cuentas por Cobrar', amort: 'Amortización', payments: 'Pagos', approvals: 'Aprobaciones', participants: 'Participantes', delinquency: 'Morosidad' };
+  document.getElementById('ptitle').textContent = titles[view] || view;
+  document.getElementById('tbactions').innerHTML = '';
+  document.getElementById('content').innerHTML = '';
+  UI.destroyCharts();
+  if (window.innerWidth <= 768) closeSidebar();
+  ({ dashboard: renderDashboard, income: renderIncome, debts: renderDebts, receivables: renderReceivables, amort: renderAmort, payments: renderPayments, approvals: renderApprovals, participants: renderParticipants, delinquency: renderDelinquency }[view] || (() => {}))(extra);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: DASHBOARD
+═══════════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const curM       = Fin.currentMonth();
+  const outDebts   = Fin.outgoingDebts();
+  const inDebts    = Fin.incomingDebts();
+  const owedTotal  = outDebts.reduce((s, d) => s + (+d.total_amount || 0), 0);
+  const owedPaid   = outDebts.reduce((s, d) => s + Fin.totalPaid(d.id), 0);
+  const owedRem    = Math.max(0, owedTotal - owedPaid);          // lo que YO debo
+  const recvTotal  = inDebts.reduce((s, d) => s + (+d.total_amount || 0), 0);
+  const recvPaid   = inDebts.reduce((s, d) => s + Fin.totalPaid(d.id), 0);
+  const recvRem    = Math.max(0, recvTotal - recvPaid);           // lo que ME DEBEN
+
+  const incomeM    = Fin.totalIncome(curM);
+  const collectedM = Fin.totalCollected(curM);
+  const expensesM  = Fin.totalExpenses(curM);
+  const realFlow   = incomeM + collectedM - expensesM;
+  const flowCls    = realFlow > 0 ? 'gn' : realFlow < 0 ? 'rd' : 'am';
+  const flowSign   = realFlow > 0 ? '+' : '';
+  const months     = Fin.last6Months();
+
+  document.getElementById('content').innerHTML = `
+  <!-- KPIs principales: deudas (outgoing vs incoming) -->
+  <div class="kgrid mb3">
+    ${UI.kc('rd','Yo Debo (saldo)', `<span class="txt-rd">${Fin.fmt(owedRem, true)}</span>`, outDebts.length+' deuda'+(outDebts.length!==1?'s':''), '🏦')}
+    ${UI.kc('gn','Me Deben (saldo)', `<span class="txt-gn">${Fin.fmt(recvRem, true)}</span>`, inDebts.length+' deudor'+(inDebts.length!==1?'es':''), '💚')}
+    ${UI.kc('pu','Posición Neta', `<span class="${(recvRem-owedRem)>=0?'txt-gn':'txt-rd'}">${(recvRem-owedRem)>=0?'+':''}${Fin.fmt(recvRem-owedRem, true)}</span>`, 'me deben − debo', '⚖️')}
+    ${UI.kc('am','Avance Pagos', Fin.pct(owedPaid,owedTotal).toFixed(1)+'%', Fin.fmt(owedPaid, true)+' pagado', '✅')}
+  </div>
+
+  <!-- KPIs del mes actual -->
+  <div class="kgrid">
+    ${UI.kc('cy','Ingresos '+Fin.fmtMonth(curM), Fin.fmt(incomeM, true), 'salario, extras, etc.', '💰')}
+    ${UI.kc('gn','Cobros '+Fin.fmtMonth(curM), Fin.fmt(collectedM, true), 'recibido de deudores', '📥')}
+    ${UI.kc('bl','Pagos '+Fin.fmtMonth(curM), Fin.fmt(expensesM, true), 'a deudas (yo debo)', '💸')}
+    ${UI.kc(flowCls,'Flujo Real '+Fin.fmtMonth(curM), `<span class="${realFlow>=0?'txt-gn':'txt-rd'}">${flowSign}${Fin.fmt(realFlow,true)}</span>`, 'ingresos+cobros−pagos', '📊')}
+  </div>
+
+  <!-- Charts row -->
+  <div class="grid2 charts-2col mb4">
+    <div class="chart-card">
+      <div class="chart-lbl">Flujo Mensual — últimos 6 meses</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c-flow"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-lbl">Distribución — Lo que YO debo</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c-donut"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Debt summary table -->
+  <div class="card mb4">
+    <div class="card-hd">
+      <div><div class="card-ti">Resumen por Deuda</div><div class="card-su">Estado actual de cada deuda</div></div>
+      <button class="btn bp btn-sm" onclick="go('debts')">Ver todas →</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Deuda</th><th>Dir.</th><th>Tipo</th><th>Total</th><th>Pagado</th><th>Restante</th><th>Avance</th><th>Estado</th></tr></thead>
+      <tbody>${S.debts.map(d => {
+        const paid = Fin.totalPaid(d.id), rem = Fin.remaining(d), pct = Fin.pct(paid, d.total_amount), ov = Fin.overdueCount(d.id);
+        const isIn = Fin.isIncoming(d);
+        const dirChip = isIn ? UI.chip('Me deben','gn') : UI.chip('Yo debo','rd');
+        const targetView = isIn ? 'receivables' : 'amort';
+        return `<tr onclick="go('${targetView}'${isIn?'':",'"+d.id+"'"})" style="cursor:pointer;border-left:3px solid ${isIn?'var(--gn)':'var(--rd)'}">
+          <td class="tdm">${d.name}</td>
+          <td>${dirChip}</td>
+          <td>${UI.typeChip(d.type)}</td>
+          <td class="tdn">${Fin.fmt(d.total_amount)}</td>
+          <td class="tdn txt-gn">${Fin.fmt(paid)}</td>
+          <td class="tdn ${isIn?'txt-gn':'txt-rd'}">${Fin.fmt(rem)}</td>
+          <td style="min-width:110px">
+            <div class="pbar mb2"><div class="pfill ${pct>80?'gn':''}" style="width:${pct}%"></div></div>
+            <div style="font-size:9px;color:var(--tx3)">${pct.toFixed(1)}%</div>
+          </td>
+          <td>${ov ? UI.chip(ov+' atras.','rd') : UI.chip('Al día','gn')}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:28px">Sin deudas. <a style="color:var(--am);cursor:pointer" onclick="go(\'debts\')">Crear una →</a></td></tr>'}</tbody>
+    </table></div>
+  </div>
+
+  <!-- Monthly breakdown -->
+  <div class="card">
+    <div class="card-hd"><div class="card-ti">Flujo por Mes — últimos 6 meses</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Mes</th><th class="tdn">Ingresos</th><th class="tdn">Cobros</th><th class="tdn">Pagos</th><th class="tdn">Flujo Real</th><th>Estado</th></tr></thead>
+      <tbody>${months.map(m => {
+        const inc = Fin.totalIncome(m), col = Fin.totalCollected(m), exp = Fin.totalExpenses(m), flow = inc + col - exp;
+        return `<tr>
+          <td class="tdm">${Fin.fmtMonth(m)}</td>
+          <td class="tdn txt-gn">${Fin.fmt(inc)}</td>
+          <td class="tdn txt-gn">${Fin.fmt(col)}</td>
+          <td class="tdn txt-rd">${Fin.fmt(exp)}</td>
+          <td class="tdn fw7 ${flow>=0?'txt-gn':'txt-rd'}">${flow>=0?'+':''}${Fin.fmt(flow)}</td>
+          <td>${flow>0?UI.chip('Positivo','gn'):flow<0?UI.chip('Negativo','rd'):UI.chip('Neutro','am')}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+
+  requestAnimationFrame(() => {
+    const cc = UI.cc();
+    // Flow line chart
+    const fc = document.getElementById('c-flow')?.getContext('2d');
+    if (fc) {
+      const labels  = months.map(Fin.fmtMonth);
+      const incData = months.map(m => Fin.totalIncome(m));
+      const colData = months.map(m => Fin.totalCollected(m));
+      const expData = months.map(m => Fin.totalExpenses(m));
+      const flowData= months.map(m => Fin.monthlyFlow(m));
+      _charts['flow'] = new Chart(fc, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Ingresos',  data: incData,  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', tension: .4, fill: true, pointRadius: 3 },
+            { label: 'Cobros',    data: colData,  borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,.08)',  tension: .4, fill: true, pointRadius: 3 },
+            { label: 'Pagos',     data: expData,  borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.08)',  tension: .4, fill: true, pointRadius: 3 },
+            { label: 'Flujo Real',data: flowData, borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.06)', tension: .4, fill: false, borderDash: [5,3], pointRadius: 3 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: cc.tx, font: { size: 10, family: 'DM Mono' }, padding: 10 } } },
+          scales: {
+            x: { grid: { color: cc.grid }, ticks: { color: cc.tx, font: { size: 10 } } },
+            y: { grid: { color: cc.grid }, ticks: { color: cc.tx, font: { size: 10 }, callback: v => '$' + v.toLocaleString() } },
+          },
+        },
+      });
+    }
+    // Donut (solo outgoing — lo que YO debo)
+    const outDebts = Fin.outgoingDebts();
+    if (outDebts.length) {
+      const dc = document.getElementById('c-donut')?.getContext('2d');
+      if (dc) _charts['donut'] = new Chart(dc, {
+        type: 'doughnut',
+        data: { labels: outDebts.map(d => d.name), datasets: [{ data: outDebts.map(d => d.total_amount), backgroundColor: cc.series, borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: cc.tx, font: { size: 10, family: 'DM Mono' }, padding: 9 } } }, cutout: '65%' },
+      });
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: INCOME
+═══════════════════════════════════════════════════════════ */
+function renderIncome() {
+  document.getElementById('tbactions').innerHTML = `<button class="btn bp btn-sm" onclick="modalAddIncome()">+ Registrar Ingreso</button>`;
+  const curM   = Fin.currentMonth();
+  const months = Fin.last6Months();
+
+  const incomeM   = Fin.totalIncome(curM);
+  const expensesM = Fin.totalExpenses(curM);
+  const flowM     = incomeM - expensesM;
+
+  document.getElementById('content').innerHTML = `
+  <div class="kgrid" style="grid-template-columns:repeat(auto-fit,minmax(155px,1fr))">
+    ${UI.kc('cy','Ingresos este mes', Fin.fmt(incomeM), S.incomes.filter(i=>i.month===curM).length+' registros', '💰')}
+    ${UI.kc('rd','Pagos este mes', Fin.fmt(expensesM), 'deudas + cuotas', '💸')}
+    ${UI.kc(flowM>=0?'gn':'rd','Balance mensual', `<span class="${flowM>=0?'txt-gn':'txt-rd'}">${flowM>=0?'+':''}${Fin.fmt(flowM,true)}</span>`, '', '📊')}
+    ${UI.kc('am','Total ingresos 6m', Fin.fmt(months.reduce((s,m)=>s+Fin.totalIncome(m),0),true), 'últimos 6 meses', '📈')}
+  </div>
+
+  <!-- Monthly flow bars -->
+  <div class="card mb4">
+    <div class="card-hd"><div class="card-ti">Flujo por Mes</div></div>
+    ${months.map(m => {
+      const inc  = Fin.totalIncome(m);
+      const exp  = Fin.totalExpenses(m);
+      const flow = inc - exp;
+      const maxV = Math.max(...months.map(x => Math.max(Fin.totalIncome(x), Fin.totalExpenses(x))), 1);
+      return `<div class="flow-bar">
+        <div class="flow-bar-label">${Fin.fmtMonth(m)}</div>
+        <div class="flow-bar-bar">
+          <div style="font-size:9px;color:var(--tx3);margin-bottom:2px">Ing.</div>
+          <div class="pbar mb2"><div class="pfill gn" style="width:${Fin.pct(inc,maxV)}%"></div></div>
+          <div style="font-size:9px;color:var(--tx3);margin-bottom:2px">Pag.</div>
+          <div class="pbar"><div class="pfill rd" style="width:${Fin.pct(exp,maxV)}%"></div></div>
+        </div>
+        <div style="text-align:right;min-width:90px">
+          <div style="font-size:10px;color:var(--tx3)">ing: <span class="txt-gn">${Fin.fmt(inc,true)}</span></div>
+          <div style="font-size:10px;color:var(--tx3)">pag: <span class="txt-rd">${Fin.fmt(exp,true)}</span></div>
+          <div class="flow-bar-amount ${flow>=0?'txt-gn':'txt-rd'}">${flow>=0?'+':''}${Fin.fmt(flow,true)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Filters -->
+  <div class="fbar">
+    <span class="flbl">Categoría:</span>
+    <select id="flt-cat" onchange="filterIncomes()">
+      <option value="">Todas</option>
+      <option value="salary">Salario</option>
+      <option value="extra">Extra</option>
+      <option value="business">Negocio</option>
+      <option value="other">Otro</option>
+    </select>
+    <span class="flbl">Mes:</span>
+    <input type="month" id="flt-inc-month" value="${curM}" onchange="filterIncomes()">
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ti">Historial de Ingresos</div>
+      <button class="btn bp btn-sm" onclick="modalIncomeForm()">+ Agregar</button>
+    </div>
+    <div class="tw"><table id="inc-table">
+      <thead id="inc-thead"></thead>
+      <tbody id="inc-tbody"></tbody>
+    </table></div>
+  </div>`;
+
+  filterIncomes();
+}
+
+function filterIncomes() {
+  const cat   = document.getElementById('flt-cat')?.value   || '';
+  const month = document.getElementById('flt-inc-month')?.value || '';
+  let rows = [...S.incomes];
+  if (cat)   rows = rows.filter(i => i.category === cat);
+  if (month) rows = rows.filter(i => i.month === month);
+
+  // Sort
+  rows = sortRows(rows, S.sort.incomes, (a, b, col) => {
+    if (col === 'amount') return (parseFloat(a.amount)||0) - (parseFloat(b.amount)||0);
+    return undefined;
+  });
+
+  // Headers (clickeable para ordenar)
+  const thead = document.getElementById('inc-thead');
+  if (thead) thead.innerHTML = `<tr>
+    ${sortHeader('Fecha',       'date',        'incomes', 'filterIncomes')}
+    ${sortHeader('Descripción', 'description', 'incomes', 'filterIncomes')}
+    ${sortHeader('Categoría',   'category',    'incomes', 'filterIncomes')}
+    ${sortHeader('Monto',       'amount',      'incomes', 'filterIncomes', 'tdn')}
+    <th></th>
+  </tr>`;
+
+  const tbody = document.getElementById('inc-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = rows.length ? rows.map(i => `<tr>
+    <td>${i.date || '—'}</td>
+    <td class="tdm">${i.description || '—'}</td>
+    <td>${UI.catChip(i.category)}</td>
+    <td class="tdn txt-gn fw7">${Fin.fmt(i.amount)}</td>
+    <td style="white-space:nowrap">
+      <button class="btn bghost btn-sm" onclick="modalIncomeForm('${i.id}')" title="Editar">✏️</button>
+      <button class="btn bghost btn-sm" onclick="confirmDelIncome('${i.id}')" title="Eliminar">🗑</button>
+    </td>
+  </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:26px">Sin ingresos en este filtro</td></tr>`;
+}
+
+function confirmDelIncome(id) {
+  const inc = S.incomes.find(i => i.id === id);
+  if (!inc) return;
+  if (!confirm(`¿Eliminar el ingreso "${inc.description||inc.category}" de ${Fin.fmt(inc.amount)}?`)) return;
+  delIncome(id);
+}
+
+async function delIncome(id) {
+  await DB.deleteIncome(id); filterIncomes(); updateBadge();
+  UI.toast('Ingreso eliminado', 'warn');
+}
+
+// modalIncomeForm: si recibe id, edita; sin id, crea
+function modalIncomeForm(editId) {
+  const isEdit = !!editId;
+  const inc    = isEdit ? S.incomes.find(i => i.id === editId) : null;
+  if (isEdit && !inc) return UI.toast('Ingreso no encontrado', 'error');
+
+  const today  = new Date().toISOString().split('T')[0];
+  const v = {
+    amt:  inc?.amount ?? '',
+    date: inc?.date || today,
+    cat:  inc?.category || 'salary',
+    desc: inc?.description || '',
+  };
+
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:420px">
+    <div class="mhd">
+      <div class="mti">${isEdit ? '✏️ Editar Ingreso' : 'Registrar Ingreso'}</div>
+      <button class="mcl" onclick="UI.cm()">✕</button>
+    </div>
+    <div class="mbd">
+      <div id="ierr" class="alrt ae hidden"></div>
+      <div class="frow c2">
+        <div class="fg"><label>Monto ($)</label><input type="number" id="i-amt" placeholder="2500.00" min="0.01" step="0.01" value="${v.amt}"></div>
+        <div class="fg"><label>Fecha</label><input type="date" id="i-date" value="${v.date}"></div>
+      </div>
+      <div class="fg"><label>Categoría</label>
+        <select id="i-cat">
+          <option value="salary"   ${v.cat==='salary'?'selected':''}>💼 Salario</option>
+          <option value="extra"    ${v.cat==='extra'?'selected':''}>⚡ Extra</option>
+          <option value="business" ${v.cat==='business'?'selected':''}>🏢 Negocio</option>
+          <option value="other"    ${v.cat==='other'?'selected':''}>📌 Otro</option>
+        </select>
+      </div>
+      <div class="fg"><label>Descripción</label><input type="text" id="i-desc" placeholder="Ej: Salario mensual, freelance..." value="${v.desc.replace(/"/g,'&quot;')}"></div>
+    </div>
+    <div class="mft">
+      ${isEdit ? `<button class="btn bd_ btn-sm" onclick="confirmDelIncomeFromModal('${editId}')">🗑 Eliminar</button>` : ''}
+      <button class="btn bs" onclick="UI.cm()" style="margin-left:auto">Cancelar</button>
+      <button class="btn bg" onclick="${isEdit?`saveIncomeEdit('${editId}')`:'saveIncome()'}" id="bsi">${isEdit?'💾 Guardar':'💰 Guardar'}</button>
+    </div>
+  </div></div>`);
+}
+
+// Wrapper para mantener compatibilidad
+function modalAddIncome() { return modalIncomeForm(); }
+
+function confirmDelIncomeFromModal(id) {
+  const inc = S.incomes.find(i => i.id === id);
+  if (!inc) return;
+  if (!confirm(`¿Eliminar el ingreso "${inc.description||inc.category}" de ${Fin.fmt(inc.amount)}?`)) return;
+  UI.cm();
+  delIncome(id);
+}
+
+async function saveIncome() {
+  const amt  = parseFloat(document.getElementById('i-amt').value);
+  const date = document.getElementById('i-date').value;
+  const cat  = document.getElementById('i-cat').value;
+  const desc = document.getElementById('i-desc').value.trim();
+  if (!amt || !date) { const e = document.getElementById('ierr'); e.textContent = 'Monto y fecha requeridos'; e.classList.remove('hidden'); return; }
+  const month = date.slice(0, 7);
+  document.getElementById('bsi').disabled = true;
+  try {
+    await DB.createIncome({ amount: amt, date, category: cat, description: desc || cat, month });
+    UI.cm(); renderIncome(); UI.toast(`Ingreso de ${Fin.fmt(amt)} registrado 💰`);
+  } catch (e) { const el = document.getElementById('ierr'); el.textContent = e.message || 'Error'; el.classList.remove('hidden'); document.getElementById('bsi').disabled = false; }
+}
+
+async function saveIncomeEdit(id) {
+  const amt  = parseFloat(document.getElementById('i-amt').value);
+  const date = document.getElementById('i-date').value;
+  const cat  = document.getElementById('i-cat').value;
+  const desc = document.getElementById('i-desc').value.trim();
+  if (!amt || !date) { const e = document.getElementById('ierr'); e.textContent = 'Monto y fecha requeridos'; e.classList.remove('hidden'); return; }
+  const month = date.slice(0, 7);
+  document.getElementById('bsi').disabled = true;
+  try {
+    await DB.updateIncome(id, { amount: amt, date, category: cat, description: desc || cat, month });
+    UI.cm(); renderIncome(); UI.toast(`✏️ Ingreso actualizado`);
+  } catch (e) { const el = document.getElementById('ierr'); el.textContent = e.message || 'Error'; el.classList.remove('hidden'); document.getElementById('bsi').disabled = false; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: DEBTS
+═══════════════════════════════════════════════════════════ */
+function renderDebts() {
+  document.getElementById('tbactions').innerHTML = `<button class="btn bp btn-sm" onclick="modalCreateDebt('outgoing')">+ Nueva Deuda</button>`;
+  const debts = Fin.outgoingDebts();
+  if (!debts.length) { document.getElementById('content').innerHTML = UI.empty('💳', 'Sin deudas registradas', 'Crea tu primera deuda para comenzar el control', '+ Nueva Deuda', "modalCreateDebt('outgoing')"); return; }
+  document.getElementById('content').innerHTML = `<div class="dcgrid">${debts.map(d => {
+    const paid = Fin.totalPaid(d.id), rem = Fin.remaining(d), pct = Fin.pct(paid, d.total_amount), ov = Fin.overdueCount(d.id);
+    const parts = S.parts.filter(p => p.debt_id === d.id);
+    return `<div class="dc" oncontextmenu="ctxDebt(event,'${d.id}')">
+      <div class="dc-type ${d.type}">${{ loan: 'Préstamo', credit_card: 'Tarjeta', personal: 'Personal' }[d.type] || d.type}</div>
+      <div class="dc-name">${d.name}</div>
+      <div class="dc-desc">${d.description || '—'}</div>
+      <div class="dc-total">${Fin.fmt(d.total_amount)}</div>
+      <div style="font-size:11px;color:var(--tx3)">Restante: <strong class="txt-rd">${Fin.fmt(rem)}</strong></div>
+      <div class="pbar" style="margin-top:8px"><div class="pfill ${pct > 80 ? 'gn' : ''}" style="width:${pct}%"></div></div>
+      <div style="font-size:9px;color:var(--tx3);text-align:right;margin-top:2px">${pct.toFixed(1)}%</div>
+      <div class="dc-meta">
+        <div class="dc-mi"><strong>${d.interest_rate || 0}%</strong>Tasa</div>
+        <div class="dc-mi"><strong class="txt-gn">${Fin.fmt(paid, true)}</strong>Pagado</div>
+        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : 'Al día'}</strong>Estado</div>
+        ${parts.length ? `<div class="dc-mi"><strong class="txt-bl">${parts.length}</strong>Part.</div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">
+        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">📋 Cuotas</button>
+        <button class="btn bg btn-sm" onclick="modalGenericPay('${d.id}')">+ Abono</button>
+        <button class="btn bs btn-sm" onclick="modalEditDebt('${d.id}')" title="Editar">✏️</button>
+        <button class="btn bs btn-sm" onclick="go('participants','${d.id}')" title="Participantes">👥</button>
+        <button class="btn bd_ btn-sm" onclick="confirmDel('${d.id}')" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function ctxDebt(e, id) {
+  const d = S.debts.find(x => x.id === id);
+  Ctx.show(e, [
+    { lbl_only: d.name }, 'div',
+    { ico: '📋', lbl: 'Ver amortización', fn: `()=>go('amort','${id}')` },
+    { ico: '✏️', lbl: 'Editar deuda', fn: `()=>modalEditDebt('${id}')` },
+    { ico: '💸', lbl: 'Abono / pago genérico', fn: `()=>modalGenericPay('${id}')`, cls: 'cig' },
+    { ico: '👥', lbl: 'Editar participantes', fn: `()=>go('participants','${id}')` },
+    { ico: '📂', lbl: 'Importar CSV amortización', fn: `()=>modalImportCSV('${id}')` },
+    'div',
+    { ico: '🗑', lbl: 'Eliminar deuda', fn: `()=>confirmDel('${id}')`, cls: 'cid' },
+  ]);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: RECEIVABLES (cuentas por cobrar)
+═══════════════════════════════════════════════════════════ */
+function renderReceivables() {
+  document.getElementById('tbactions').innerHTML = `<button class="btn bg btn-sm" onclick="modalCreateDebt('incoming')">+ Nueva por Cobrar</button>`;
+  const debts = Fin.incomingDebts();
+
+  const totalReceivable = debts.reduce((s, d) => s + (+d.total_amount || 0), 0);
+  const totalCollected  = debts.reduce((s, d) => s + Fin.totalPaid(d.id), 0);
+  const totalPending    = Math.max(0, totalReceivable - totalCollected);
+  const overdueCount    = debts.reduce((s, d) => s + Fin.overdueCount(d.id), 0);
+
+  const kpis = `<div class="kgrid mb4">
+    ${UI.kc('gn','Por cobrar (total)', Fin.fmt(totalReceivable, true), debts.length+' deudor'+(debts.length!==1?'es':''), '💚')}
+    ${UI.kc('cy','Cobrado', Fin.fmt(totalCollected, true), Fin.pct(totalCollected,totalReceivable).toFixed(1)+'%', '📥')}
+    ${UI.kc('am','Pendiente', Fin.fmt(totalPending, true), 'aún por cobrar', '⏳')}
+    ${UI.kc('rd','Atrasos', overdueCount, 'cuotas vencidas', '⚠️')}
+  </div>`;
+
+  if (!debts.length) {
+    document.getElementById('content').innerHTML = kpis + UI.empty('💚', 'Sin cuentas por cobrar', 'Registra deudas que otras personas te deben a ti', '+ Nueva por Cobrar', "modalCreateDebt('incoming')");
+    return;
+  }
+
+  document.getElementById('content').innerHTML = kpis + `<div class="dcgrid">${debts.map(d => {
+    const paid = Fin.totalPaid(d.id), rem = Fin.remaining(d), pct = Fin.pct(paid, d.total_amount), ov = Fin.overdueCount(d.id);
+    return `<div class="dc" style="border-left:3px solid var(--gn)">
+      <div class="dc-type" style="background:var(--gnd);color:var(--gn)">Me deben</div>
+      <div class="dc-name">${d.name}</div>
+      <div class="dc-desc">${d.borrower_name ? '👤 '+d.borrower_name : (d.description || '—')}${d.borrower_email ? ' · '+d.borrower_email : ''}</div>
+      <div class="dc-total txt-gn">${Fin.fmt(d.total_amount)}</div>
+      <div style="font-size:11px;color:var(--tx3)">Pendiente: <strong class="txt-am">${Fin.fmt(rem)}</strong></div>
+      <div class="pbar" style="margin-top:8px"><div class="pfill gn" style="width:${pct}%"></div></div>
+      <div style="font-size:9px;color:var(--tx3);text-align:right;margin-top:2px">${pct.toFixed(1)}% cobrado</div>
+      <div class="dc-meta">
+        <div class="dc-mi"><strong>${d.interest_rate || 0}%</strong>Tasa</div>
+        <div class="dc-mi"><strong class="txt-gn">${Fin.fmt(paid, true)}</strong>Cobrado</div>
+        <div class="dc-mi"><strong style="color:${ov ? 'var(--rd)' : 'var(--gn)'}">${ov ? ov + ' atras.' : 'Al día'}</strong>Estado</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap" onclick="event.stopPropagation()">
+        <button class="btn bs btn-sm" onclick="go('amort','${d.id}')">📋 Cuotas</button>
+        <button class="btn bg btn-sm" onclick="modalGenericPay('${d.id}')">+ Cobro</button>
+        <button class="btn bp btn-sm" onclick="copyPublicLink('${d.id}')" title="Copiar link público">🔗 Link</button>
+        <button class="btn bs btn-sm" onclick="modalEditDebt('${d.id}')" title="Editar">✏️</button>
+        <button class="btn bs btn-sm" onclick="modalShareLink('${d.id}')" title="Más opciones">⚙️</button>
+        <button class="btn bd_ btn-sm" onclick="confirmDel('${d.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ── Public link helpers ── */
+function publicLinkFor(debtId) {
+  const d = S.debts.find(x => x.id === debtId);
+  if (!d || !d.public_token) return null;
+  // Build URL relative to current location (works on local file:// and on hosted)
+  const base = location.href.split('?')[0].split('#')[0].replace(/\/[^\/]*$/, '/');
+  return `${base}public.html?token=${encodeURIComponent(d.public_token)}`;
+}
+
+async function copyPublicLink(debtId) {
+  const d = S.debts.find(x => x.id === debtId);
+  if (!d) return;
+  if (!d.public_token) {
+    d.public_token = 'tok_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    if (sb) await sb.from('debts').update({ public_token: d.public_token }).eq('id', debtId);
+  }
+  const url = publicLinkFor(debtId);
+  try {
+    await navigator.clipboard.writeText(url);
+    UI.toast('🔗 Link copiado al portapapeles');
+  } catch {
+    // Fallback: show modal with URL
+    modalShareLink(debtId);
+  }
+}
+
+function modalShareLink(debtId) {
+  const d = S.debts.find(x => x.id === debtId);
+  if (!d) return;
+  if (!d.public_token) {
+    d.public_token = 'tok_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    if (sb) sb.from('debts').update({ public_token: d.public_token }).eq('id', debtId);
+  }
+  const url = publicLinkFor(debtId);
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:520px">
+    <div class="mhd"><div class="mti">🔗 Compartir link público — ${d.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="alrt ai">
+        Comparte este link con <strong>${d.borrower_name || 'el deudor'}</strong> para que pueda ver el estado de la deuda en tiempo real.
+        <br><span style="font-size:11px;color:var(--tx3)">Solo lectura · sin login · token único</span>
+      </div>
+      <div class="fg">
+        <label>URL pública</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="share-url" value="${url}" readonly onclick="this.select()" style="flex:1">
+          <button class="btn bp btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('share-url').value).then(()=>UI.toast('Copiado'))">📋</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Token (privado — no compartas excepto vía link)</label>
+        <input type="text" value="${d.public_token}" readonly style="opacity:.6">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn bs btn-sm" onclick="window.open(document.getElementById('share-url').value,'_blank')">👁️ Vista previa</button>
+        <button class="btn bd_ btn-sm" onclick="regenToken('${debtId}')">🔄 Regenerar token</button>
+      </div>
+      ${d.borrower_email ? `<div class="alrt as_" style="margin-top:10px">
+        💡 Tip: envía este link a <strong>${d.borrower_email}</strong> por email o WhatsApp.
+      </div>` : ''}
+    </div>
+    <div class="mft"><button class="btn bp" onclick="UI.cm()">Cerrar</button></div>
+  </div></div>`);
+}
+
+async function regenToken(debtId) {
+  const d = S.debts.find(x => x.id === debtId);
+  if (!d) return;
+  d.public_token = 'tok_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  if (sb) await sb.from('debts').update({ public_token: d.public_token }).eq('id', debtId);
+  UI.toast('Token regenerado · el link anterior dejó de funcionar', 'warn');
+  modalShareLink(debtId);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: AMORTIZATION
+═══════════════════════════════════════════════════════════ */
+function renderAmort(debtId) {
+  document.getElementById('tbactions').innerHTML = `
+    <select onchange="go('amort',this.value)" style="background:var(--bg2);border:1px solid var(--bd2);color:var(--tx);padding:6px 11px;border-radius:var(--r);font-family:var(--fm);font-size:12px">
+      ${UI.debtSelect(debtId)}
+    </select>
+    ${debtId ? `
+      <button class="btn bg btn-sm" onclick="modalGenericPay('${debtId}')">+ Abono</button>
+      <button class="btn bs btn-sm" onclick="modalEditDebt('${debtId}')" title="Editar deuda">✏️</button>
+      <button class="btn bs btn-sm" onclick="modalImportCSV('${debtId}')">📂 CSV</button>` : ''}`;
+
+  if (!debtId) { document.getElementById('content').innerHTML = UI.empty('📋', 'Selecciona una deuda', 'Elige del selector de arriba', '', ''); return; }
+  const debt  = S.debts.find(d => d.id === debtId);
+  if (!debt) { document.getElementById('content').innerHTML = '<div class="alrt ae">Deuda no encontrada</div>'; return; }
+
+  const rows  = Fin.annotated(debtId);
+  const paid  = rows.filter(r => r.status === 'paid').length;
+  const ov    = rows.filter(r => r.status === 'overdue' || r.status === 'partial').length;
+  const pend  = rows.filter(r => r.status === 'pending').length;
+  const rem   = Fin.remaining(debt);
+  const parts = S.parts.filter(p => p.debt_id === debtId);
+  const nextRow = rows.find(r => r.status !== 'paid');
+
+  // CC section
+  let ccSec = '';
+  if (debt.type === 'credit_card') {
+    const bal = parseFloat(debt.cc_balance) || 0;
+    const gp  = Fin.paidGeneric(debtId);
+    ccSec = `<div class="cc-card mb4">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:9px;color:var(--pu);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">💳 Tarjeta de Crédito — Saldo Rotativo</div>
+          <div style="font-family:var(--fh);font-size:22px;font-weight:800">${Fin.fmt(bal)}</div>
+          <div style="font-size:11px;color:var(--tx3);margin-top:3px">Saldo total registrado</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--tx3)">Abonos realizados</div>
+          <div style="font-family:var(--fh);font-size:16px;font-weight:700;color:var(--gn)">${Fin.fmt(gp)}</div>
+          <div style="font-size:10px;color:var(--tx3);margin-top:2px">Restante: <strong>${Fin.fmt(Math.max(0, bal - gp))}</strong></div>
+        </div>
+        <button class="btn bg btn-sm" onclick="modalGenericPay('${debtId}')">+ Abono saldo</button>
+      </div>
+      ${debt.cc_has_amort ? '<div style="margin-top:10px;font-size:11px;color:rgba(139,92,246,.7)">También tiene cuotas fijas — ver tabla abajo ↓</div>' : ''}
+    </div>`;
+  }
+
+  // Participant summary
+  let partSec = '';
+  if (parts.length) {
+    partSec = `<div class="card mb4">
+      <div class="card-hd">
+        <div><div class="card-ti">👥 Responsabilidad por Participante</div><div class="card-su">Cuánto debe y cuánto ha pagado cada uno</div></div>
+        <button class="btn bs btn-sm" onclick="go('participants','${debtId}')">Editar →</button>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Participante</th><th class="tdn">%</th><th class="tdn">Debe Total</th><th class="tdn">Pagado</th><th class="tdn">Le falta</th><th class="tdn">Próx. cuota</th><th>Estado</th></tr></thead>
+        <tbody>${parts.map(pp => {
+          const { owes, paid: ppaid, due } = Fin.partBalance(debtId, pp.id);
+          const nc = nextRow ? nextRow.total * (pp.pct / 100) : 0;
+          return `<tr>
+            <td class="tdm">${pp.name}</td><td class="tdn">${pp.pct}%</td>
+            <td class="tdn">${Fin.fmt(owes)}</td>
+            <td class="tdn txt-gn">${Fin.fmt(ppaid)}</td>
+            <td class="tdn ${due > 0 ? 'txt-rd' : ''} fw7">${Fin.fmt(due)}</td>
+            <td class="tdn txt-am">${Fin.fmt(nc)}</td>
+            <td>${due <= 0 ? UI.chip('Al día', 'gn') : UI.chip('Debe', 'rd')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }
+
+  document.getElementById('content').innerHTML = `
+  <div class="kgrid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px">
+    ${UI.kc('am','Deuda',`<span style="font-size:13px">${debt.name.length>15?debt.name.slice(0,13)+'…':debt.name}</span>`,UI.typeChip(debt.type),'')}
+    ${UI.kc('gn','Pagadas',paid,'de '+rows.length,'')}
+    ${UI.kc('rd','Atrasadas',ov,'cuotas','')}
+    ${UI.kc('bl','Pendientes',pend,'','')}
+    ${UI.kc('pu','Restante',Fin.fmt(rem,true),'capital','')}
+  </div>
+  ${ccSec}${partSec}
+  <div class="card">
+    <div class="card-hd">
+      <div><div class="card-ti">Tabla de Amortización</div>
+      <div class="card-su">Sistema francés · ${debt.interest_rate||0}% anual · <span style="color:var(--am)">clic derecho en fila</span> para registrar pago</div></div>
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th class="tdn">Saldo</th><th>Estado</th>${parts.length ? '<th>Participantes</th>' : ''}</tr></thead>
+      <tbody>${rows.length ? rows.map(r => {
+        const rc = r.status === 'paid' ? 'rp' : (r.status === 'overdue' || r.status === 'partial') ? 'ro' : '';
+        const ipRows = (r.instPays || []);
+        const ppBadges = parts.length ? parts.map(pp => {
+          const ppPay = ipRows.filter(p => p.part_id === pp.id).reduce((s, p) => s + (+p.amount || 0), 0);
+          const exp_  = r.total * (pp.pct / 100);
+          const cls_  = ppPay >= exp_ * 0.99 ? 'paid' : r.status !== 'pending' ? 'due' : '';
+          return `<span class="pp-badge ${cls_}" title="${pp.name}: ${Fin.fmt(ppPay)} / ${Fin.fmt(exp_)}">${pp.name.split(' ')[0]} ${Fin.fmt(ppPay, true)}</span>`;
+        }).join('') : '';
+
+        // Mostrar info de pago parcial
+        const partialInfo = r.status === 'partial'
+          ? `<div style="font-size:10px;color:var(--am);margin-top:2px">
+               <span class="txt-gn">${Fin.fmt(r.instTotal,true)} pagado</span>
+               · <span class="txt-rd">falta ${Fin.fmt(r.partialRemaining,true)}</span>
+             </div>` : '';
+
+        // Pagos pendientes de aprobación (notificados por deudor)
+        const pendBadge = (r.pendingPays && r.pendingPays.length)
+          ? `<div style="font-size:10px;color:var(--am);margin-top:2px;font-weight:600">⏳ ${r.pendingPays.length} pago${r.pendingPays.length>1?'s':''} por aprobar</div>` : '';
+
+        return `<tr class="${rc}" oncontextmenu="ctxAmortRow(event,'${debtId}','${r.id}','${r.status}')" style="cursor:context-menu">
+          <td class="tdm">${r.n}</td>
+          <td>${r.due}</td>
+          <td style="color:${r.paid_date ? 'var(--gn)' : 'var(--tx3)'}">${r.paid_date || '—'}</td>
+          <td class="tdn">${Fin.fmt(r.cap)}</td>
+          <td class="tdn">${Fin.fmt(r.int)}</td>
+          <td class="tdn fw7">${Fin.fmt(r.total)}${partialInfo}${pendBadge}</td>
+          <td class="tdn">${Fin.fmt(r.bal)}</td>
+          <td>${UI.stChip(r.status)}</td>
+          ${parts.length ? `<td>${ppBadges || '<span class="txt-mu" style="font-size:9px">—</span>'}</td>` : ''}
+        </tr>`;
+      }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:28px">Sin cuotas. <a style="color:var(--am);cursor:pointer" onclick="modalImportCSV(\''+debtId+'\')">Importar CSV →</a></td></tr>'}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* context menu — amort row */
+function ctxAmortRow(e, debtId, amortId, status) {
+  const amort = S.amorts.find(a => a.id === amortId);
+  const parts = S.parts.filter(p => p.debt_id === debtId);
+  const items = [{ lbl_only: `Cuota #${amort?.n} · ${Fin.fmt(amort?.total)}` }, 'div'];
+  if (status !== 'paid') {
+    items.push({ ico: '✅', lbl: 'Marcar PAGADA (hoy)', cls: 'cig', fn: `()=>markPaid('${amortId}','${debtId}',null)` });
+    items.push({ ico: '📅', lbl: 'Marcar pagada con fecha…', fn: `()=>modalMarkPaid('${amortId}','${debtId}')` });
+    if (parts.length) {
+      items.push('div', { lbl_only: 'Pago por participante' });
+      parts.forEach(pp => items.push({ ico: '💸', lbl: `${pp.name} (${pp.pct}% · ${Fin.fmt(amort?.total * (pp.pct / 100))})`, fn: `()=>modalInstPayment('${debtId}','${amortId}','${pp.id}')` }));
+    } else {
+      items.push('div', { ico: '💸', lbl: 'Registrar pago esta cuota', cls: 'cig', fn: `()=>modalInstPayment('${debtId}','${amortId}',null)` });
+    }
+  } else {
+    items.push({ ico: '↩️', lbl: 'Desmarcar (volver a pendiente)', fn: `()=>markPaid('${amortId}','${debtId}','unmark')` });
+    items.push('div', { ico: '🔍', lbl: 'Ver pagos de esta cuota', fn: `()=>showInstPayments('${amortId}')` });
+  }
+  items.push('div', { ico: '➕', lbl: 'Abono genérico a deuda', fn: `()=>modalGenericPay('${debtId}')` });
+  Ctx.show(e, items);
+}
+
+async function markPaid(amortId, debtId, mode) {
+  const date = mode === 'unmark' ? null : new Date().toISOString().split('T')[0];
+  await DB.markAmortPaid(amortId, date);
+  updateBadge(); go('amort', debtId);
+  UI.toast(mode === 'unmark' ? 'Cuota desmarcada' : '✅ Cuota marcada como pagada', mode === 'unmark' ? 'warn' : 'success');
+}
+
+function modalMarkPaid(amortId, debtId) {
+  const today = new Date().toISOString().split('T')[0];
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:340px">
+    <div class="mhd"><div class="mti">Fecha de pago</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd"><div class="fg"><label>¿Cuándo se pagó?</label><input type="date" id="mpd" value="${today}"></div></div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bg" onclick="doMarkPaidDate('${amortId}','${debtId}')">✅ Confirmar</button></div>
+  </div></div>`);
+}
+async function doMarkPaidDate(amortId, debtId) {
+  const date = document.getElementById('mpd').value;
+  if (!date) return;
+  await DB.markAmortPaid(amortId, date); UI.cm(); updateBadge(); go('amort', debtId);
+  UI.toast('✅ Cuota pagada el ' + date);
+}
+
+function modalInstPayment(debtId, amortId, partId) {
+  const amort  = S.amorts.find(a => a.id === amortId);
+  const debt   = S.debts.find(d => d.id === debtId);
+  const parts  = S.parts.filter(p => p.debt_id === debtId);
+  const part   = partId ? S.parts.find(p => p.id === partId) : null;
+  const today  = new Date().toISOString().split('T')[0];
+  const exp_   = part ? amort?.total * (part.pct / 100) : amort?.total;
+  const alreadyPaid = partId ? S.instPayments.filter(p => p.amort_id === amortId && p.part_id === partId).reduce((s, p) => s + (+p.amount || 0), 0) : 0;
+  const remaining_ = Math.max(0, (exp_ || 0) - alreadyPaid);
+
+  UI.modal(`<div class="mover"><div class="modal">
+    <div class="mhd"><div class="mti">${part ? `Pago de ${part.name}` : 'Pago de cuota'} — #${amort?.n}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="alrt ai">Cuota #${amort?.n} · vence ${amort?.due} · ${part ? `<strong>${part.name}</strong> (${part.pct}%)` : 'Cuota total'}<br>
+      Debe: <strong>${Fin.fmt(exp_)}</strong>${alreadyPaid > 0 ? ` · Ya pagado: <span class="txt-gn">${Fin.fmt(alreadyPaid)}</span> · Pendiente: <span class="txt-rd">${Fin.fmt(remaining_)}</span>` : ''}</div>
+      ${!partId && parts.length ? `<div class="fg"><label>Participante</label>
+        <select id="ip-part"><option value="">— Sin participante —</option>${parts.map(pp => `<option value="${pp.id}">${pp.name} (${pp.pct}%)</option>`).join('')}</select></div>` : ''}
+      <div class="frow c2">
+        <div class="fg"><label>Monto ($)</label><input type="number" id="ip-amt" value="${remaining_.toFixed(2)}" min="0.01" step="0.01"></div>
+        <div class="fg"><label>Fecha</label><input type="date" id="ip-date" value="${today}"></div>
+      </div>
+      <div class="fg"><label>Notas</label><input type="text" id="ip-notes" placeholder="Descripción del pago"></div>
+      <div class="fg">
+        <label>📎 Comprobante (opcional)</label>
+        <input type="file" id="ip-receipt" accept="image/*,.pdf" capture="environment" onchange="previewReceipt(this,'ip-prev')" style="font-size:12px">
+        <div id="ip-prev"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="ip-markpaid" checked style="accent-color:var(--am)">
+        <label for="ip-markpaid" style="font-size:12px;color:var(--tx2)">Marcar cuota como pagada al guardar</label>
+      </div>
+      <div id="ip-err" class="alrt ae hidden"></div>
+    </div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bg" onclick="saveInstPayment('${debtId}','${amortId}','${partId || ''}')">💾 Registrar</button></div>
+  </div></div>`);
+}
+
+async function saveInstPayment(debtId, amortId, partId) {
+  const amt   = parseFloat(document.getElementById('ip-amt').value);
+  const date  = document.getElementById('ip-date').value;
+  const notes = document.getElementById('ip-notes').value.trim();
+  const file  = document.getElementById('ip-receipt')?.files[0];
+  const mark  = document.getElementById('ip-markpaid').checked;
+  const selP  = partId || document.getElementById('ip-part')?.value || '';
+  if (!amt || !date) { const e = document.getElementById('ip-err'); e.textContent = 'Monto y fecha requeridos'; e.classList.remove('hidden'); return; }
+  const pp = selP ? S.parts.find(p => p.id === selP) : null;
+  try {
+    let receiptUrl = null;
+    if (file) {
+      UI.toast('📤 Subiendo comprobante...', 'success');
+      receiptUrl = await DB.uploadReceipt(file, debtId);
+    }
+    await DB.createInstPayment({ debt_id: debtId, amort_id: amortId, part_id: selP || null, user_id: pp?.user_id || user.id, amount: amt, paid_date: date, notes, receipt_url: receiptUrl });
+    if (mark) await DB.markAmortPaid(amortId, date);
+    UI.cm(); updateBadge(); go('amort', debtId);
+    UI.toast(`✅ ${Fin.fmt(amt)} registrado${pp ? ' para ' + pp.name : ''}${receiptUrl?' · 📎':''}`);
+  } catch (e) {
+    const el = document.getElementById('ip-err'); el.textContent = e.message || 'Error al guardar';
+    el.classList.remove('hidden');
+  }
+}
+
+function showInstPayments(amortId) {
+  const amort = S.amorts.find(a => a.id === amortId);
+  const ips   = S.instPayments.filter(p => p.amort_id === amortId);
+  const total = ips.reduce((s, p) => s + (+p.amount || 0), 0);
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:560px">
+    <div class="mhd"><div class="mti">Pagos — Cuota #${amort?.n}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">${ips.length ? `<div class="tw"><table>
+      <thead><tr><th>Participante</th><th>Fecha</th><th>Notas</th><th class="tdc">📎</th><th class="tdn">Monto</th></tr></thead>
+      <tbody>${ips.map(p => { const pp = S.parts.find(x => x.id === p.part_id); return `<tr>
+        <td class="tdm">${pp?.name || 'General'}</td><td>${p.paid_date || '—'}</td>
+        <td style="color:var(--tx3)">${p.notes || '—'}</td>
+        <td class="tdc">${p.receipt_url ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">📎</button>` : '<span class="txt-mu" style="font-size:10px">—</span>'}</td>
+        <td class="tdn txt-gn fw7">${Fin.fmt(p.amount)}</td></tr>`; }).join('')}
+      <tr style="border-top:2px solid var(--bd2)"><td colspan="4" class="fw7 txt-am">Total</td><td class="tdn txt-gn fw7">${Fin.fmt(total)}</td></tr>
+      </tbody></table></div>` : '<div class="alrt aw">Sin pagos en esta cuota.</div>'}</div>
+    <div class="mft"><button class="btn bp" onclick="UI.cm()">Cerrar</button></div>
+  </div></div>`);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL: GENERIC PAYMENT / ABONO
+═══════════════════════════════════════════════════════════ */
+function modalGenericPay(debtId) {
+  const debt = S.debts.find(d => d.id === debtId);
+  const rem  = Fin.remaining(debt);
+  const today = new Date().toISOString().split('T')[0];
+  const isCC  = debt?.type === 'credit_card';
+  const isIn  = Fin.isIncoming(debt);
+  const titleVerb = isIn ? 'Cobro Recibido' : (isCC ? 'Abono a Tarjeta' : 'Abono a Capital');
+  const btnLbl    = isIn ? '📥 Registrar Cobro' : 'Registrar Abono';
+  const noteDef   = isIn ? `Cobro de ${debt?.borrower_name || 'deudor'}` : (isCC ? 'Abono tarjeta' : 'Abono a capital');
+  UI.modal(`<div class="mover"><div class="modal">
+    <div class="mhd"><div class="mti">${titleVerb} — ${debt?.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="alrt ${isIn?'as_':'ai'}">${isIn?'💚 Saldo por cobrar':'Saldo pendiente'}: <strong>${Fin.fmt(rem)}</strong>${isIn && debt?.borrower_name ? ' · 👤 '+debt.borrower_name : ''}</div>
+      <div class="frow c2">
+        <div class="fg"><label>Monto ($)</label><input type="number" id="gp-amt" placeholder="500.00" min="0.01" step="0.01" oninput="document.getElementById('gp-info').textContent='Saldo después: '+('$'+Math.max(0,${rem}-parseFloat(this.value||0)).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2}))"></div>
+        <div class="fg"><label>Fecha</label><input type="date" id="gp-date" value="${today}"></div>
+      </div>
+      <div class="fg"><label>Notas</label><textarea id="gp-notes">${noteDef}</textarea></div>
+      <div class="fg">
+        <label>📎 Comprobante (opcional)</label>
+        <input type="file" id="gp-receipt" accept="image/*,.pdf" capture="environment" onchange="previewReceipt(this,'gp-prev')" style="font-size:12px">
+        <div id="gp-prev"></div>
+      </div>
+      <div id="gp-info" style="font-size:11px;color:var(--tx3);margin-top:4px"></div>
+      <div id="gp-err" class="alrt ae hidden"></div>
+    </div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn ${isIn?'bg':'bp'}" onclick="saveGenericPay('${debtId}')" id="bgp">${btnLbl}</button></div>
+  </div></div>`);
+}
+async function saveGenericPay(debtId) {
+  const amt   = parseFloat(document.getElementById('gp-amt').value);
+  const date  = document.getElementById('gp-date').value;
+  const notes = document.getElementById('gp-notes').value.trim();
+  const file  = document.getElementById('gp-receipt')?.files[0];
+  if (!amt || !date) { const e = document.getElementById('gp-err'); e.textContent = 'Monto y fecha requeridos'; e.classList.remove('hidden'); return; }
+  document.getElementById('bgp').disabled = true;
+  try {
+    let receiptUrl = null;
+    if (file) {
+      UI.toast('📤 Subiendo comprobante...', 'success');
+      receiptUrl = await DB.uploadReceipt(file, debtId);
+    }
+    await DB.createGenericPayment({ debt_id: debtId, user_id: user.id, amount: amt, payment_date: date, notes, receipt_url: receiptUrl });
+    const debt = S.debts.find(d => d.id === debtId);
+    const isIn = Fin.isIncoming(debt);
+    UI.cm(); go(S.view, S.selDebt);
+    UI.toast(`${isIn?'📥 Cobro de':'Abono de'} ${Fin.fmt(amt)} registrado${receiptUrl?' · 📎 con comprobante':''}`);
+  } catch (e) { const el = document.getElementById('gp-err'); el.textContent = e.message || 'Error'; el.classList.remove('hidden'); document.getElementById('bgp').disabled = false; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDICIÓN / APROBACIÓN DE PAGOS
+═══════════════════════════════════════════════════════════ */
+
+// Buscar pago por ID en cualquiera de las dos tablas
+function findPayment(id) {
+  const inst = S.instPayments.find(p => p.id === id);
+  if (inst) return { ...inst, _table: 'installment_payments', _kind: 'inst' };
+  const gen = S.payments.find(p => p.id === id);
+  if (gen) return { ...gen, _table: 'payments', _kind: 'generic' };
+  return null;
+}
+
+function modalEditPayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return UI.toast('Pago no encontrado', 'error');
+  const debt = S.debts.find(d => d.id === p.debt_id);
+  const isInst = p._kind === 'inst';
+  const dateField = isInst ? 'paid_date' : 'payment_date';
+  const date = p[dateField] || '';
+  const isPending = Fin.isPending(p);
+  const isRejected = Fin.isRejected(p);
+  const reportedByBorrower = p.reported_by === 'borrower';
+
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:520px">
+    <div class="mhd">
+      <div class="mti">${isPending ? '⏳ Revisar pago notificado' : '✏️ Editar pago'}</div>
+      <button class="mcl" onclick="UI.cm()">✕</button>
+    </div>
+    <div class="mbd">
+      ${isPending ? `<div class="alrt aw" style="margin-bottom:14px">
+        <strong>Pago reportado ${reportedByBorrower?'por el deudor':'por ti'}</strong> — está pendiente de aprobación.
+        Revisa el comprobante y monto, y aprueba o rechaza.
+      </div>`:''}
+      ${isRejected ? `<div class="alrt ae" style="margin-bottom:14px">
+        Este pago fue <strong>rechazado</strong>. ${p.reviewer_note ? 'Motivo: ' + p.reviewer_note : ''}
+      </div>`:''}
+
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">
+        ${debt?.name || '—'} ${isInst && p.amort_id ? '· Cuota #' + (S.amorts.find(a=>a.id===p.amort_id)?.n || '?') : ''}
+      </div>
+
+      <div class="frow c2">
+        <div class="fg"><label>Monto ($)</label><input type="number" id="ep-amt" value="${p.amount}" min="0.01" step="0.01"></div>
+        <div class="fg"><label>Fecha</label><input type="date" id="ep-date" value="${date}"></div>
+      </div>
+      <div class="fg"><label>Notas</label><textarea id="ep-notes">${(p.notes||'').replace(/</g,'&lt;')}</textarea></div>
+
+      ${p.receipt_url ? `<div class="fg">
+        <label>Comprobante adjunto</label>
+        <div style="background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);padding:8px;display:flex;gap:8px;align-items:center">
+          <img src="${p.receipt_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">
+          <div style="flex:1;font-size:11px;color:var(--tx3)">Clic en la imagen para ver grande</div>
+          <button class="btn bs btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">↗ Ver</button>
+        </div>
+      </div>` : ''}
+
+      <div class="fg"><label>📎 Reemplazar comprobante (opcional)</label>
+        <input type="file" id="ep-receipt" accept="image/*,.pdf" capture="environment" onchange="previewReceipt(this,'ep-prev')" style="font-size:12px">
+        <div id="ep-prev"></div>
+      </div>
+
+      ${isPending ? `<div class="fg"><label>Nota de revisión (opcional)</label>
+        <input type="text" id="ep-rnote" placeholder="Razón si rechazas, o nota libre">
+      </div>`:''}
+
+      <div id="ep-err" class="alrt ae hidden"></div>
+    </div>
+    <div class="mft" style="flex-wrap:wrap;gap:6px">
+      <button class="btn bd_ btn-sm" onclick="confirmDeletePayment('${paymentId}')">🗑 Eliminar</button>
+      ${isPending ? `
+        <button class="btn bd_ btn-sm" onclick="rejectPayment('${paymentId}')" style="margin-left:auto">✕ Rechazar</button>
+        <button class="btn bg btn-sm" onclick="approvePayment('${paymentId}')">✓ Aprobar</button>
+      ` : `
+        <button class="btn bs" onclick="UI.cm()" style="margin-left:auto">Cancelar</button>
+        <button class="btn bp" onclick="saveEditedPayment('${paymentId}')" id="bep">💾 Guardar</button>
+      `}
+    </div>
+  </div></div>`);
+}
+
+async function saveEditedPayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return UI.toast('Pago no encontrado', 'error');
+  const amt   = parseFloat(document.getElementById('ep-amt').value);
+  const date  = document.getElementById('ep-date').value;
+  const notes = document.getElementById('ep-notes').value.trim();
+  const file  = document.getElementById('ep-receipt')?.files[0];
+  if (!amt || !date) { const el = document.getElementById('ep-err'); el.textContent = 'Monto y fecha requeridos'; el.classList.remove('hidden'); return; }
+
+  const dateField = p._kind === 'inst' ? 'paid_date' : 'payment_date';
+  const patch = { amount: amt, [dateField]: date, notes };
+
+  document.getElementById('bep').disabled = true;
+  try {
+    if (file) {
+      UI.toast('📤 Subiendo comprobante...', 'success');
+      // Borrar el viejo si existía
+      if (p.receipt_url) await DB.deleteReceipt(p.receipt_url).catch(()=>{});
+      patch.receipt_url = await DB.uploadReceipt(file, p.debt_id);
+    }
+    await DB.updatePayment(p._table, paymentId, patch);
+    UI.cm(); updateBadge(); go(S.view, S.selDebt);
+    UI.toast('✏️ Pago actualizado');
+  } catch (e) {
+    const el = document.getElementById('ep-err');
+    el.textContent = e.message || 'Error'; el.classList.remove('hidden');
+    document.getElementById('bep').disabled = false;
+  }
+}
+
+async function approvePayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return;
+  const note = document.getElementById('ep-rnote')?.value.trim() || null;
+  const patch = {
+    status: 'approved',
+    reviewed_at: new Date().toISOString(),
+    reviewer_note: note,
+  };
+  // Si el monto/fecha/notas se editaron en el modal, también guardarlos
+  const amtEl = document.getElementById('ep-amt');
+  const dateEl = document.getElementById('ep-date');
+  const notesEl = document.getElementById('ep-notes');
+  if (amtEl && parseFloat(amtEl.value) !== +p.amount) patch.amount = parseFloat(amtEl.value);
+  if (dateEl) {
+    const dateField = p._kind === 'inst' ? 'paid_date' : 'payment_date';
+    if (dateEl.value !== p[dateField]) patch[dateField] = dateEl.value;
+  }
+  if (notesEl && notesEl.value.trim() !== (p.notes||'')) patch.notes = notesEl.value.trim();
+
+  await DB.updatePayment(p._table, paymentId, patch);
+  UI.cm(); updateBadge(); go(S.view, S.selDebt);
+  UI.toast(`✅ Pago de ${Fin.fmt(patch.amount || p.amount)} aprobado`);
+}
+
+async function rejectPayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return;
+  const note = document.getElementById('ep-rnote')?.value.trim() || null;
+  if (!note) {
+    if (!confirm('¿Rechazar este pago sin dar un motivo?\nEs mejor poner un motivo para que el deudor sepa qué pasó.')) return;
+  }
+  await DB.updatePayment(p._table, paymentId, {
+    status: 'rejected',
+    reviewed_at: new Date().toISOString(),
+    reviewer_note: note,
+  });
+  UI.cm(); updateBadge(); go(S.view, S.selDebt);
+  UI.toast('Pago rechazado', 'warn');
+}
+
+function confirmDeletePayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return;
+  if (!confirm(`¿Eliminar este pago de ${Fin.fmt(p.amount)}?\nEsta acción no se puede deshacer.`)) return;
+  doDeletePayment(paymentId);
+}
+
+async function doDeletePayment(paymentId) {
+  const p = findPayment(paymentId);
+  if (!p) return;
+  // Borrar receipt del storage si existe
+  if (p.receipt_url) await DB.deleteReceipt(p.receipt_url).catch(()=>{});
+  if (p._kind === 'inst') await DB.deleteInstPayment(paymentId);
+  else                    await DB.deletePayment(paymentId);
+  UI.cm(); updateBadge(); go(S.view, S.selDebt);
+  UI.toast('Pago eliminado', 'warn');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL: IMPORT CSV
+═══════════════════════════════════════════════════════════ */
+function modalImportCSV(debtId) {
+  const debt = S.debts.find(d => d.id === debtId);
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:620px">
+    <div class="mhd"><div class="mti">Importar Amortización CSV — ${debt?.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="alrt ai" style="margin-bottom:14px">
+        <div><strong>Formato esperado del CSV:</strong><br>
+        <code style="font-size:11px;background:var(--bg3s);padding:2px 6px;border-radius:4px;display:inline-block;margin-top:4px">
+          cuota, vencimiento, capital, interes, total, saldo
+        </code><br><span style="font-size:11px;color:var(--tx3);margin-top:4px;display:block">La primera fila puede ser encabezado (se detecta automáticamente)</span></div>
+      </div>
+      <div class="drop-zone" id="csv-drop" onclick="document.getElementById('csv-file').click()">
+        <div class="drop-icon">📂</div>
+        <p><strong>Clic para elegir CSV</strong> o arrastra aquí</p>
+        <p style="margin-top:4px;font-size:11px">Formatos: .csv · columnas separadas por coma o punto y coma</p>
+      </div>
+      <input type="file" id="csv-file" accept=".csv,.txt" style="display:none" onchange="handleCSVFile(event,'${debtId}')">
+      <div id="csv-preview" style="margin-top:14px"></div>
+      <div id="csv-err" class="alrt ae hidden" style="margin-top:10px"></div>
+    </div>
+    <div class="mft">
+      <button class="btn bs" onclick="UI.cm()">Cancelar</button>
+      <button class="btn bp hidden" id="btn-csv-import" onclick="confirmCSVImport('${debtId}')">📥 Importar tabla</button>
+    </div>
+  </div></div>`);
+
+  // Drag and drop
+  const dz = document.getElementById('csv-drop');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleCSVFile({ target: { files: e.dataTransfer.files } }, debtId); });
+}
+
+window._csvRows = [];
+function handleCSVFile(e, debtId) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const text = ev.target.result;
+      const rows = parseCSV(text);
+      window._csvRows = rows;
+      showCSVPreview(rows, debtId);
+    } catch (err) {
+      const el = document.getElementById('csv-err');
+      el.textContent = 'Error al leer el CSV: ' + err.message; el.classList.remove('hidden');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  const sep  = text.includes(';') ? ';' : ',';
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+  const rows  = [];
+  const startIdx = /[a-zA-Z]/i.test(lines[0]) ? 1 : 0; // skip header
+  for (let i = startIdx; i < lines.length; i++) {
+    const cols = lines[i].split(sep).map(c => c.trim().replace(/["']/g, ''));
+    if (cols.length < 4) continue;
+    // Try to auto-detect columns: cuota, vencimiento, capital, interes, total, saldo
+    const n   = parseInt(cols[0])   || i - startIdx + 1;
+    const due = parseDate(cols[1])  || '';
+    const cap = parseNum(cols[2]);
+    const int_ = parseNum(cols[3]);
+    const total = cols[4] !== undefined ? parseNum(cols[4]) : cap + int_;
+    const bal   = cols[5] !== undefined ? parseNum(cols[5]) : 0;
+    rows.push({ id: `csv_${Date.now()}_${i}`, n, due, cap, int: int_, total, bal, paid_date: null });
+  }
+  if (!rows.length) throw new Error('No se encontraron filas válidas');
+  return rows;
+}
+
+function parseDate(s) {
+  if (!s) return '';
+  // Try YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m1) { const y = m1[3].length === 2 ? '20' + m1[3] : m1[3]; return `${y}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`; }
+  return '';
+}
+function parseNum(s) { if (!s) return 0; return parseFloat(s.replace(/[^\d.,\-]/g, '').replace(',', '.')) || 0; }
+
+function showCSVPreview(rows, debtId) {
+  const el = document.getElementById('csv-preview');
+  const btn = document.getElementById('btn-csv-import');
+  if (!el) return;
+  btn?.classList.remove('hidden');
+  el.innerHTML = `
+  <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">✅ ${rows.length} cuotas detectadas — vista previa (primeras 5):</div>
+  <div class="tw"><table style="min-width:auto">
+    <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Total</th><th class="tdn">Saldo</th></tr></thead>
+    <tbody>${rows.slice(0, 5).map(r => `<tr>
+      <td>${r.n}</td><td>${r.due||'—'}</td>
+      <td class="tdn">${Fin.fmt(r.cap)}</td><td class="tdn">${Fin.fmt(r.int)}</td>
+      <td class="tdn fw7">${Fin.fmt(r.total)}</td><td class="tdn">${Fin.fmt(r.bal)}</td>
+    </tr>`).join('')}
+    ${rows.length > 5 ? `<tr><td colspan="6" style="text-align:center;color:var(--tx3);font-size:11px;padding:8px">... y ${rows.length - 5} más</td></tr>` : ''}
+    </tbody></table></div>`;
+}
+
+async function confirmCSVImport(debtId) {
+  if (!window._csvRows?.length) return;
+  document.getElementById('btn-csv-import').disabled = true;
+  await DB.importAmortCSV(debtId, window._csvRows);
+  UI.cm(); go('amort', debtId);
+  UI.toast(`📥 ${window._csvRows.length} cuotas importadas exitosamente`);
+  window._csvRows = [];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: PAYMENTS
+═══════════════════════════════════════════════════════════ */
+function renderPayments() {
+  const debtOpts = `<option value="">Todas las deudas</option>${S.debts.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}`;
+  document.getElementById('content').innerHTML = `
+  <div class="fbar">
+    <span class="flbl">Deuda:</span>
+    <select id="flt-debt" onchange="filterPays()">${debtOpts}</select>
+    <span class="flbl">Tipo:</span>
+    <select id="flt-type" onchange="filterPays()">
+      <option value="">Todos los tipos</option>
+      ${[...new Set(S.debts.map(d => d.type))].map(t => `<option value="${t}">${{ loan: 'Préstamos', credit_card: 'Tarjetas', personal: 'Personal' }[t] || t}</option>`).join('')}
+    </select>
+    <span class="flbl">Mes:</span>
+    <input type="month" id="flt-month" onchange="filterPays()">
+  </div>
+  <div id="pays-kpis" class="kgrid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
+  <div class="card mb4">
+    <div class="card-hd"><div><div class="card-ti">Pagos por Cuota</div><div class="card-su">Registrados desde la tabla de amortización · clic en encabezado para ordenar</div></div></div>
+    <div class="tw"><table>
+      <thead id="inst-thead"></thead>
+      <tbody id="inst-tbody"></tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div><div class="card-ti">Abonos Genéricos</div><div class="card-su">Pagos sin cuota específica · clic en encabezado para ordenar</div></div>
+      <button class="btn bp btn-sm" onclick="modalGenericPay(document.getElementById('flt-debt').value||'${S.debts[0]?.id||''}')" ${!S.debts.length ? 'disabled' : ''}>+ Abono</button>
+    </div>
+    <div class="tw"><table>
+      <thead id="gen-thead"></thead>
+      <tbody id="gen-tbody"></tbody>
+    </table></div>
+  </div>`;
+  if (!S.sort.payInst) S.sort.payInst = { col: 'paid_date',    dir: 'desc' };
+  if (!S.sort.payGen)  S.sort.payGen  = { col: 'payment_date', dir: 'desc' };
+  filterPays();
+}
+
+function filterPays() {
+  const dId  = document.getElementById('flt-debt')?.value   || '';
+  const tType= document.getElementById('flt-type')?.value   || '';
+  const month= document.getElementById('flt-month')?.value  || '';
+
+  const baseFilter = (arr, dateField) => {
+    let r = [...arr];
+    if (dId)   r = r.filter(p => p.debt_id === dId);
+    if (tType) r = r.filter(p => S.debts.find(x => x.id === p.debt_id)?.type === tType);
+    if (month) r = r.filter(p => (p[dateField] || '').startsWith(month));
+    return r;
+  };
+
+  // Custom comparator: para columnas derivadas (deuda nombre, cuota, etc.)
+  const cmpInst = (a, b, col) => {
+    if (col === 'debt')  return (S.debts.find(d=>d.id===a.debt_id)?.name||'').localeCompare(S.debts.find(d=>d.id===b.debt_id)?.name||'', 'es');
+    if (col === 'cuota') return (S.amorts.find(x=>x.id===a.amort_id)?.n||0) - (S.amorts.find(x=>x.id===b.amort_id)?.n||0);
+    if (col === 'part')  return (S.parts.find(x=>x.id===a.part_id)?.name||'').localeCompare(S.parts.find(x=>x.id===b.part_id)?.name||'', 'es');
+    if (col === 'amount') return (parseFloat(a.amount)||0) - (parseFloat(b.amount)||0);
+    if (col === 'status') {
+      const ord = p => Fin.isPending(p)?0 : Fin.isRejected(p)?2 : 1;
+      return ord(a) - ord(b);
+    }
+    return undefined;
+  };
+  const cmpGen = (a, b, col) => {
+    if (col === 'debt')  return (S.debts.find(d=>d.id===a.debt_id)?.name||'').localeCompare(S.debts.find(d=>d.id===b.debt_id)?.name||'', 'es');
+    if (col === 'type')  return (S.debts.find(d=>d.id===a.debt_id)?.type||'').localeCompare(S.debts.find(d=>d.id===b.debt_id)?.type||'', 'es');
+    if (col === 'amount') return (parseFloat(a.amount)||0) - (parseFloat(b.amount)||0);
+    if (col === 'status') {
+      const ord = p => Fin.isPending(p)?0 : Fin.isRejected(p)?2 : 1;
+      return ord(a) - ord(b);
+    }
+    return undefined;
+  };
+
+  const fi = sortRows(baseFilter(S.instPayments, 'paid_date'),    S.sort.payInst, cmpInst);
+  const fg = sortRows(baseFilter(S.payments,     'payment_date'), S.sort.payGen,  cmpGen);
+  const ti = fi.reduce((s, p) => s + (+p.amount || 0), 0);
+  const tg = fg.reduce((s, p) => s + (+p.amount || 0), 0);
+
+  // Headers
+  const ith = document.getElementById('inst-thead');
+  if (ith) ith.innerHTML = `<tr>
+    ${sortHeader('Deuda',        'debt',      'payInst', 'filterPays')}
+    ${sortHeader('Cuota #',      'cuota',     'payInst', 'filterPays')}
+    ${sortHeader('Participante', 'part',      'payInst', 'filterPays')}
+    ${sortHeader('Fecha',        'paid_date', 'payInst', 'filterPays')}
+    <th>Notas</th>
+    <th class="tdc">📎</th>
+    ${sortHeader('Estado',       'status',    'payInst', 'filterPays')}
+    ${sortHeader('Monto',        'amount',    'payInst', 'filterPays', 'tdn')}
+    <th></th>
+  </tr>`;
+  const gth = document.getElementById('gen-thead');
+  if (gth) gth.innerHTML = `<tr>
+    ${sortHeader('Deuda',        'debt',          'payGen', 'filterPays')}
+    ${sortHeader('Tipo',         'type',          'payGen', 'filterPays')}
+    ${sortHeader('Fecha',        'payment_date',  'payGen', 'filterPays')}
+    <th>Notas</th>
+    <th class="tdc">📎</th>
+    ${sortHeader('Estado',       'status',        'payGen', 'filterPays')}
+    ${sortHeader('Monto',        'amount',        'payGen', 'filterPays', 'tdn')}
+    <th></th>
+  </tr>`;
+
+  const kpis = document.getElementById('pays-kpis');
+  if (kpis) kpis.innerHTML = `${UI.kc('gn','Por cuota',Fin.fmt(ti,true),fi.length+' pagos','')}${UI.kc('bl','Abonos',Fin.fmt(tg,true),fg.length+' abonos','')}${UI.kc('am','Total',Fin.fmt(ti+tg,true),'suma filtrada','')}`;
+
+  const receiptCell = url => url
+    ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${url.replace(/'/g,"\\'")}')" title="Ver comprobante">📎</button>`
+    : '<span class="txt-mu" style="font-size:10px">—</span>';
+
+  const statusCell = p => {
+    if (Fin.isPending(p))  return '<span class="chip cam" title="Pendiente de aprobación">⏳ Pendiente</span>';
+    if (Fin.isRejected(p)) return '<span class="chip crd" title="Rechazado">✕ Rechazado</span>';
+    return p.reported_by === 'borrower'
+      ? '<span class="chip cgn" title="Aprobado · reportado por deudor">✓ Aprobado</span>'
+      : '<span class="chip cgn">✓ OK</span>';
+  };
+
+  const it = document.getElementById('inst-tbody');
+  if (it) it.innerHTML = fi.length ? fi.map(p => {
+    const debt = S.debts.find(d => d.id === p.debt_id);
+    const amort = S.amorts.find(a => a.id === p.amort_id);
+    const pp = S.parts.find(x => x.id === p.part_id);
+    return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
+      <td class="tdm">${debt?.name||'—'}</td>
+      <td class="tdc">#${amort?.n||'—'}</td>
+      <td>${pp ? UI.chip(pp.name,'bl') : '<span class="txt-mu">General</span>'}</td>
+      <td>${p.paid_date||'—'}</td>
+      <td style="color:var(--tx3)">${p.notes||'—'}</td>
+      <td class="tdc">${receiptCell(p.receipt_url)}</td>
+      <td class="tdc">${statusCell(p)}</td>
+      <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${Fin.fmt(p.amount)}</td>
+      <td><button class="btn bghost btn-xs" onclick="modalEditPayment('${p.id}')" title="${Fin.isPending(p)?'Revisar':'Editar'}">${Fin.isPending(p)?'⏳':'✏️'}</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--tx3);padding:22px">Sin pagos de cuota</td></tr>`;
+
+  const gt = document.getElementById('gen-tbody');
+  if (gt) gt.innerHTML = fg.length ? fg.map(p => {
+    const debt = S.debts.find(d => d.id === p.debt_id);
+    return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
+      <td class="tdm">${debt?.name||'—'}</td>
+      <td>${debt?UI.typeChip(debt.type):''}</td>
+      <td>${p.payment_date||'—'}</td>
+      <td style="color:var(--tx3)">${p.notes||'—'}</td>
+      <td class="tdc">${receiptCell(p.receipt_url)}</td>
+      <td class="tdc">${statusCell(p)}</td>
+      <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${Fin.fmt(p.amount)}</td>
+      <td><button class="btn bghost btn-xs" onclick="modalEditPayment('${p.id}')" title="${Fin.isPending(p)?'Revisar':'Editar'}">${Fin.isPending(p)?'⏳':'✏️'}</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:22px">Sin abonos</td></tr>`;
+}
+
+async function delGenPay(id) {
+  S.payments = S.payments.filter(p => p.id !== id);
+  if (sb) await sb.from('payments').delete().eq('id', id);
+  filterPays(); UI.toast('Eliminado', 'warn');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: PARTICIPANTS
+═══════════════════════════════════════════════════════════ */
+function renderParticipants(debtId) {
+  document.getElementById('tbactions').innerHTML = `
+    <select onchange="go('participants',this.value)" style="background:var(--bg2);border:1px solid var(--bd2);color:var(--tx);padding:6px 11px;border-radius:var(--r);font-family:var(--fm);font-size:12px">
+      ${UI.debtSelect(debtId)}
+    </select>`;
+  if (!debtId) { document.getElementById('content').innerHTML = UI.empty('👥', 'Selecciona una deuda', 'Elige del selector de arriba', '', ''); return; }
+  const debt  = S.debts.find(d => d.id === debtId);
+  const rows  = Fin.annotated(debtId);
+  const nextRow = rows.find(r => r.status !== 'paid');
+  window._ep  = S.parts.filter(p => p.debt_id === debtId).map(p => ({ ...p }));
+
+  document.getElementById('content').innerHTML = `
+  <div class="card mb4">
+    <div class="card-hd">
+      <div><div class="card-ti">Editor de Participantes — ${debt?.name}</div><div class="card-su">Total deuda: <strong>${Fin.fmt(debt?.total_amount)}</strong></div></div>
+    </div>
+    <div id="pw" class="alrt ae hidden">⚠️ Los % no suman 100%</div>
+    <div id="pe"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:11px;flex-wrap:wrap">
+      <button class="btn bs btn-sm" onclick="addEP('${debtId}')">+ Agregar</button>
+      <button class="btn bp" onclick="saveEP('${debtId}')">💾 Guardar</button>
+      <span id="pct-tot" style="font-size:12px;padding:3px 9px;border-radius:var(--r);background:var(--gnd);color:var(--gn)">100%</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ti">Resumen de Pagos</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Participante</th><th class="tdn">%</th><th class="tdn">Debe Total</th><th class="tdn">Ha Pagado</th><th class="tdn">Le Falta</th><th class="tdn">Próx. Cuota</th><th>Estado</th></tr></thead>
+      <tbody id="ep-sum"></tbody>
+    </table></div>
+  </div>`;
+  renderEP(debtId); updateEPSum(debtId, nextRow);
+}
+
+function renderEP(debtId) {
+  const ed = document.getElementById('pe');
+  if (!ed) return;
+  ed.innerHTML = (window._ep || []).map((p, i) => `
+  <div style="display:flex;gap:7px;align-items:center;padding:8px;background:var(--bg3s);border-radius:var(--r);margin-bottom:6px;border:1px solid var(--bd)">
+    <input type="text"   value="${p.name||''}"  placeholder="Nombre" style="flex:1;background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:6px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none" oninput="window._ep[${i}].name=this.value">
+    <input type="email"  value="${p.email||''}" placeholder="Email (opcional)" style="width:170px;background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:6px 9px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none" oninput="window._ep[${i}].email=this.value">
+    <input type="number" value="${p.pct||''}"   placeholder="%" min="0" max="100" step="0.5" style="width:60px;background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:6px 8px;color:var(--tx);font-family:var(--fm);font-size:12px;outline:none;text-align:right" oninput="window._ep[${i}].pct=parseFloat(this.value)||0;updatePctTot()">
+    <button class="btn bd_ btn-sm" onclick="removeEP(${i},'${debtId}')">✕</button>
+  </div>`).join('') || `<div style="color:var(--tx3);font-size:12px;padding:8px">Sin participantes. Agrega uno.</div>`;
+  updatePctTot();
+}
+
+function addEP(debtId) {
+  if (!window._ep) window._ep = [];
+  window._ep.push({ id: 'np-' + Date.now(), debt_id: debtId, user_id: 'u-' + Date.now(), name: '', email: '', pct: 0 });
+  renderEP(debtId);
+}
+function removeEP(i, debtId) { window._ep.splice(i, 1); renderEP(debtId); updateEPSum(debtId); }
+function updatePctTot() {
+  const tot = (window._ep || []).reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+  const el  = document.getElementById('pct-tot'), pw = document.getElementById('pw');
+  const ok  = Math.abs(tot - 100) < 0.11;
+  if (el)  { el.textContent = tot.toFixed(1) + '%'; el.style.background = ok ? 'var(--gnd)' : 'var(--rdd)'; el.style.color = ok ? 'var(--gn)' : 'var(--rd)'; }
+  if (pw)  pw.classList.toggle('hidden', ok);
+}
+async function saveEP(debtId) {
+  const tot = (window._ep || []).reduce((s, p) => s + (parseFloat(p.pct) || 0), 0);
+  if (Math.abs(tot - 100) > 0.11) { UI.toast('Los % deben sumar 100%', 'error'); return; }
+  const valid = (window._ep || []).filter(p => p.name && parseFloat(p.pct) > 0);
+  await DB.saveParticipants(debtId, valid.map(p => ({ ...p, debt_id: debtId })));
+  UI.toast('Participantes guardados ✅');
+  const rows = Fin.annotated(debtId); updateEPSum(debtId, rows.find(r => r.status !== 'paid'));
+}
+function updateEPSum(debtId, nextRow) {
+  const tb = document.getElementById('ep-sum');
+  if (!tb) return;
+  const debt = S.debts.find(d => d.id === debtId);
+  const rows = (window._ep || []).filter(p => p.name && parseFloat(p.pct) > 0);
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--tx3);padding:18px">Sin participantes</td></tr>'; return; }
+  tb.innerHTML = rows.map(pp => {
+    const share = parseFloat(pp.pct) || 0;
+    const owes  = (+debt?.total_amount || 0) * (share / 100);
+    const ppaid = S.instPayments.filter(p => p.part_id === pp.id && p.debt_id === debtId).reduce((s, p) => s + (+p.amount || 0), 0)
+                + S.payments.filter(p => p.user_id === pp.user_id && p.debt_id === debtId).reduce((s, p) => s + (+p.amount || 0), 0);
+    const due_  = Math.max(0, owes - ppaid);
+    const nc    = nextRow ? nextRow.total * (share / 100) : 0;
+    return `<tr><td class="tdm">${pp.name}</td><td class="tdn">${share}%</td><td class="tdn">${Fin.fmt(owes)}</td><td class="tdn txt-gn">${Fin.fmt(ppaid)}</td><td class="tdn ${due_ > 0 ? 'txt-rd' : ''} fw7">${Fin.fmt(due_)}</td><td class="tdn txt-am">${Fin.fmt(nc)}</td><td>${due_ <= 0 ? UI.chip('Al día', 'gn') : UI.chip('Debe', 'rd')}</td></tr>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: APPROVALS — pagos notificados pendientes de revisar
+═══════════════════════════════════════════════════════════ */
+function renderApprovals() {
+  document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="refreshFromDB(true)" title="Recargar">🔄 Actualizar</button>`;
+  const pending  = Fin.allPendingPayments();
+  const approved = [
+    ...S.payments.filter(p => Fin.isApproved(p) && p.reported_by === 'borrower').map(p => ({ ...p, _kind:'generic' })),
+    ...S.instPayments.filter(p => Fin.isApproved(p) && p.reported_by === 'borrower').map(p => ({ ...p, _kind:'inst' })),
+  ].sort((a,b) => (b.reviewed_at||'').localeCompare(a.reviewed_at||''));
+  const rejected = [
+    ...S.payments.filter(p => Fin.isRejected(p)).map(p => ({ ...p, _kind:'generic' })),
+    ...S.instPayments.filter(p => Fin.isRejected(p)).map(p => ({ ...p, _kind:'inst' })),
+  ].sort((a,b) => (b.reviewed_at||'').localeCompare(a.reviewed_at||''));
+
+  const renderRow = (p, showReviewedBy) => {
+    const debt = S.debts.find(d => d.id === p.debt_id);
+    const date = p.payment_date || p.paid_date || '—';
+    return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.06)':''}">
+      <td>${date}</td>
+      <td class="tdm">${debt?.name||'—'}${debt?.borrower_name?`<div style="font-size:10px;color:var(--tx3);font-weight:400">${debt.borrower_name}</div>`:''}</td>
+      <td>${p.notes||'—'}</td>
+      <td class="tdc">${p.receipt_url ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">📎 Ver</button>` : '<span class="txt-mu" style="font-size:10px">—</span>'}</td>
+      <td>${p.reported_by==='borrower' ? '<span class="chip cbl">📥 Deudor</span>' : '<span class="chip cam">Tú</span>'}</td>
+      <td class="tdn fw7 ${Fin.isApproved(p)?'txt-gn':Fin.isRejected(p)?'txt-rd':'txt-am'}">${Fin.fmt(p.amount)}</td>
+      ${showReviewedBy ? `<td style="font-size:10px;color:var(--tx3)">${p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('es-EC') : '—'}${p.reviewer_note?`<br><span style="color:var(--tx3)">"${p.reviewer_note}"</span>`:''}</td>` : ''}
+      <td><button class="btn ${Fin.isPending(p)?'bp':'bs'} btn-xs" onclick="modalEditPayment('${p.id}')">${Fin.isPending(p)?'⏳ Revisar':'Ver'}</button></td>
+    </tr>`;
+  };
+
+  document.getElementById('content').innerHTML = `
+  <div class="kgrid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+    ${UI.kc('am','Pendientes',pending.length, pending.length+' por revisar', '⏳')}
+    ${UI.kc('gn','Aprobados (deudores)',approved.length, 'pagos validados', '✅')}
+    ${UI.kc('rd','Rechazados',rejected.length, '', '✕')}
+  </div>
+
+  <div class="card mb4">
+    <div class="card-hd">
+      <div><div class="card-ti">⏳ Pendientes de aprobación</div>
+      <div class="card-su">Pagos notificados que requieren tu validación · clic en "Revisar" para aprobar o rechazar</div></div>
+      ${pending.length ? '' : ''}
+    </div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Deuda / Deudor</th><th>Notas</th><th class="tdc">Comprobante</th><th>Reportó</th><th class="tdn">Monto</th><th></th></tr></thead>
+      <tbody>${pending.length ? pending.map(p => renderRow(p, false)).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gn);padding:28px">✅ No hay pagos pendientes de aprobación</td></tr>'}</tbody>
+    </table></div>
+  </div>
+
+  ${approved.length ? `<div class="card mb4">
+    <div class="card-hd"><div class="card-ti">✅ Aprobados — reportados por deudores</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Deuda / Deudor</th><th>Notas</th><th class="tdc">📎</th><th>Reportó</th><th class="tdn">Monto</th><th>Revisado</th><th></th></tr></thead>
+      <tbody>${approved.map(p => renderRow(p, true)).join('')}</tbody>
+    </table></div>
+  </div>`:''}
+
+  ${rejected.length ? `<div class="card">
+    <div class="card-hd"><div class="card-ti">✕ Rechazados</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th>Deuda / Deudor</th><th>Notas</th><th class="tdc">📎</th><th>Reportó</th><th class="tdn">Monto</th><th>Rechazado · motivo</th><th></th></tr></thead>
+      <tbody>${rejected.map(p => renderRow(p, true)).join('')}</tbody>
+    </table></div>
+  </div>`:''}`;
+}
+
+// Recargar datos desde Supabase (útil cuando hay pagos pendientes)
+async function refreshFromDB(showToast) {
+  if (!sb || !user) return;
+  try {
+    await DB.loadAll();
+    updateBadge();
+    if (S.view === 'approvals') renderApprovals();
+    else go(S.view, S.selDebt);
+    if (showToast) UI.toast('🔄 Datos actualizados');
+  } catch (e) { if (showToast) UI.toast('Error al recargar', 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEW: DELINQUENCY
+═══════════════════════════════════════════════════════════ */
+function renderDelinquency() {
+  const overdue = [];
+  S.debts.forEach(d => Fin.annotated(d.id).filter(a => a.status === 'overdue' || a.status === 'partial').forEach(a => overdue.push({ ...a, debtName: d.name, debtId: d.id })));
+  const partDue = [];
+  S.debts.forEach(debt => S.parts.filter(p => p.debt_id === debt.id).forEach(pp => {
+    const { owes, paid, due } = Fin.partBalance(debt.id, pp.id);
+    if (due > 0) partDue.push({ name: pp.name, debtName: debt.name, debtId: debt.id, owes, paid, due });
+  }));
+
+  document.getElementById('content').innerHTML = `
+  <div class="kgrid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+    ${UI.kc('rd','Cuotas Vencidas',overdue.length,'','')}
+    ${UI.kc('am','Monto Atrasado',Fin.fmt(overdue.reduce((s,o)=>s+o.total,0),true),'','')}
+    ${UI.kc('pu','Participantes',partDue.length,'con saldo pendiente','')}
+  </div>
+  <div class="card mb4">
+    <div class="card-hd"><div class="card-ti">⚠️ Cuotas Vencidas o Parciales</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Deuda</th><th>#</th><th>Vence</th><th>Días</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Total</th><th class="tdn">Pagado</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${overdue.length ? overdue.sort((a,b)=>a.due.localeCompare(b.due)).map(o => {
+        const dias = Fin.daysSince(o.due);
+        const pso = S.instPayments.filter(p => p.amort_id === o.id).reduce((s, p) => s + (+p.amount||0), 0);
+        return `<tr class="ro">
+          <td class="tdm">${o.debtName}</td><td>#${o.n}</td><td>${o.due}</td>
+          <td>${UI.chip(dias+'d','rd')}</td>
+          <td class="tdn">${Fin.fmt(o.cap)}</td><td class="tdn">${Fin.fmt(o.int)}</td>
+          <td class="tdn fw7">${Fin.fmt(o.total)}</td>
+          <td class="tdn txt-gn">${Fin.fmt(pso)}</td>
+          <td>${UI.stChip(o.status)}</td>
+          <td><button class="btn bg btn-xs" onclick="markPaid('${o.id}','${o.debtId}',null)">✅ Pagada</button></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="10" style="text-align:center;color:var(--gn);padding:28px">✅ Todo al día</td></tr>'}</tbody>
+    </table></div>
+  </div>
+  ${partDue.length ? `<div class="card"><div class="card-hd"><div class="card-ti">🚨 Participantes con Saldo Pendiente</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Participante</th><th>Deuda</th><th class="tdn">Debe</th><th class="tdn">Ha Pagado</th><th class="tdn">Pendiente</th></tr></thead>
+    <tbody>${partDue.sort((a,b)=>b.due-a.due).map(pp=>`<tr><td class="tdm">${pp.name}</td><td>${pp.debtName}</td><td class="tdn">${Fin.fmt(pp.owes)}</td><td class="tdn txt-gn">${Fin.fmt(pp.paid)}</td><td class="tdn txt-rd fw7">${Fin.fmt(pp.due)}</td></tr>`).join('')}</tbody>
+  </table></div></div>` : ''}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL: CREATE DEBT
+═══════════════════════════════════════════════════════════ */
+function modalCreateDebt(presetDirection) { return modalDebtForm({ direction: presetDirection || 'outgoing' }); }
+function modalEditDebt(debtId) {
+  const debt = S.debts.find(d => d.id === debtId);
+  if (!debt) return UI.toast('Deuda no encontrada', 'error');
+  return modalDebtForm({ editId: debtId, debt });
+}
+
+function modalDebtForm(opts) {
+  const isEdit = !!opts.editId;
+  const debt   = opts.debt || {};
+  const today  = new Date().toISOString().split('T')[0];
+  const dir    = isEdit ? (debt.direction || 'outgoing') : (opts.direction || 'outgoing');
+
+  // Pre-fill values for edit mode
+  const v = {
+    name:    debt.name || '',
+    desc:    debt.description || '',
+    type:    debt.type || 'loan',
+    amt:     debt.total_amount ?? '',
+    rate:    debt.interest_rate ?? '',
+    start:   debt.start_date || today,
+    months:  debt.months ?? '',
+    ccBal:   debt.cc_balance ?? '',
+    ccAmort: debt.cc_has_amort || false,
+    bname:   debt.borrower_name || '',
+    bemail:  debt.borrower_email || '',
+  };
+
+  const title = isEdit
+    ? (dir === 'incoming' ? 'Editar Cuenta por Cobrar' : 'Editar Deuda')
+    : (dir === 'incoming' ? 'Nueva Cuenta por Cobrar' : 'Nueva Deuda');
+
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:620px">
+    <div class="mhd"><div class="mti">${isEdit?'✏️ ':''}${title}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div id="derr" class="alrt ae hidden"></div>
+
+      ${isEdit ? `<div class="alrt ai" style="font-size:11px;margin-bottom:12px">
+        ⚠️ Si cambias <strong>monto</strong>, <strong>tasa</strong>, <strong>plazo</strong> o <strong>fecha de inicio</strong>, te preguntaremos si quieres regenerar la tabla de amortización (los pagos registrados se conservan por número de cuota).
+      </div>` : `
+      <!-- Direction selector (solo en CREAR) -->
+      <div class="fg">
+        <label>¿Es una deuda mía o me deben?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${dir==='outgoing'?'var(--rd)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="dir-out-lbl">
+            <input type="radio" name="ddir" value="outgoing" ${dir==='outgoing'?'checked':''} onchange="onDirectionChange()" style="accent-color:var(--rd)">
+            <div><div style="font-weight:600;color:var(--rd)">🏦 Yo debo</div><div style="font-size:10px;color:var(--tx3)">Es una deuda que tengo</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${dir==='incoming'?'var(--gn)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="dir-in-lbl">
+            <input type="radio" name="ddir" value="incoming" ${dir==='incoming'?'checked':''} onchange="onDirectionChange()" style="accent-color:var(--gn)">
+            <div><div style="font-weight:600;color:var(--gn)">💚 Me deben</div><div style="font-size:10px;color:var(--tx3)">Alguien me debe a mí</div></div>
+          </label>
+        </div>
+      </div>`}
+      ${isEdit ? `<input type="hidden" name="ddir" value="${dir}">` : ''}
+
+      <div class="frow c2">
+        <div class="fg" style="grid-column:1/-1"><label>Nombre</label><input type="text" id="dn" placeholder="Ej: Préstamo Banco Pichincha" value="${v.name.replace(/"/g,'&quot;')}"></div>
+        <div class="fg" style="grid-column:1/-1"><label>Descripción</label><input type="text" id="dd" placeholder="Descripción breve" value="${v.desc.replace(/"/g,'&quot;')}"></div>
+      </div>
+
+      <!-- Borrower fields (only for incoming) -->
+      <div id="borrower-opts" class="${dir==='incoming'?'':'hidden'}">
+        <div class="frow c2">
+          <div class="fg"><label>Nombre del deudor</label><input type="text" id="d-bname" placeholder="Ej: Carlos Mendoza" value="${v.bname.replace(/"/g,'&quot;')}"></div>
+          <div class="fg"><label>Email del deudor (opcional)</label><input type="email" id="d-bemail" placeholder="carlos@email.com" value="${v.bemail.replace(/"/g,'&quot;')}"></div>
+        </div>
+        ${!isEdit ? `<div class="alrt as_" style="font-size:11px;margin-bottom:10px">
+          🔗 Se generará automáticamente un link público para que esta persona vea el estado de su deuda.
+        </div>`:''}
+      </div>
+
+      <div class="frow c3">
+        <div class="fg"><label>Tipo</label>
+          <select id="dtype" onchange="onDebtTypeChange()" ${isEdit?'':''}>
+            <option value="loan" ${v.type==='loan'?'selected':''}>Préstamo</option>
+            <option value="credit_card" ${v.type==='credit_card'?'selected':''}>Tarjeta de Crédito</option>
+            <option value="personal" ${v.type==='personal'?'selected':''}>Personal</option>
+          </select></div>
+        <div class="fg"><label>Monto Total ($)</label><input type="number" id="damt" placeholder="10000" min="0" step="0.01" value="${v.amt}" oninput="calcCuota()"></div>
+        <div class="fg"><label>Tasa Anual (%)</label><input type="number" id="drate" placeholder="12" min="0" step="0.01" value="${v.rate}" oninput="calcCuota()"></div>
+      </div>
+      <div id="cc-opts" class="${v.type==='credit_card'?'':'hidden'}">
+        <div class="frow c2">
+          <div class="fg"><label>Saldo Actual Tarjeta ($)</label><input type="number" id="dcc-bal" placeholder="1500" min="0" step="0.01" value="${v.ccBal}"></div>
+          <div class="fg" style="padding-top:20px;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="dcc-amort" ${v.ccAmort?'checked':''} style="accent-color:var(--am)" onchange="onDebtTypeChange()">
+            <label for="dcc-amort" style="font-size:12px;color:var(--tx2);text-transform:none;letter-spacing:0;margin:0">También tiene cuotas fijas</label>
+          </div>
+        </div>
+      </div>
+      <div id="amort-opts" class="${v.type==='credit_card' && !v.ccAmort ? 'hidden':''}">
+        <div class="frow c3">
+          <div class="fg"><label>Fecha Inicio</label><input type="date" id="dstart" value="${v.start}"></div>
+          <div class="fg"><label>Plazo (meses)</label><input type="number" id="dmonths" placeholder="24" min="1" value="${v.months}" oninput="calcCuota()"></div>
+          <div class="fg"><label>Cuota estimada</label><input type="text" id="dcuota" readonly style="opacity:.5" placeholder="Auto"></div>
+        </div>
+      </div>
+      ${!isEdit ? `<div class="alrt aw" style="margin-top:4px;font-size:11px">💡 La tabla de amortización se genera automáticamente (sistema francés) · O puedes importarla desde CSV después</div>` : ''}
+    </div>
+    <div class="mft">
+      <button class="btn bs" onclick="UI.cm()">Cancelar</button>
+      <button class="btn bp" onclick="${isEdit?`saveEditedDebt('${opts.editId}')`:'saveDebt()'}" id="bsd">${isEdit?'💾 Guardar Cambios':'Crear'}</button>
+    </div>
+  </div></div>`);
+
+  // Calcular cuota inicial si estamos editando
+  if (isEdit) setTimeout(calcCuota, 50);
+}
+
+function onDirectionChange() {
+  const dir = document.querySelector('input[name="ddir"]:checked')?.value || 'outgoing';
+  document.getElementById('borrower-opts').classList.toggle('hidden', dir !== 'incoming');
+  // Update visual styling on labels
+  const out = document.getElementById('dir-out-lbl'), inc = document.getElementById('dir-in-lbl');
+  if (out) out.style.borderColor = dir === 'outgoing' ? 'var(--rd)' : 'var(--bd2)';
+  if (inc) inc.style.borderColor = dir === 'incoming' ? 'var(--gn)' : 'var(--bd2)';
+}
+
+function onDebtTypeChange() {
+  const isCC = document.getElementById('dtype').value === 'credit_card';
+  document.getElementById('cc-opts').classList.toggle('hidden', !isCC);
+  const showAmort = !isCC || document.getElementById('dcc-amort')?.checked;
+  document.getElementById('amort-opts').classList.toggle('hidden', isCC && !showAmort);
+}
+
+function calcCuota() {
+  const p = parseFloat(document.getElementById('damt').value) || 0;
+  const r = parseFloat(document.getElementById('drate').value) || 0;
+  const n = parseInt(document.getElementById('dmonths').value) || 0;
+  if (p && n) {
+    const rm = r / 100 / 12;
+    const c  = rm === 0 ? p / n : p * rm * Math.pow(1 + rm, n) / (Math.pow(1 + rm, n) - 1);
+    document.getElementById('dcuota').value = Fin.fmt(c);
+  }
+}
+
+async function saveDebt() {
+  const name   = document.getElementById('dn').value.trim();
+  const type   = document.getElementById('dtype').value;
+  const amt    = parseFloat(document.getElementById('damt').value);
+  const rate   = parseFloat(document.getElementById('drate').value) || 0;
+  const start  = document.getElementById('dstart').value;
+  const months = parseInt(document.getElementById('dmonths').value) || 0;
+  const desc   = document.getElementById('dd').value.trim();
+  const ccBal  = parseFloat(document.getElementById('dcc-bal')?.value) || 0;
+  const ccAmort= document.getElementById('dcc-amort')?.checked || false;
+  const direction = document.querySelector('input[name="ddir"]:checked')?.value || 'outgoing';
+  const borrowerName  = document.getElementById('d-bname')?.value.trim() || null;
+  const borrowerEmail = document.getElementById('d-bemail')?.value.trim() || null;
+  if (!name || !amt) { const e = document.getElementById('derr'); e.textContent = 'Nombre y monto requeridos'; e.classList.remove('hidden'); return; }
+  if (direction === 'incoming' && !borrowerName) { const e = document.getElementById('derr'); e.textContent = 'El nombre del deudor es requerido'; e.classList.remove('hidden'); return; }
+  document.getElementById('bsd').disabled = true;
+  try {
+    const fwd = n => { const d = new Date(start + 'T12:00:00'); d.setMonth(d.getMonth() + n); return d.toISOString().split('T')[0]; };
+    const publicToken = direction === 'incoming' ? ('tok_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36)) : null;
+    await DB.createDebt({
+      name, type, total_amount: amt, interest_rate: rate, start_date: start,
+      end_date_estimated: months ? fwd(months) : null, description: desc,
+      months: (type !== 'credit_card' || ccAmort) ? months : 0,
+      cc_balance: ccBal, cc_has_amort: ccAmort,
+      direction, public_token: publicToken,
+      borrower_name: borrowerName, borrower_email: borrowerEmail,
+    });
+    UI.cm(); updateBadge();
+    go(direction === 'incoming' ? 'receivables' : 'debts');
+    UI.toast(`"${name}" creada ✅`);
+  } catch (e) { const el = document.getElementById('derr'); el.textContent = e.message || 'Error'; el.classList.remove('hidden'); document.getElementById('bsd').disabled = false; }
+}
+
+async function saveEditedDebt(debtId) {
+  const debt = S.debts.find(d => d.id === debtId);
+  if (!debt) return UI.toast('Deuda no encontrada', 'error');
+
+  const name   = document.getElementById('dn').value.trim();
+  const type   = document.getElementById('dtype').value;
+  const amt    = parseFloat(document.getElementById('damt').value);
+  const rate   = parseFloat(document.getElementById('drate').value) || 0;
+  const start  = document.getElementById('dstart').value;
+  const months = parseInt(document.getElementById('dmonths').value) || 0;
+  const desc   = document.getElementById('dd').value.trim();
+  const ccBal  = parseFloat(document.getElementById('dcc-bal')?.value) || 0;
+  const ccAmort= document.getElementById('dcc-amort')?.checked || false;
+  const direction = debt.direction || 'outgoing';
+  const borrowerName  = document.getElementById('d-bname')?.value.trim() || null;
+  const borrowerEmail = document.getElementById('d-bemail')?.value.trim() || null;
+
+  if (!name || !amt) { const e = document.getElementById('derr'); e.textContent = 'Nombre y monto requeridos'; e.classList.remove('hidden'); return; }
+  if (direction === 'incoming' && !borrowerName) { const e = document.getElementById('derr'); e.textContent = 'El nombre del deudor es requerido'; e.classList.remove('hidden'); return; }
+
+  // Detectar si cambian campos que afectan amortización
+  const amortChanged = (
+    (+debt.total_amount !== +amt) ||
+    (+(debt.interest_rate || 0) !== +rate) ||
+    (+(debt.months || 0) !== +months) ||
+    (debt.start_date !== start)
+  );
+  const debtMonths = (type !== 'credit_card' || ccAmort) ? months : 0;
+  const willHaveAmort = debtMonths > 0 && amt > 0 && start;
+
+  let regen = false;
+  if (amortChanged && willHaveAmort) {
+    regen = confirm(
+      '¿Regenerar la tabla de amortización?\n\n' +
+      'Cambiaste monto/tasa/plazo/fecha. Los pagos ya registrados se conservan por número de cuota.\n\n' +
+      'OK = Regenerar tabla\nCancelar = Solo actualizar datos sin tocar la tabla'
+    );
+  }
+
+  document.getElementById('bsd').disabled = true;
+  try {
+    const fwd = n => { const d = new Date(start + 'T12:00:00'); d.setMonth(d.getMonth() + n); return d.toISOString().split('T')[0]; };
+    const patch = {
+      name, description: desc, type,
+      total_amount: amt, interest_rate: rate, start_date: start,
+      months: debtMonths, end_date_estimated: debtMonths ? fwd(debtMonths) : null,
+      cc_balance: ccBal, cc_has_amort: ccAmort,
+      borrower_name: borrowerName, borrower_email: borrowerEmail,
+    };
+    await DB.updateDebt(debtId, patch);
+    if (regen) await DB.regenerateAmort(debtId, amt, rate, debtMonths, start);
+
+    UI.cm(); updateBadge();
+    go(S.view, S.selDebt);
+    UI.toast(`✏️ "${name}" actualizada${regen ? ' · tabla regenerada' : ''}`);
+  } catch (e) {
+    const el = document.getElementById('derr'); el.textContent = e.message || 'Error';
+    el.classList.remove('hidden'); document.getElementById('bsd').disabled = false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DELETE CONFIRM
+═══════════════════════════════════════════════════════════ */
+function confirmDel(id) {
+  const d = S.debts.find(x => x.id === id);
+  UI.modal(`<div class="mover"><div class="modal" style="max-width:370px">
+    <div class="mhd"><div class="mti">Eliminar Deuda</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd"><p style="color:var(--tx2)">¿Eliminar "<strong>${d?.name}</strong>" junto con todos sus pagos y cuotas?</p><p style="color:var(--rd);margin-top:8px;font-size:12px">Esta acción no se puede deshacer.</p></div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bd_" onclick="doDel('${id}')">Eliminar</button></div>
+  </div></div>`);
+}
+async function doDel(id) { await DB.deleteDebt(id); UI.cm(); updateBadge(); go('debts'); UI.toast('Deuda eliminada', 'warn'); }
+
+/* ═══════════════════════════════════════════════════════════
+   SESSION
+═══════════════════════════════════════════════════════════ */
+async function checkSession() {
+  if (!sb) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) { user = session.user; await initApp(); }
+  } catch (e) {}
+}
+checkSession();
+</script>
+</body>
+</html>
