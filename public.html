@@ -251,10 +251,24 @@ const fmt = (n, short) => {
   return sign + '$' + v.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 const todayISO = () => new Date().toISOString().split('T')[0];
-const daysSince = s => Math.floor((Date.now() - new Date(s + 'T12:00:00')) / 86400000);
+
+// Normaliza fechas que vienen de Supabase (pueden traer 'YYYY-MM-DD' o con timezone)
+function parseSafeDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
+}
+
+const daysSince = s => {
+  const d = parseSafeDate(s);
+  if (!d) return 0;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+};
+
 const fmtDate = s => {
-  if (!s) return '—';
-  const d = new Date(s + 'T12:00:00');
+  const d = parseSafeDate(s);
+  if (!d) return '—';
   return d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
@@ -314,7 +328,7 @@ function annotateAmorts(amorts, instPays) {
 function renderError(msg, sub) {
   document.getElementById('root').innerHTML = `
   <div class="phead">
-    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v5.4</div></div>
+    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v5.14</div></div>
     <button class="theme-btn" onclick="toggleTheme()">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</button>
   </div>
   <div class="center-screen">
@@ -350,13 +364,43 @@ function renderPublic(data) {
   const totalPaid = approvedPays.reduce((s,p) => s+(+p.amount||0), 0)
                   + approvedInst.reduce((s,p) => s+(+p.amount||0), 0);
   const total     = +debt.total_amount || 0;
-  const remaining = Math.max(0, total - totalPaid);
-  const pct       = total ? Math.min(100, totalPaid/total*100) : 0;
+
+  // ── Desglose capital vs interés vs seguros ──
+  // Pagos genéricos = 100% capital
+  // Pagos de cuota = prorrateo cap/total, int/total, insurance/total
+  let capitalPaid   = approvedPays.reduce((s, p) => s + (+p.amount || 0), 0);
+  let interestPaid  = 0;
+  let insurancePaid = 0;
+  if (hasAmort) {
+    amorts.forEach(a => {
+      const cuotaTotal = +a.total || 0;
+      const cap = +a.cap || 0;
+      const int_ = +a.int || 0;
+      const ins  = +a.insurance || 0;
+      if (cuotaTotal <= 0) return;
+      const ipApr = approvedInst.filter(p => p.amort_id === a.id);
+      const sumIp = ipApr.reduce((s, p) => s + (+p.amount || 0), 0);
+      const isManuallyPaid = !!a.paid_date;
+      const covered = isManuallyPaid ? cuotaTotal : sumIp;
+      capitalPaid   += covered * (cap / cuotaTotal);
+      interestPaid  += covered * (int_ / cuotaTotal);
+      insurancePaid += covered * (ins / cuotaTotal);
+    });
+  } else {
+    capitalPaid += approvedInst.reduce((s, p) => s + (+p.amount || 0), 0);
+  }
+  const capitalRem = Math.max(0, total - capitalPaid);
+  const remaining = capitalRem; // El "saldo pendiente" real es capital restante
+  const pct       = total ? Math.min(100, capitalPaid/total*100) : 0;
 
   // Anotar amortización (con instPays APROBADOS para no inflar saldos)
   const annotated = annotateAmorts(amorts, approvedInst);
   const overdueRows = annotated.filter(a => a.status === 'overdue' || a.status === 'partial');
   const upcoming    = annotated.filter(a => a.status === 'pending').slice(0, 3);
+
+  // ¿La deuda tiene seguros? (cualquier fila con insurance > 0)
+  const hasInsuranceCol = annotated.some(r => (+r.insurance || 0) > 0);
+  const totalInsurance  = annotated.reduce((s, r) => s + (+r.insurance || 0), 0);
 
   // Estado global
   let statusLbl, statusCls;
@@ -381,7 +425,7 @@ function renderPublic(data) {
   <div class="phead">
     <div>
       <div class="brand">DebtOS</div>
-      <div class="brand-sub">Vista pública · v5.4</div>
+      <div class="brand-sub">Vista pública · v5.14</div>
       <div style="font-size:10px;color:var(--tx3);margin-top:4px;display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.4)"></span>
         Actualizado · ${new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
@@ -421,24 +465,29 @@ function renderPublic(data) {
 
   <!-- KPIs -->
   <div class="kgrid">
-    <div class="kc bl"><div class="klbl">Monto Total</div><div class="kval">${fmt(total, true)}</div><div class="ksub">capital original</div></div>
-    <div class="kc gn"><div class="klbl">Pagado</div><div class="kval" style="color:var(--gn)">${fmt(totalPaid, true)}</div><div class="ksub">${pct.toFixed(1)}% completado</div></div>
-    <div class="kc ${remaining > 0 ? 'rd' : 'gn'}"><div class="klbl">Saldo Pendiente</div><div class="kval" style="color:${remaining > 0 ? 'var(--rd)' : 'var(--gn)'}">${fmt(remaining, true)}</div><div class="ksub">${remaining > 0 ? 'aún por pagar' : '¡Liquidada!'}</div></div>
+    <div class="kc bl"><div class="klbl">Capital Total</div><div class="kval">${fmt(total, true)}</div><div class="ksub">monto original</div></div>
+    <div class="kc gn"><div class="klbl">Capital Pagado</div><div class="kval" style="color:var(--gn)">${fmt(capitalPaid, true)}</div><div class="ksub">${pct.toFixed(1)}% completado${interestPaid > 0 ? ' · interés: '+fmt(interestPaid, true) : ''}${insurancePaid > 0 ? ' · seguros: '+fmt(insurancePaid, true) : ''}</div></div>
+    <div class="kc ${capitalRem > 0 ? 'rd' : 'gn'}"><div class="klbl">Capital Pendiente</div><div class="kval" style="color:${capitalRem > 0 ? 'var(--rd)' : 'var(--gn)'}">${fmt(capitalRem, true)}</div><div class="ksub">${capitalRem > 0 ? 'aún por pagar' : '¡Liquidada!'}</div></div>
     ${hasAmort ? `<div class="kc ${overdueRows.length > 0 ? 'rd' : 'am'}"><div class="klbl">Cuotas Atrasadas</div><div class="kval">${overdueRows.length}</div><div class="ksub">${overdueRows.length === 0 ? 'al día' : 'requieren atención'}</div></div>` : `<div class="kc bl"><div class="klbl">Tipo</div><div class="kval" style="font-size:14px">💸 Pago libre</div><div class="ksub">sin cuotas fijas</div></div>`}
   </div>
+
+  ${hasInsuranceCol ? `<div style="margin-top:12px;padding:9px 13px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:8px;font-size:11.5px;color:var(--tx2)">
+    🛡️ Esta deuda incluye <strong style="color:#8b5cf6;font-family:var(--fmono)">${fmt(totalInsurance, true)}</strong> total en seguros/desgravamen distribuidos entre las cuotas. Estos van además del capital e interés.
+  </div>` : ''}
 
   ${(hasAmort && overdueRows.length > 0) ? `
   <!-- Overdue alert -->
   <div class="card" style="border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,var(--rdd) 0%,var(--bg2) 60%)">
     <div class="card-ti" style="color:var(--rd)">⚠️ Cuotas Atrasadas — Requieren Atención</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th>Días Atraso</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th>Días Atraso</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${overdueRows.map(r => `<tr class="ro">
         <td class="tdm">#${r.n}</td>
         <td>${fmtDate(r.due)}</td>
         <td><span class="chip crd">${daysSince(r.due)} días</span></td>
         <td class="tdn">${fmt(r.cap)}</td>
         <td class="tdn">${fmt(r.int)}</td>
+        ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
         <td class="tdn" style="font-weight:700">${fmt(r.total)}</td>
         <td>${r.status === 'partial' ? '<span class="chip cam">Parcial</span>' : '<span class="chip crd">Atrasada</span>'}</td>
       </tr>`).join('')}</tbody>
@@ -450,12 +499,13 @@ function renderPublic(data) {
   <div class="card">
     <div class="card-ti">📅 Próximas Cuotas</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th class="tdn">Saldo restante</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th class="tdn">Saldo restante</th></tr></thead>
       <tbody>${upcoming.map(r => `<tr>
         <td class="tdm">#${r.n}</td>
         <td>${fmtDate(r.due)} <span style="font-size:10px;color:var(--tx3)">(en ${-daysSince(r.due)} días)</span></td>
         <td class="tdn">${fmt(r.cap)}</td>
         <td class="tdn">${fmt(r.int)}</td>
+        ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
         <td class="tdn" style="font-weight:700;color:var(--am)">${fmt(r.total)}</td>
         <td class="tdn">${fmt(r.bal)}</td>
       </tr>`).join('')}</tbody>
@@ -467,7 +517,7 @@ function renderPublic(data) {
   <div class="card">
     <div class="card-ti">📋 Plan Completo de Pagos</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha de Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha de Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${annotated.map(r => {
         const rc = r.status==='paid'?'rp' : (r.status==='overdue'||r.status==='partial')?'ro' : '';
         let chip;
@@ -481,6 +531,7 @@ function renderPublic(data) {
           <td style="color:${r.paid_date ? 'var(--gn)' : 'var(--tx3)'}">${r.paid_date ? fmtDate(r.paid_date) : '—'}</td>
           <td class="tdn">${fmt(r.cap)}</td>
           <td class="tdn">${fmt(r.int)}</td>
+          ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
           <td class="tdn" style="font-weight:600">${fmt(r.total)}</td>
           <td>${chip}</td>
         </tr>`;
