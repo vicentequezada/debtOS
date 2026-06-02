@@ -579,7 +579,7 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 <div id="auth-screen">
   <div class="acard">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
-      <div><div class="alogo">DebtOS</div><div class="atag">Control financiero personal · v5.37</div></div>
+      <div><div class="alogo">DebtOS</div><div class="atag">Control financiero personal · v5.38</div></div>
       <button class="tbtn" onclick="toggleTheme()">🌙</button>
     </div>
     <div id="ae" class="alrt ae hidden"></div>
@@ -604,7 +604,7 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
     <div class="slogo">
       <div class="slogo-wrap">
         <div class="slogo-mark">DebtOS</div>
-        <div class="slogo-sub">Financial OS · v5.37</div>
+        <div class="slogo-sub">Financial OS · v5.38</div>
       </div>
     </div>
     <nav class="snav">
@@ -1191,7 +1191,7 @@ const AI = {
           if (/app_settings.*does not exist|relation.*app_settings/i.test(error.message || '')) {
             if (key) localStorage.setItem('debtos_ai_key', key);
             else localStorage.removeItem('debtos_ai_key');
-            throw new Error('La tabla app_settings no existe. Ejecuta el SQL de v5.37. (Se guardó local mientras tanto.)');
+            throw new Error('La tabla app_settings no existe. Ejecuta el SQL de v5.38. (Se guardó local mientras tanto.)');
           }
           throw error;
         }
@@ -2738,11 +2738,22 @@ const DB = {
       // ─── INVERTIR DEUDAS ESPEJO ───
       // Si estoy como counterparty (no owner) en una deuda, debo verla invertida:
       // El owner la creó como 'incoming' (me cobra) → yo la veo como 'outgoing' (yo debo)
-      // Esto se aplica solo a deudas donde NO soy owner pero SÍ counterparty
+      // EXCEPCIÓN: si la deuda tiene paid_by_other=true, NO se invierte: ambos la ven como outgoing
+      // (es una deuda "a nombre de uno pero pagada por el otro" — ambos comparten responsabilidad)
       if (!admin || !S.viewAsUserId) {
         S.debts = S.debts.map(d => {
           if (d.counterparty_user_id === uid && d.owner_user_id !== uid) {
-            // Soy contraparte: invertir direction y marcar como espejo
+            // Soy contraparte: marcar como espejo SIEMPRE; invertir direction solo si NO es paid_by_other
+            if (d.paid_by_other) {
+              // Deuda a nombre del owner pero pagada por mí: ambos la vemos como outgoing
+              return {
+                ...d,
+                _is_mirror: true,
+                _is_shared_payment: true,  // flag visual
+                _original_owner: d.owner_user_id,
+                direction: 'outgoing',  // yo (el pagador) la veo como mía
+              };
+            }
             return {
               ...d,
               _is_mirror: true,
@@ -2767,14 +2778,25 @@ const DB = {
         const myIds = new Set(S.debts.map(d => d.id));
         const newOnes = mirrorDebts.filter(d => !myIds.has(d.id) && d.owner_user_id !== uid);
         if (newOnes.length) {
-          const inverted = newOnes.map(d => ({
-            ...d,
-            _is_mirror: true,
-            _original_owner: d.owner_user_id,
-            direction: d.direction === 'incoming' ? 'outgoing'
-                     : d.direction === 'outgoing' ? 'incoming'
-                     : 'third_party',
-          }));
+          const inverted = newOnes.map(d => {
+            if (d.paid_by_other) {
+              return {
+                ...d,
+                _is_mirror: true,
+                _is_shared_payment: true,
+                _original_owner: d.owner_user_id,
+                direction: 'outgoing',
+              };
+            }
+            return {
+              ...d,
+              _is_mirror: true,
+              _original_owner: d.owner_user_id,
+              direction: d.direction === 'incoming' ? 'outgoing'
+                       : d.direction === 'outgoing' ? 'incoming'
+                       : 'third_party',
+            };
+          });
           S.debts = [...S.debts, ...inverted];
 
           // Cargar también amortizaciones e instPayments de estas deudas
@@ -2876,7 +2898,7 @@ const DB = {
       // Quitar campos que pueden no existir en tu schema (monthly_insurance) — fallback gracioso
       let debtPayload = { ...d };
       // Reintenta el INSERT, removiendo columnas opcionales que no existan en el schema
-      const optionalCols = ['monthly_insurance', 'holder_name', 'holder_email', 'currency', 'counterparty_user_id', 'is_recurring', 'recurring_frequency', 'recurring_day', 'recurring_anchor', 'recurring_end_date'];
+      const optionalCols = ['monthly_insurance', 'holder_name', 'holder_email', 'currency', 'counterparty_user_id', 'paid_by_other', 'is_recurring', 'recurring_frequency', 'recurring_day', 'recurring_anchor', 'recurring_end_date'];
       let attempt = 0;
       let lastErr = null;
       while (attempt < optionalCols.length + 1) {
@@ -3751,7 +3773,7 @@ async function saveAISetup() {
       }, { onConflict: 'id' });
       if (error) {
         if (/app_settings.*does not exist|relation.*app_settings/i.test(error.message || '')) {
-          UI.toast('⚠️ Falta la tabla app_settings. Ejecuta el SQL v5.37. Se guardó local mientras tanto.', 'warn');
+          UI.toast('⚠️ Falta la tabla app_settings. Ejecuta el SQL v5.38. Se guardó local mientras tanto.', 'warn');
           if (newKey) localStorage.setItem('debtos_ai_key', newKey);
         } else throw error;
       }
@@ -5462,7 +5484,7 @@ async function saveIncomeSource(editId) {
         if (error) {
           if (/income_sources.*does not exist|relation.*income_sources/i.test(error.message || '')) {
             S.incomeSources.pop();
-            throw new Error('Falta ejecutar el SQL v5.37 que crea la tabla income_sources.');
+            throw new Error('Falta ejecutar el SQL v5.38 que crea la tabla income_sources.');
           }
           throw error;
         }
@@ -5572,7 +5594,7 @@ async function saveVirtualConfirmation(sourceId, originalDate, currency) {
           delete row.source_id;
           const { error: e2 } = await sb.from('incomes').insert(row);
           if (e2) throw e2;
-          UI.toast('⚠️ Ingreso registrado, pero falta la columna source_id (ejecuta SQL v5.37)', 'warn');
+          UI.toast('⚠️ Ingreso registrado, pero falta la columna source_id (ejecuta SQL v5.38)', 'warn');
         } else throw error;
       }
     }
@@ -5909,7 +5931,17 @@ function renderDebts() {
     if (mine && d.counterparty_user_id) {
       const cp = S.allProfiles.find(p => p.user_id === d.counterparty_user_id);
       const cpName = cp?.display_name || (cp?.email||'').split('@')[0] || 'usuario';
-      ownerInfo += `<div style="display:inline-block;font-size:9px;color:var(--pu);background:rgba(168,85,247,.12);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle" title="Esta deuda está vinculada a ${cpName}, que la ve automáticamente desde su lado">🔗 Vinculado: ${cpName}</div>`;
+      if (d.paid_by_other) {
+        ownerInfo += `<div style="display:inline-block;font-size:9px;color:var(--pu);background:rgba(168,85,247,.18);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:600" title="Esta deuda está a mi nombre pero la paga ${cpName}. Él/ella la ve como suya en su login.">🤝 Paga: ${cpName}</div>`;
+      } else {
+        ownerInfo += `<div style="display:inline-block;font-size:9px;color:var(--pu);background:rgba(168,85,247,.12);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle" title="Esta deuda está vinculada a ${cpName}, que la ve automáticamente desde su lado">🔗 Vinculado: ${cpName}</div>`;
+      }
+    }
+    // Si soy el counterparty (deuda espejo) y es paid_by_other: aviso especial
+    if (d._is_shared_payment) {
+      const owner = S.allProfiles.find(p => p.user_id === d._original_owner);
+      const ownerName = owner?.display_name || (owner?.email||'').split('@')[0] || 'titular';
+      ownerInfo += `<div style="display:inline-block;font-size:9px;color:var(--pu);background:rgba(168,85,247,.18);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:600" title="Esta deuda está a nombre de ${ownerName} pero tú la pagas. Aparece en tus deudas porque es tu responsabilidad pagarla.">🤝 A nombre de: ${ownerName}</div>`;
     }
     const isRec = Fin.isRecurring(d);
     const recFreqLbl = d.recurring_frequency === 'biweekly' ? 'quincenal' : `mensual día ${d.recurring_day||1}`;
@@ -9579,6 +9611,7 @@ function modalDebtForm(opts) {
     ins:     debt.monthly_insurance ?? '',
     currency: debt.currency || Cur.primary(),
     counterparty: debt.counterparty_user_id || '',
+    paidByOther: !!debt.paid_by_other,
     isRecurring: !!debt.is_recurring,
     recFreq: debt.recurring_frequency || 'monthly',
     recDay: debt.recurring_day || 1,
@@ -9720,15 +9753,37 @@ function modalDebtForm(opts) {
       <div id="outgoing-link" class="${dir==='outgoing'?'':'hidden'}">
         ${availableUsers.length ? `
         <div class="fg">
-          <label>🔗 ¿A quién le debes? Vincular a usuario registrado <span style="color:var(--tx3);font-weight:400">(opcional)</span></label>
-          <select id="d-counterparty-out" class="fselect" style="width:100%">
+          <label>🔗 Vincular a usuario registrado <span style="color:var(--tx3);font-weight:400">(opcional)</span></label>
+          <select id="d-counterparty-out" class="fselect" style="width:100%" onchange="onCounterpartyChange()">
             <option value="">— Sin vincular (solo registro personal) —</option>
             ${availableUsers.map(u => `<option value="${u.user_id}" ${v.counterparty===u.user_id?'selected':''}>${u.display_name||u.email} · ${u.email}</option>`).join('')}
           </select>
           <div style="font-size:10.5px;color:var(--tx3);margin-top:4px;line-height:1.5">
-            💡 Si le debes a otro usuario del sistema, vincúlalo: él/ella la verá automáticamente como <strong>"Por Cobrar"</strong>.
+            💡 Vincular esta deuda con otro usuario del sistema. Elige más abajo cómo se interpreta.
           </div>
-        </div>` : ''}
+        </div>
+
+        <!-- Modo de vinculación: aparece sólo cuando hay un counterparty seleccionado -->
+        <div class="fg" id="paid-by-other-group" style="${v.counterparty?'':'display:none'}">
+          <label>🤝 ¿Cómo se relaciona esta deuda con el usuario vinculado?</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${!v.paidByOther?'var(--rd)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="pbo-no-lbl">
+              <input type="radio" name="d-paid-by-other" value="no" ${!v.paidByOther?'checked':''} onchange="onPaidByOtherChange()" style="accent-color:var(--rd);margin-top:2px">
+              <div>
+                <div style="font-weight:600;color:var(--rd);font-size:12px">💸 Le debo dinero</div>
+                <div style="font-size:10px;color:var(--tx3);line-height:1.4">Yo le debo a esa persona. Él/ella lo verá como <strong>"Por Cobrar"</strong>.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:10px;background:var(--bg3s);border:2px solid ${v.paidByOther?'var(--pu)':'var(--bd2)'};border-radius:var(--r);cursor:pointer;transition:all .15s" id="pbo-yes-lbl">
+              <input type="radio" name="d-paid-by-other" value="yes" ${v.paidByOther?'checked':''} onchange="onPaidByOtherChange()" style="accent-color:var(--pu);margin-top:2px">
+              <div>
+                <div style="font-weight:600;color:var(--pu);font-size:12px">🤝 Él/ella la paga</div>
+                <div style="font-size:10px;color:var(--tx3);line-height:1.4">Deuda a mi nombre pero pagada por esa persona (ej: tarjeta mía que paga mi hermano). Él/ella la verá como <strong>"Yo Debo"</strong> en su login.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <div class="frow c3">
@@ -9871,6 +9926,21 @@ function onDirectionChange() {
   if (tp)  tp.style.borderColor  = dir === 'third_party' ? 'var(--bl)' : 'var(--bd2)';
 }
 
+function onCounterpartyChange() {
+  // Mostrar/ocultar el bloque "¿Cómo se relaciona?" cuando hay counterparty
+  const cp = document.getElementById('d-counterparty-out')?.value;
+  const grp = document.getElementById('paid-by-other-group');
+  if (grp) grp.style.display = cp ? '' : 'none';
+}
+
+function onPaidByOtherChange() {
+  const val = document.querySelector('input[name="d-paid-by-other"]:checked')?.value || 'no';
+  const noLbl = document.getElementById('pbo-no-lbl');
+  const yesLbl = document.getElementById('pbo-yes-lbl');
+  if (noLbl) noLbl.style.borderColor = val === 'no' ? 'var(--rd)' : 'var(--bd2)';
+  if (yesLbl) yesLbl.style.borderColor = val === 'yes' ? 'var(--pu)' : 'var(--bd2)';
+}
+
 function onDebtTypeChange() {
   const isCC = document.getElementById('dtype').value === 'credit_card';
   document.getElementById('cc-opts').classList.toggle('hidden', !isCC);
@@ -9929,6 +9999,10 @@ async function saveDebt() {
     : direction === 'outgoing'
       ? (document.getElementById('d-counterparty-out')?.value || null)
       : (document.getElementById('d-counterparty')?.value || null);
+  // Flag: la deuda está a MI nombre pero la paga el counterparty (caso "tarjeta mía que paga mi hermano")
+  const paidByOther = direction === 'outgoing' && counterpartyUserId
+    ? (document.querySelector('input[name="d-paid-by-other"]:checked')?.value === 'yes')
+    : false;
 
   // Fecha de inicio: depende del modo
   let start;
@@ -9970,6 +10044,7 @@ async function saveDebt() {
       monthly_insurance: monthlyIns,
       currency,
       counterparty_user_id: counterpartyUserId,
+      paid_by_other: paidByOther,
       is_recurring: isRecurring,
       recurring_frequency: recFreq,
       recurring_day: recDay,
@@ -10025,6 +10100,9 @@ async function saveEditedDebt(debtId) {
     : direction === 'outgoing'
       ? (document.getElementById('d-counterparty-out')?.value || null)
       : (document.getElementById('d-counterparty')?.value || null);
+  const paidByOther = direction === 'outgoing' && counterpartyUserId
+    ? (document.querySelector('input[name="d-paid-by-other"]:checked')?.value === 'yes')
+    : false;
 
   // Si la deuda es sin amortización o recurrente, leer fecha del input alternativo
   let start;
@@ -10087,6 +10165,7 @@ async function saveEditedDebt(debtId) {
       has_amort: hasAmort,
       monthly_insurance: monthlyIns,
       counterparty_user_id: counterpartyUserId,
+      paid_by_other: paidByOther,
       is_recurring: isRecurring,
       recurring_frequency: recFreq,
       recurring_day: recDay,
@@ -10094,7 +10173,7 @@ async function saveEditedDebt(debtId) {
       recurring_end_date: recEnd,
     };
     // Reintenta UPDATE retirando columnas opcionales que no existan
-    const optionalCols = ['monthly_insurance', 'holder_name', 'holder_email', 'currency', 'counterparty_user_id', 'is_recurring', 'recurring_frequency', 'recurring_day', 'recurring_anchor', 'recurring_end_date'];
+    const optionalCols = ['monthly_insurance', 'holder_name', 'holder_email', 'currency', 'counterparty_user_id', 'paid_by_other', 'is_recurring', 'recurring_frequency', 'recurring_day', 'recurring_anchor', 'recurring_end_date'];
     // Pre-filtrar columnas conocidamente faltantes (cacheadas en sesión anterior)
     window._missingDbCols = window._missingDbCols || new Set();
     let workingPatch = { ...patch };

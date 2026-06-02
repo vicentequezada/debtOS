@@ -243,32 +243,45 @@ function toggleTheme(){
 /* ═══════════════════════════════════════════════════════════
    FORMAT HELPERS
 ═══════════════════════════════════════════════════════════ */
-const fmt = (n, short) => {
-  if (isNaN(n) || n == null) return '$0.00';
+/* ═══════════════════════════════════════════════════════════
+   FORMATEO MULTIMONEDA
+═══════════════════════════════════════════════════════════ */
+const CURRENCY_INFO = {
+  USD: { symbol: '$',  locale: 'en-US', name: 'Dólar' },
+  MXN: { symbol: '$',  locale: 'es-MX', name: 'Peso mexicano' },
+  EUR: { symbol: '€',  locale: 'es-ES', name: 'Euro' },
+  GBP: { symbol: '£',  locale: 'en-GB', name: 'Libra' },
+  CAD: { symbol: 'C$', locale: 'en-CA', name: 'Dólar canadiense' },
+  COP: { symbol: '$',  locale: 'es-CO', name: 'Peso colombiano' },
+  ARS: { symbol: '$',  locale: 'es-AR', name: 'Peso argentino' },
+  BRL: { symbol: 'R$', locale: 'pt-BR', name: 'Real' },
+  CLP: { symbol: '$',  locale: 'es-CL', name: 'Peso chileno' },
+  PEN: { symbol: 'S/', locale: 'es-PE', name: 'Sol' },
+  VES: { symbol: 'Bs', locale: 'es-VE', name: 'Bolívar' },
+};
+const curInfo = code => CURRENCY_INFO[code] || CURRENCY_INFO.USD;
+
+const fmt = (n, currency, short) => {
+  // Compat: si currency es boolean, era el short de antes (modo USD por defecto)
+  if (typeof currency === 'boolean') { short = currency; currency = 'USD'; }
+  const code = currency || 'USD';
+  const c = curInfo(code);
+  if (isNaN(n) || n == null) return c.symbol + '0.00 ' + code;
   const v = Math.abs(parseFloat(n));
   const sign = n < 0 ? '-' : '';
-  if (short && v >= 1000) return sign + '$' + (v / 1000).toFixed(1) + 'k';
-  return sign + '$' + v.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (short && v >= 1000) {
+    const k = v / 1000;
+    const formatted = k.toLocaleString(c.locale, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+    return sign + c.symbol + formatted + 'k ' + code;
+  }
+  const formatted = v.toLocaleString(c.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return sign + c.symbol + formatted + ' ' + code;
 };
 const todayISO = () => new Date().toISOString().split('T')[0];
-
-// Normaliza fechas que vienen de Supabase (pueden traer 'YYYY-MM-DD' o con timezone)
-function parseSafeDate(s) {
-  if (!s) return null;
-  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
-}
-
-const daysSince = s => {
-  const d = parseSafeDate(s);
-  if (!d) return 0;
-  return Math.floor((Date.now() - d.getTime()) / 86400000);
-};
-
+const daysSince = s => Math.floor((Date.now() - new Date(s + 'T12:00:00')) / 86400000);
 const fmtDate = s => {
-  const d = parseSafeDate(s);
-  if (!d) return '—';
+  if (!s) return '—';
+  const d = new Date(s + 'T12:00:00');
   return d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
@@ -286,13 +299,29 @@ function getToken() {
 async function fetchPublicDebt(token) {
   if (!sb) throw new Error('Supabase no configurado');
 
-  // Una sola query por token (NUNCA exponemos owner_user_id al cliente)
-  const { data: debt, error: e1 } = await sb
+  // Una sola query por token (NUNCA exponemos owner_user_id al cliente).
+  // Intentar select completo, con fallback si faltan columnas (BD sin migrar)
+  const fullSelect = 'id,name,description,type,total_amount,interest_rate,start_date,months,direction,public_token,borrower_name,cc_balance,currency,is_recurring,recurring_frequency,recurring_day,recurring_anchor,recurring_end_date,monthly_insurance,has_amort';
+  const basicSelect = 'id,name,description,type,total_amount,interest_rate,start_date,months,direction,public_token,borrower_name,cc_balance';
+
+  let debt, e1;
+  ({ data: debt, error: e1 } = await sb
     .from('debts')
-    .select('id,name,description,type,total_amount,interest_rate,start_date,months,direction,public_token,borrower_name,cc_balance,has_amort')
+    .select(fullSelect)
     .eq('public_token', token)
     .eq('direction', 'incoming')
-    .maybeSingle();
+    .maybeSingle());
+
+  // Si falla por columna faltante, reintentar con select básico
+  if (e1 && /column|schema cache/i.test(e1.message || '')) {
+    console.warn('[public] falló con select completo, reintentando básico:', e1.message);
+    ({ data: debt, error: e1 } = await sb
+      .from('debts')
+      .select(basicSelect)
+      .eq('public_token', token)
+      .eq('direction', 'incoming')
+      .maybeSingle());
+  }
   if (e1) throw e1;
   if (!debt) return null;
 
@@ -328,7 +357,7 @@ function annotateAmorts(amorts, instPays) {
 function renderError(msg, sub) {
   document.getElementById('root').innerHTML = `
   <div class="phead">
-    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v5.14</div></div>
+    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v5.5</div></div>
     <button class="theme-btn" onclick="toggleTheme()">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</button>
   </div>
   <div class="center-screen">
@@ -340,15 +369,213 @@ function renderError(msg, sub) {
   </div>`;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   RENDER: DEUDA RECURRENTE (renta, suscripción, etc.)
+═══════════════════════════════════════════════════════════ */
+function expandRecurringDebt(debt, fromDate, toDate) {
+  if (!debt) return [];
+  const start = debt.start_date;
+  const end = debt.recurring_end_date || toDate;
+  if (!start) return [];
+  const effStart = start > fromDate ? start : fromDate;
+  const effEnd   = end < toDate ? end : toDate;
+  if (effStart > effEnd) return [];
+  const occ = [];
+  const freq = debt.recurring_frequency || 'monthly';
+  if (freq === 'monthly') {
+    const day = Math.max(1, Math.min(31, debt.recurring_day || 1));
+    const startD = new Date(effStart + 'T00:00:00');
+    const endD   = new Date(effEnd + 'T00:00:00');
+    let year = startD.getFullYear();
+    let mon  = startD.getMonth();
+    while (true) {
+      const lastDay = new Date(year, mon + 1, 0).getDate();
+      const useDay = Math.min(day, lastDay);
+      const dateStr = `${year}-${String(mon + 1).padStart(2, '0')}-${String(useDay).padStart(2, '0')}`;
+      if (dateStr >= effStart && dateStr <= effEnd) occ.push({ date: dateStr, month: dateStr.slice(0,7), amount: +debt.total_amount||0 });
+      else if (dateStr > effEnd) break;
+      mon++;
+      if (mon > 11) { mon = 0; year++; }
+      if (year > endD.getFullYear() + 1) break;
+    }
+  } else if (freq === 'biweekly') {
+    const anchor = debt.recurring_anchor || start;
+    let curD = new Date(anchor + 'T00:00:00');
+    const endD = new Date(effEnd + 'T00:00:00');
+    const fromD = new Date(effStart + 'T00:00:00');
+    while (curD < fromD) curD.setDate(curD.getDate() + 14);
+    while (curD <= endD) {
+      const ds = curD.toISOString().slice(0,10);
+      occ.push({ date: ds, month: ds.slice(0,7), amount: +debt.total_amount||0 });
+      curD.setDate(curD.getDate() + 14);
+    }
+  }
+  return occ;
+}
+
+function renderPublicRecurring(data, cur, f) {
+  const { debt, payments } = data;
+  const today = todayISO();
+  const freqLbl = debt.recurring_frequency === 'biweekly' ? 'cada 14 días' : `cada mes (día ${debt.recurring_day||1})`;
+  const isEnded = debt.recurring_end_date && debt.recurring_end_date < today;
+
+  // Calcular esperados desde inicio hasta hoy
+  const expected = expandRecurringDebt(debt, '2000-01-01', today);
+  // Pagos aprobados (no rechazados)
+  const isApproved = p => !p.status || p.status === 'approved';
+  const isPending  = p => p.status === 'pending';
+  const approvedPays = payments.filter(isApproved);
+  const pendingPays  = payments.filter(isPending);
+
+  // Set de meses ya pagados (aprobados)
+  const paidMonths = new Set(approvedPays.map(p => (p.payment_date||'').slice(0,7)).filter(Boolean));
+  // Total pagado este año
+  const yearStr = today.slice(0,4);
+  const paidThisYear = approvedPays.filter(p => (p.payment_date||'').startsWith(yearStr)).reduce((s, p) => s + (+p.amount||0), 0);
+  // Monto periódico
+  const periodAmount = +debt.total_amount || 0;
+  // Total cobrado histórico (todos los pagos aprobados)
+  const totalCollected = approvedPays.reduce((s, p) => s + (+p.amount||0), 0);
+  // Cuántos esperados están pendientes (no pagados aún)
+  const pendingCount = expected.filter(e => !paidMonths.has(e.month)).length;
+  // Cuántos atrasados (fecha pasó, no pagado)
+  const overdueCount = expected.filter(e => !paidMonths.has(e.month) && e.date < today).length;
+
+  // Status pill
+  let statusLbl, statusCls;
+  if (isEnded) { statusLbl = '📁 Acuerdo Terminado'; statusCls = 'ok'; }
+  else if (overdueCount > 0) { statusLbl = `⚠️ ${overdueCount} pago${overdueCount>1?'s':''} atrasado${overdueCount>1?'s':''}`; statusCls = 'late'; }
+  else { statusLbl = '✅ Al Día'; statusCls = 'ok'; }
+
+  document.getElementById('root').innerHTML = `
+  <div class="phead">
+    <div>
+      <div class="brand">DebtOS</div>
+      <div class="brand-sub">Vista pública · v5.5</div>
+      <div style="font-size:10px;color:var(--tx3);margin-top:4px;display:flex;align-items:center;gap:6px">
+        <span style="display:inline-block;width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.4)"></span>
+        Actualizado · ${new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
+        <a href="javascript:location.reload()" style="color:var(--am);text-decoration:none;margin-left:4px;font-weight:500">↻ recargar</a>
+      </div>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</button>
+  </div>
+
+  <div class="ro-banner">
+    🔒 <strong>Vista compartida — Gasto Recurrente</strong> · Aquí puedes ver el calendario de pagos esperados y <strong>reportar pagos realizados</strong> mes a mes.
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    ${debt.borrower_name ? `<div class="hero-borrower">👤 ${debt.borrower_name}</div>` : ''}
+    <div class="hero-title">🔄 ${debt.name}</div>
+    <div class="hero-sub">${debt.description || 'Gasto recurrente'} · ${freqLbl} · Inicio: ${fmtDate(debt.start_date)}${debt.recurring_end_date ? ' · Fin: '+fmtDate(debt.recurring_end_date) : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
+    <div class="status-pill ${statusCls}"><span class="dot"></span>${statusLbl}</div>
+
+    <div style="text-align:center;margin-top:14px;padding:14px;background:var(--bg3s);border-radius:8px">
+      <div style="font-size:11px;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Monto por período</div>
+      <div style="font-family:var(--fmono);font-size:26px;font-weight:800;color:var(--pu)">${f(periodAmount)}</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px">${freqLbl}</div>
+    </div>
+
+    ${!isEnded ? `<div style="text-align:center;margin-top:14px">
+      <button onclick="modalReportPayment()" style="background:var(--gn);color:#021008;border:none;padding:10px 22px;border-radius:8px;font-family:var(--fm);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,.3)">
+        📤 Reportar un pago realizado
+      </button>
+      ${pendingPays.length > 0 ? `<div style="margin-top:8px;font-size:11px;color:var(--am)">⏳ Tienes ${pendingPays.length} pago${pendingPays.length>1?'s':''} esperando aprobación</div>` : ''}
+    </div>` : ''}
+  </div>
+
+  <!-- KPIs -->
+  <div class="kgrid">
+    <div class="kc bl"><div class="klbl">Monto por período</div><div class="kval">${f(periodAmount, true)}</div><div class="ksub">${freqLbl}</div></div>
+    <div class="kc gn"><div class="klbl">Total pagado histórico</div><div class="kval" style="color:var(--gn)">${f(totalCollected, true)}</div><div class="ksub">${approvedPays.length} pago${approvedPays.length!==1?'s':''} aprobado${approvedPays.length!==1?'s':''}</div></div>
+    <div class="kc ${overdueCount > 0 ? 'rd' : 'am'}"><div class="klbl">Pagos pendientes</div><div class="kval" style="color:${overdueCount > 0 ? 'var(--rd)' : 'var(--am)'}">${pendingCount}</div><div class="ksub">${overdueCount > 0 ? overdueCount+' atrasado'+(overdueCount>1?'s':'') : 'al día'}</div></div>
+  </div>
+
+  <!-- Calendario de pagos esperados -->
+  <div class="section">
+    <div class="section-ti">📅 Calendario de Pagos</div>
+    <div class="section-su">Más recientes primero · ${expected.length} período${expected.length!==1?'s':''} desde el inicio</div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th>Fecha esperada</th>
+        <th class="tdn">Monto esperado</th>
+        <th>Estado</th>
+        <th class="tdn">Monto real</th>
+      </tr></thead>
+      <tbody>${expected.length ? expected.slice().reverse().map(occ => {
+        const isPaid = paidMonths.has(occ.month);
+        const linked = approvedPays.find(p => (p.payment_date||'').slice(0,7) === occ.month);
+        const hasPending = pendingPays.some(p => (p.payment_date||'').slice(0,7) === occ.month);
+        if (isPaid && linked) {
+          const realAmt = +linked.amount || 0;
+          const diff = realAmt - occ.amount;
+          const diffStr = Math.abs(diff) > 0.01 ? ` <span style="font-size:9px;color:var(--tx3)">(${diff>0?'+':''}${f(diff)})</span>` : '';
+          return `<tr style="background:rgba(16,185,129,.04)">
+            <td>${fmtDate(occ.date)}</td>
+            <td class="tdn">${f(occ.amount)}</td>
+            <td><span style="font-size:10px;background:var(--gnd);color:var(--gn);padding:2px 7px;border-radius:8px;font-weight:600">✓ Pagado ${fmtDate(linked.payment_date)}</span></td>
+            <td class="tdn fw7 txt-gn">${f(realAmt)}${diffStr}</td>
+          </tr>`;
+        }
+        if (hasPending) {
+          return `<tr style="background:rgba(245,158,11,.06)">
+            <td>${fmtDate(occ.date)}</td>
+            <td class="tdn">${f(occ.amount)}</td>
+            <td><span style="font-size:10px;background:rgba(245,158,11,.15);color:var(--am);padding:2px 7px;border-radius:8px;font-weight:600">⏳ Reportado · pendiente aprobación</span></td>
+            <td class="tdn">—</td>
+          </tr>`;
+        }
+        const isOverdue = occ.date < today;
+        return `<tr style="background:${isOverdue?'rgba(239,68,68,.04)':'transparent'}">
+          <td>${fmtDate(occ.date)}${isOverdue?' <span style="font-size:9px;background:var(--rdd);color:var(--rd);padding:1px 5px;border-radius:6px;margin-left:4px">⚠ atrasado</span>':''}</td>
+          <td class="tdn fw7">${f(occ.amount)}</td>
+          <td><span style="font-size:10px;background:var(--bld);color:var(--bl);padding:2px 7px;border-radius:8px">🔮 Esperado</span></td>
+          <td class="tdn"><span style="color:var(--tx3)">—</span></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--tx3);padding:26px">Aún no hay pagos esperados</td></tr>'}</tbody>
+    </table></div>
+  </div>
+
+  ${approvedPays.filter(p => !expected.some(e => e.month === (p.payment_date||'').slice(0,7))).length ? `
+  <div class="section">
+    <div class="section-ti">💰 Pagos adicionales</div>
+    <div class="section-su">Pagos fuera del calendario esperado</div>
+    <div class="tw"><table>
+      <thead><tr><th>Fecha</th><th class="tdn">Monto</th><th>Notas</th></tr></thead>
+      <tbody>${approvedPays.filter(p => !expected.some(e => e.month === (p.payment_date||'').slice(0,7))).map(p => `<tr>
+        <td>${fmtDate(p.payment_date)}</td>
+        <td class="tdn fw7 txt-gn">${f(p.amount)}</td>
+        <td>${p.notes||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>` : ''}
+
+  <div class="footer-note">
+    📌 <strong>Información:</strong> Este es un gasto/cobro recurrente.
+    <br><span style="opacity:.6;font-size:10px">Esta vista es solo informativa. Los pagos deben realizarse directamente al acreedor.</span>
+  </div>
+
+  <div id="modal-container"></div>
+  `;
+}
+
+
 function renderPublic(data) {
   const { debt, amorts, payments, instPays } = data;
   window._debtData = data; // guardar para modales
 
-  // Determinar si tiene tabla de amortización
-  // Si has_amort es null/undefined, inferir por presencia de amorts o months
-  const hasAmort = (debt.has_amort === false) ? false
-                 : (debt.has_amort === true)  ? true
-                 : (amorts && amorts.length > 0) || (+debt.months || 0) > 0;
+  // ── MONEDA Y MODO ──
+  const cur = debt.currency || 'USD';
+  const isRecurring = !!debt.is_recurring;
+  // helper local: fmt() con la moneda de esta deuda
+  const f  = (n, short) => fmt(n, cur, short);
+
+  // Si es recurrente → renderizar vista distinta y retornar
+  if (isRecurring) {
+    return renderPublicRecurring(data, cur, f);
+  }
 
   // Filtrar SOLO pagos aprobados para cálculos de saldo
   const isApproved = p => !p.status || p.status === 'approved';
@@ -364,43 +591,13 @@ function renderPublic(data) {
   const totalPaid = approvedPays.reduce((s,p) => s+(+p.amount||0), 0)
                   + approvedInst.reduce((s,p) => s+(+p.amount||0), 0);
   const total     = +debt.total_amount || 0;
-
-  // ── Desglose capital vs interés vs seguros ──
-  // Pagos genéricos = 100% capital
-  // Pagos de cuota = prorrateo cap/total, int/total, insurance/total
-  let capitalPaid   = approvedPays.reduce((s, p) => s + (+p.amount || 0), 0);
-  let interestPaid  = 0;
-  let insurancePaid = 0;
-  if (hasAmort) {
-    amorts.forEach(a => {
-      const cuotaTotal = +a.total || 0;
-      const cap = +a.cap || 0;
-      const int_ = +a.int || 0;
-      const ins  = +a.insurance || 0;
-      if (cuotaTotal <= 0) return;
-      const ipApr = approvedInst.filter(p => p.amort_id === a.id);
-      const sumIp = ipApr.reduce((s, p) => s + (+p.amount || 0), 0);
-      const isManuallyPaid = !!a.paid_date;
-      const covered = isManuallyPaid ? cuotaTotal : sumIp;
-      capitalPaid   += covered * (cap / cuotaTotal);
-      interestPaid  += covered * (int_ / cuotaTotal);
-      insurancePaid += covered * (ins / cuotaTotal);
-    });
-  } else {
-    capitalPaid += approvedInst.reduce((s, p) => s + (+p.amount || 0), 0);
-  }
-  const capitalRem = Math.max(0, total - capitalPaid);
-  const remaining = capitalRem; // El "saldo pendiente" real es capital restante
-  const pct       = total ? Math.min(100, capitalPaid/total*100) : 0;
+  const remaining = Math.max(0, total - totalPaid);
+  const pct       = total ? Math.min(100, totalPaid/total*100) : 0;
 
   // Anotar amortización (con instPays APROBADOS para no inflar saldos)
   const annotated = annotateAmorts(amorts, approvedInst);
   const overdueRows = annotated.filter(a => a.status === 'overdue' || a.status === 'partial');
   const upcoming    = annotated.filter(a => a.status === 'pending').slice(0, 3);
-
-  // ¿La deuda tiene seguros? (cualquier fila con insurance > 0)
-  const hasInsuranceCol = annotated.some(r => (+r.insurance || 0) > 0);
-  const totalInsurance  = annotated.reduce((s, r) => s + (+r.insurance || 0), 0);
 
   // Estado global
   let statusLbl, statusCls;
@@ -425,7 +622,7 @@ function renderPublic(data) {
   <div class="phead">
     <div>
       <div class="brand">DebtOS</div>
-      <div class="brand-sub">Vista pública · v5.14</div>
+      <div class="brand-sub">Vista pública · v5.5</div>
       <div style="font-size:10px;color:var(--tx3);margin-top:4px;display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.4)"></span>
         Actualizado · ${new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
@@ -443,15 +640,15 @@ function renderPublic(data) {
   <div class="hero">
     ${debt.borrower_name ? `<div class="hero-borrower">👤 ${debt.borrower_name}</div>` : ''}
     <div class="hero-title">${debt.name}</div>
-    <div class="hero-sub">${debt.description || 'Sin descripción'} · Inicio: ${fmtDate(debt.start_date)}${debt.months ? ' · Plazo: '+debt.months+' meses' : ''}${debt.interest_rate ? ' · Tasa: '+debt.interest_rate+'% anual' : ''}</div>
+    <div class="hero-sub">${debt.description || 'Sin descripción'} · Inicio: ${fmtDate(debt.start_date)}${debt.months ? ' · Plazo: '+debt.months+' meses' : ''}${debt.interest_rate ? ' · Tasa: '+debt.interest_rate+'% anual' : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
     <div class="status-pill ${statusCls}"><span class="dot"></span>${statusLbl}</div>
 
     <div class="pwrap">
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
       <div class="pinfo">
-        <span><strong style="color:var(--gn)">${fmt(totalPaid)}</strong> pagado</span>
+        <span><strong style="color:var(--gn)">${f(totalPaid)}</strong> pagado</span>
         <span>${pct.toFixed(1)}%</span>
-        <span>de <strong>${fmt(total)}</strong></span>
+        <span>de <strong>${f(total)}</strong></span>
       </div>
     </div>
 
@@ -465,59 +662,53 @@ function renderPublic(data) {
 
   <!-- KPIs -->
   <div class="kgrid">
-    <div class="kc bl"><div class="klbl">Capital Total</div><div class="kval">${fmt(total, true)}</div><div class="ksub">monto original</div></div>
-    <div class="kc gn"><div class="klbl">Capital Pagado</div><div class="kval" style="color:var(--gn)">${fmt(capitalPaid, true)}</div><div class="ksub">${pct.toFixed(1)}% completado${interestPaid > 0 ? ' · interés: '+fmt(interestPaid, true) : ''}${insurancePaid > 0 ? ' · seguros: '+fmt(insurancePaid, true) : ''}</div></div>
-    <div class="kc ${capitalRem > 0 ? 'rd' : 'gn'}"><div class="klbl">Capital Pendiente</div><div class="kval" style="color:${capitalRem > 0 ? 'var(--rd)' : 'var(--gn)'}">${fmt(capitalRem, true)}</div><div class="ksub">${capitalRem > 0 ? 'aún por pagar' : '¡Liquidada!'}</div></div>
-    ${hasAmort ? `<div class="kc ${overdueRows.length > 0 ? 'rd' : 'am'}"><div class="klbl">Cuotas Atrasadas</div><div class="kval">${overdueRows.length}</div><div class="ksub">${overdueRows.length === 0 ? 'al día' : 'requieren atención'}</div></div>` : `<div class="kc bl"><div class="klbl">Tipo</div><div class="kval" style="font-size:14px">💸 Pago libre</div><div class="ksub">sin cuotas fijas</div></div>`}
+    <div class="kc bl"><div class="klbl">Monto Total</div><div class="kval">${f(total, true)}</div><div class="ksub">capital original</div></div>
+    <div class="kc gn"><div class="klbl">Pagado</div><div class="kval" style="color:var(--gn)">${f(totalPaid, true)}</div><div class="ksub">${pct.toFixed(1)}% completado</div></div>
+    <div class="kc ${remaining > 0 ? 'rd' : 'gn'}"><div class="klbl">Saldo Pendiente</div><div class="kval" style="color:${remaining > 0 ? 'var(--rd)' : 'var(--gn)'}">${f(remaining, true)}</div><div class="ksub">${remaining > 0 ? 'aún por pagar' : '¡Liquidada!'}</div></div>
+    <div class="kc ${overdueRows.length > 0 ? 'rd' : 'am'}"><div class="klbl">Cuotas Atrasadas</div><div class="kval">${overdueRows.length}</div><div class="ksub">${overdueRows.length === 0 ? 'al día' : 'requieren atención'}</div></div>
   </div>
 
-  ${hasInsuranceCol ? `<div style="margin-top:12px;padding:9px 13px;background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:8px;font-size:11.5px;color:var(--tx2)">
-    🛡️ Esta deuda incluye <strong style="color:#8b5cf6;font-family:var(--fmono)">${fmt(totalInsurance, true)}</strong> total en seguros/desgravamen distribuidos entre las cuotas. Estos van además del capital e interés.
-  </div>` : ''}
-
-  ${(hasAmort && overdueRows.length > 0) ? `
+  ${overdueRows.length > 0 ? `
   <!-- Overdue alert -->
   <div class="card" style="border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,var(--rdd) 0%,var(--bg2) 60%)">
     <div class="card-ti" style="color:var(--rd)">⚠️ Cuotas Atrasadas — Requieren Atención</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th>Días Atraso</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th>Estado</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th>Días Atraso</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${overdueRows.map(r => `<tr class="ro">
         <td class="tdm">#${r.n}</td>
         <td>${fmtDate(r.due)}</td>
         <td><span class="chip crd">${daysSince(r.due)} días</span></td>
-        <td class="tdn">${fmt(r.cap)}</td>
-        <td class="tdn">${fmt(r.int)}</td>
-        ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
-        <td class="tdn" style="font-weight:700">${fmt(r.total)}</td>
+        <td class="tdn">${f(r.cap)}</td>
+        <td class="tdn">${f(r.int)}</td>
+        <td class="tdn" style="font-weight:700">${f(r.total)}</td>
         <td>${r.status === 'partial' ? '<span class="chip cam">Parcial</span>' : '<span class="chip crd">Atrasada</span>'}</td>
       </tr>`).join('')}</tbody>
     </table></div>
   </div>` : ''}
 
-  ${(hasAmort && upcoming.length > 0) ? `
+  ${upcoming.length > 0 ? `
   <!-- Upcoming -->
   <div class="card">
     <div class="card-ti">📅 Próximas Cuotas</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th class="tdn">Saldo restante</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th class="tdn">Saldo restante</th></tr></thead>
       <tbody>${upcoming.map(r => `<tr>
         <td class="tdm">#${r.n}</td>
         <td>${fmtDate(r.due)} <span style="font-size:10px;color:var(--tx3)">(en ${-daysSince(r.due)} días)</span></td>
-        <td class="tdn">${fmt(r.cap)}</td>
-        <td class="tdn">${fmt(r.int)}</td>
-        ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
-        <td class="tdn" style="font-weight:700;color:var(--am)">${fmt(r.total)}</td>
-        <td class="tdn">${fmt(r.bal)}</td>
+        <td class="tdn">${f(r.cap)}</td>
+        <td class="tdn">${f(r.int)}</td>
+        <td class="tdn" style="font-weight:700;color:var(--am)">${f(r.total)}</td>
+        <td class="tdn">${f(r.bal)}</td>
       </tr>`).join('')}</tbody>
     </table></div>
   </div>` : ''}
 
   <!-- Full schedule -->
-  ${(hasAmort && annotated.length > 0) ? `
+  ${annotated.length > 0 ? `
   <div class="card">
     <div class="card-ti">📋 Plan Completo de Pagos</div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha de Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th>${hasInsuranceCol ? '<th class="tdn">Seguros</th>' : ''}<th class="tdn">Cuota</th><th>Estado</th></tr></thead>
+      <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha de Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${annotated.map(r => {
         const rc = r.status==='paid'?'rp' : (r.status==='overdue'||r.status==='partial')?'ro' : '';
         let chip;
@@ -529,10 +720,9 @@ function renderPublic(data) {
           <td class="tdm">#${r.n}</td>
           <td>${fmtDate(r.due)}</td>
           <td style="color:${r.paid_date ? 'var(--gn)' : 'var(--tx3)'}">${r.paid_date ? fmtDate(r.paid_date) : '—'}</td>
-          <td class="tdn">${fmt(r.cap)}</td>
-          <td class="tdn">${fmt(r.int)}</td>
-          ${hasInsuranceCol ? `<td class="tdn" style="color:${(+r.insurance||0)>0?'#8b5cf6':'var(--tx3)'}">${(+r.insurance||0)>0?fmt(r.insurance):'—'}</td>` : ''}
-          <td class="tdn" style="font-weight:600">${fmt(r.total)}</td>
+          <td class="tdn">${f(r.cap)}</td>
+          <td class="tdn">${f(r.int)}</td>
+          <td class="tdn" style="font-weight:600">${f(r.total)}</td>
           <td>${chip}</td>
         </tr>`;
       }).join('')}</tbody>
@@ -557,12 +747,12 @@ function renderPublic(data) {
           <td style="color:var(--tx3)">${p.notes || '—'}${p.reported_by==='borrower'?'<br><span style="font-size:9px;color:var(--am)">📤 reportado por ti</span>':''}${isRejected(p) && p.reviewer_note?`<br><span style="font-size:9px;color:var(--rd)">Motivo: ${p.reviewer_note}</span>`:''}</td>
           <td class="tdc">${p.receipt_url ? `<a href="${p.receipt_url}" target="_blank" style="color:var(--am);text-decoration:none;font-size:13px" title="Ver comprobante">📎</a>` : '<span style="color:var(--tx3);font-size:10px">—</span>'}</td>
           <td>${statusBadge}</td>
-          <td class="tdn" style="${amountStyle}">${fmt(p.amount)}</td>
+          <td class="tdn" style="${amountStyle}">${f(p.amount)}</td>
         </tr>`;
       }).join('')}
       <tr style="border-top:2px solid var(--bd2)">
         <td colspan="5" class="tdm" style="color:var(--am)">Total Aprobado</td>
-        <td class="tdn" style="color:var(--gn);font-weight:800;font-size:13px">${fmt(totalPaid)}</td>
+        <td class="tdn" style="color:var(--gn);font-weight:800;font-size:13px">${f(totalPaid)}</td>
       </tr>
       </tbody>
     </table></div>
@@ -589,26 +779,11 @@ function modalReportPayment() {
   const debt = data.debt;
   const today = new Date().toISOString().split('T')[0];
 
-  // ¿La deuda tiene tabla de amortización?
-  const hasAmort = (debt.has_amort === false) ? false
-                 : (debt.has_amort === true)  ? true
-                 : (data.amorts && data.amorts.length > 0) || (+debt.months || 0) > 0;
-
-  // Calcular saldo pendiente (solo aprobados)
-  const isApproved = p => !p.status || p.status === 'approved';
-  const totalPaid = (data.payments  || []).filter(isApproved).reduce((s,p)=>s+(+p.amount||0), 0)
-                  + (data.instPays  || []).filter(isApproved).reduce((s,p)=>s+(+p.amount||0), 0);
-  const remaining = Math.max(0, (+debt.total_amount||0) - totalPaid);
-
-  // Sugerencia inteligente: si hay cuotas, sugerir la próxima; si no, dejar vacío
-  let suggestedAmt = '';
-  let suggestedNote = '';
-  if (hasAmort) {
-    const annotated = annotateAmorts(data.amorts, data.instPays.filter(isApproved));
-    const nextRow = annotated.find(a => a.status === 'pending' || a.status === 'overdue' || a.status === 'partial');
-    suggestedAmt  = nextRow ? nextRow.total.toFixed(2) : '';
-    suggestedNote = nextRow ? `Pago cuota #${nextRow.n}` : '';
-  }
+  // Sugerencia: cuota más próxima pendiente
+  const annotated = annotateAmorts(data.amorts, data.instPays.filter(p => !p.status || p.status==='approved'));
+  const nextRow = annotated.find(a => a.status === 'pending' || a.status === 'overdue' || a.status === 'partial');
+  const suggestedAmt = nextRow ? nextRow.total.toFixed(2) : '';
+  const suggestedNote = nextRow ? `Pago cuota #${nextRow.n}` : '';
 
   document.getElementById('modal-container').innerHTML = `<div class="mover" onclick="if(event.target===this) closeModal()"><div class="modal">
     <div class="mhd">
@@ -618,7 +793,7 @@ function modalReportPayment() {
     <div class="mbd">
       <div class="alrt-info">
         <strong>${debt.name}</strong>${debt.borrower_name ? ' · ' + debt.borrower_name : ''}<br>
-        <span style="font-size:11px;opacity:.85">${hasAmort ? 'Tu pago aparecerá como "Por aprobar" hasta que el acreedor lo confirme.' : `Saldo pendiente: <strong>${fmt(remaining)}</strong>. Puedes abonar el monto que quieras. Tu pago aparecerá como "Por aprobar".`}</span>
+        <span style="font-size:11px;opacity:.85">Tu pago aparecerá como "Por aprobar" hasta que el acreedor lo confirme.</span>
       </div>
 
       <div class="frow">
