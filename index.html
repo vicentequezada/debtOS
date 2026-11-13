@@ -786,7 +786,7 @@ a.v6-more{text-decoration:none;font-size:16px}
     <div class="slogo">
       <div class="slogo-wrap">
         <div class="slogo-mark">DebtOS</div>
-        <div class="slogo-sub">Financial OS · v6.5</div>
+        <div class="slogo-sub">Financial OS · v6.6 · 13-11-2026 12:29</div>
       </div>
     </div>
     <nav class="snav">
@@ -2391,6 +2391,8 @@ const Fin = {
     let realExpensesTotal = 0;
 
     Fin.outgoingDebts().forEach(d => {
+      // v6.5: una deuda ya liquidada/refinanciada no genera cuotas ni cobros esperados
+      if (typeof DebtFilter !== 'undefined' && DebtFilter.isClosed(d)) return;
       const myShare = Fin.myShareOfDebt(d);
       const _isPaidByOther = d.paid_by_other && d.counterparty_user_id && !d._is_mirror && d.counterparty_user_id !== user?.id;
       const parts = (S.parts || []).filter(p => p.debt_id === d.id);
@@ -8575,6 +8577,7 @@ function renderDebtRow(d, opts = {}) {
     // Tomar la primera cuota pendiente o la primera cuota como referencia
     const nextRow = rows.find(r => !r.paid_date) || rows[0];
     cuotaMensual = nextRow ? (+nextRow.total || 0) : 0;
+    if ((typeof V64 !== 'undefined' && !V64.isBank(d)) || rows.length <= 1) cuotaMensual = 0;  // v6.6
   }
 
   // ── Total pendiente: cap + int de cuotas no pagadas ──
@@ -8673,7 +8676,7 @@ function renderDebtRow(d, opts = {}) {
   // Render cuota mensual: si es recurrente, mostrar /mes o /quincena
   const cuotaMensualHtml = Fin.isRecurring(d)
     ? `${Cur.fmt(cuotaMensual, cur, { k: true })}<span style="font-size:9px;color:var(--tx3);font-weight:400">/${d.recurring_frequency === 'biweekly' ? 'qna' : 'mes'}</span>`
-    : (hasA ? Cur.fmt(cuotaMensual, cur, { k: true }) : '<span style="color:var(--tx3);font-size:10px">—</span>');
+    : (hasA && cuotaMensual ? Cur.fmt(cuotaMensual, cur, { k: true }) : `<span style="color:var(--tx3);font-size:10px">${hasA ? 'pago único / sin cuota fija' : '—'}</span>`);
 
   // Render total pendiente
   const totalPendienteHtml = Fin.isRecurring(d)
@@ -8753,6 +8756,8 @@ function renderDebtsTable(debts, kind) {
       const rows = (S.amorts || []).filter(a => a.debt_id === d.id);
       const nextRow = rows.find(r => !r.paid_date) || rows[0];
       cuotaMen = nextRow ? (+nextRow.total || 0) : 0;
+      // v6.6: deudas con personas (o de un solo pago) no tienen cuota mensual, salvo que las marques como recurrentes
+      if ((typeof V64 !== 'undefined' && !V64.isBank(d)) || rows.length <= 1) cuotaMen = 0;
     }
 
     // Convertir a primaria
@@ -12971,7 +12976,7 @@ function renderDelinquency() {
     // 2) COBROS ATRASADOS POR OTROS PARTICIPANTES / PAID_BY_OTHER
     //    Examinar TODAS las cuotas con vencimiento <= hoy, sin importar su estado
     //    Si otros no han aportado su parte y la cuota ya venció → es cobro atrasado
-    if (!isIn && (hasOtherParts || _isPaidByOther)) {
+    if (!isIn && (hasOtherParts || _isPaidByOther) && !(typeof DebtFilter !== 'undefined' && DebtFilter.isClosed(d))) {
       annotated
         .filter(a => a.due && a.due <= todayStr)
         .forEach(a => {
@@ -14816,6 +14821,7 @@ function esc(v) {
   return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const DEBTOS_VERSION = 'v6.6', DEBTOS_BUILD = '13-11-2026 12:29';
 const V6 = {
   today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
   addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); },
@@ -15775,7 +15781,7 @@ function v6CompactList(list, view) {
     const pct = rec ? null : (total ? Math.min(100, (1 - rem / total) * 100) : 0);
     const who = view === 'receivables' && d.borrower_name ? esc(d.borrower_name) + ' · ' : '';
     const sub = closed ? '✓ Pagada'
-      : [cuota ? `${V6.cur(cuota, d.currency)}${rec ? (d.recurring_frequency === 'biweekly' ? '/quincena' : '/mes') : ''}` : '',
+      : [cuota && (rec || V64.isBank(d)) && (Fin.annotated(d.id).length > 1) ? `${V6.cur(cuota, d.currency)}${rec ? (d.recurring_frequency === 'biweekly' ? '/quincena' : '/mes') : ''}` : (next ? 'pago único' : 'sin cuota fija'),
          next ? (next.due < today ? `<span style="color:var(--rd);font-weight:600">${ov} atrasada${ov>1?'s':''}</span>` : 'próx. ' + V6.short(next.due)) : '',
          +d.interest_rate ? (+d.interest_rate).toLocaleString('es-EC') + '%' : ''].filter(Boolean).join(' · ');
     return `<div class="v6-row">
@@ -16432,6 +16438,7 @@ renderHome = function () {
       <div><span>Me deben</span><b style="color:var(--gn)">${V6.money(h.totalRec + (h.othersTotal || 0))}</b></div>
       <div><span>Salud</span><b>${score === null ? '—' : score + '/100'}</b></div>
     </div>
+    <div class="v6-muted" style="text-align:center;margin-top:10px;font-size:10.5px">DebtOS ${DEBTOS_VERSION} · actualizado ${DEBTOS_BUILD}</div>
   </div>`;
   if (location.hash === '#gasto' && S.mov.ready) { history.replaceState(null, '', location.pathname); setTimeout(modalNewTx, 250); }
 };
