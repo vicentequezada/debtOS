@@ -690,6 +690,8 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 .v6-seg.on{background:var(--bg2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .v6-seg-n{font-size:10.5px;color:var(--tx3);margin-left:2px}
 .v6-stamp{font-size:10px;color:var(--tx3);margin-top:1px;white-space:nowrap}
+.v64-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.v64-pill.ok{background:var(--gnd);color:var(--gn)}.v64-pill.late{background:var(--rdd);color:var(--rd)}.v64-pill.wait{background:var(--bg3s);color:var(--tx2)}
 .v6-more{border:none;background:none;color:var(--tx3);font-size:18px;cursor:pointer;padding:4px 2px;flex-shrink:0}
 
 /* Barra inferior: solo en celular */
@@ -724,6 +726,33 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 .v63-bal{position:relative;height:20px;display:flex;align-items:center;justify-content:flex-end}
 .v63-bal i{position:absolute;left:0;top:7px;height:6px;border-radius:3px;opacity:.35}
 .v63-bal b{position:relative;font-size:12px}
+
+/* v6.5 · compacto */
+.v6-wrap{padding-top:0}
+.v6-card{padding:10px 12px;margin-bottom:8px;border-radius:12px}
+.v6-row{padding:8px 0;gap:8px}
+.v6-monthnav{margin-bottom:8px}
+.v6-hero{padding:12px 14px;margin-bottom:8px}
+.v65-mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.08)}
+.v65-mini div{display:flex;flex-direction:column;min-width:0}
+.v65-mini span{font-size:10.5px;color:var(--tx2)}
+.v65-mini b{font-size:14px;color:var(--tx);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v65-mini small{font-size:10px;color:var(--tx3)}
+.v65-pend{border-color:var(--am)}
+.v65-p{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--bd)}
+.v65-p:last-child{border-bottom:none}
+.v65-tabs{margin-bottom:6px}
+.v65-tabs i{font-style:normal;font-size:10px;background:var(--am);color:#1a1200;border-radius:999px;padding:1px 6px;margin-left:3px}
+.v65-tabbody{min-height:120px}
+.v65-foot{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding-top:8px;margin-top:4px;border-top:1px solid var(--bd);color:var(--tx3)}
+.v65-foot a{color:var(--bl);font-weight:600;text-decoration:none}
+.v65-proj{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px}
+.v65-big{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.v65-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;cursor:pointer}
+.v65-totals div{display:flex;flex-direction:column;min-width:0}
+.v65-totals span{font-size:10.5px;color:var(--tx3)}
+.v65-totals b{font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+a.v6-more{text-decoration:none;font-size:16px}
 </style>
 </head>
 <body>
@@ -757,7 +786,7 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
     <div class="slogo">
       <div class="slogo-wrap">
         <div class="slogo-mark">DebtOS</div>
-        <div class="slogo-sub">Financial OS · v6.3</div>
+        <div class="slogo-sub">Financial OS · v6.5</div>
       </div>
     </div>
     <nav class="snav">
@@ -13669,7 +13698,9 @@ async function approveExpectedIncome(idx, month, opts = {}) {
         currency: src.currency || 'USD',
         date: paidDate,
         category: src.category || 'salary',
-        notes: `Aprobado desde plan mensual (${month})${partialTag}${userNotes}`,
+        description: src.name || 'Ingreso',
+        month: paidDate.slice(0, 7),
+        notes: `Aprobado desde plan mensual (${month})${partialTag}${opts.notes ? ' · ' + opts.notes : ''}`,
         user_id: user?.id,
       };
       S.incomes.push(row);
@@ -15130,7 +15161,7 @@ function renderHome() {
     </div>`; }).join('') : '';
   const maxCat = h.cats[0]?.v || 1;
   const catHtml = !S.mov.ready
-    ? `<div class="v6-empty">${S.mov.missing ? 'Para ver tus gastos ejecuta el SQL de la v6 en Supabase.' : 'Cargando movimientos…'}</div>`
+    ? `<div class="v6-empty">${S.mov.missing ? 'Para ver tus gastos ejecuta 2_migracion_v6.3.sql en Supabase.' : 'Cargando movimientos…'}</div>`
     : h.cats.length ? h.cats.slice(0, 6).map(x => {
         const bud = x.c?.budget ? ` <span class="v6-muted">/ ${V6.money(x.c.budget)}</span>` : '';
         const over = x.c?.budget && x.v > x.c.budget;
@@ -15173,7 +15204,7 @@ function renderMovements() {
   if (!S.mov.ready) {
     c.innerHTML = `<div class="v6-wrap"><div class="alrt aw" style="font-size:13px;line-height:1.6">
       <strong>Falta un paso para activar Movimientos.</strong><br>
-      Ejecuta el archivo <code>debtos_v6_migracion.sql</code> en Supabase → SQL Editor (una sola vez) y luego recarga la app.
+      Ejecuta el archivo <b>2_migracion_v6.3.sql</b> en Supabase → SQL Editor (proyecto de DebtOS) y luego recarga la app.
       ${S.mov.missing ? '' : '<br><small>Si ya lo ejecutaste, revisa tu conexión y pulsa “Conectado” en el menú para sincronizar.</small>'}
     </div></div>`;
     return;
@@ -15642,7 +15673,7 @@ async function v6NewLink() {
   const a = new Uint8Array(18); crypto.getRandomValues(a);
   const token = Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
   const { error } = await sb.from('fin_share_links').insert({ token, owner_user_id: user.id, label: label.trim() || 'Gastos del hogar', currency: Cur.primary() });
-  if (error) return UI.toast('❌ ' + (/fin_share_links/.test(error.message) ? 'Ejecuta el SQL v6.2 en Supabase' : error.message), 'error');
+  if (error) return UI.toast('❌ ' + (/fin_share_links/.test(error.message) ? 'Ejecuta 2_migracion_v6.3.sql en Supabase' : error.message), 'error');
   S.mov.links = [...(S.mov.links || []), { token, label, active: true, currency: Cur.primary(), show_debts: false }];
   v6CopyLink(token); go('movements');
 }
@@ -15652,7 +15683,7 @@ function v6CopyLink(token) {
 }
 async function v6LinkShowDebts(token, on) {
   const { error } = await sb.from('fin_share_links').update({ show_debts: on }).eq('token', token);
-  if (error) return UI.toast('❌ ' + (/show_debts/.test(error.message) ? 'Ejecuta el SQL v6.3 en Supabase' : error.message), 'error');
+  if (error) return UI.toast('❌ ' + (/show_debts/.test(error.message) ? 'Ejecuta 2_migracion_v6.3.sql en Supabase' : error.message), 'error');
   S.mov.links = (S.mov.links || []).map(l => l.token === token ? { ...l, show_debts: on } : l);
   UI.toast(on ? '✅ Ahora el link muestra las cuotas del mes' : 'Cuotas ocultas en el link');
 }
@@ -15674,7 +15705,7 @@ async function v6AddMember() {
     S.mov.members = [...(S.mov.members || []), { owner_user_id: user.id, member_user_id: p.user_id }];
     if (!(S.allProfiles || []).some(x => x.user_id === p.user_id)) S.allProfiles = [...(S.allProfiles || []), p];
     UI.toast('✅ Ahora comparten los gastos'); go('movements');
-  } catch (e) { UI.toast('❌ ' + (/fin_household/.test(e.message || '') ? 'Ejecuta el SQL v6.1 en Supabase' : e.message), 'error'); }
+  } catch (e) { UI.toast('❌ ' + (/fin_household/.test(e.message || '') ? 'Ejecuta 2_migracion_v6.3.sql en Supabase' : e.message), 'error'); }
 }
 async function v6RemoveMember(uid) {
   if (!confirm('¿Dejar de compartir los gastos con esta persona?')) return;
@@ -16177,6 +16208,233 @@ function v63Onboarding() {
     wrap.insertAdjacentHTML('afterbegin', v63Onboarding());
   };
 })();
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   v6.4 — Avisos: cobros del mes, ingresos por confirmar; deudas bancos/personas
+═══════════════════════════════════════════════════════════ */
+const V64 = {
+  isBank(d) { return ['loan', 'credit_card', 'mortgage'].includes(d.type) && !/suegra|devoluci/i.test(d.name || ''); },
+  /* Lo que te deben pagar este mes, con su estado */
+  cobrosMes(m) {
+    const today = V6.today(); const out = [];
+    Fin.incomingDebts().filter(d => !DebtFilter.isClosed(d)).forEach(d => {
+      if (Fin.hasAmort(d)) {
+        Fin.annotated(d.id).filter(a => (a.due || '').startsWith(m) || (a.status !== 'paid' && a.due < m + '-01')).forEach(a => {
+          const late = a.status !== 'paid' && a.due < today;
+          out.push({ who: d.borrower_name || d.name, what: d.name, due: a.due, amount: Math.max(0, (+a.total || 0) - (a.status === 'paid' ? 0 : (+a.instTotal || 0))), cur: d.currency, st: a.status === 'paid' ? 'ok' : late ? 'late' : 'wait', act: `modalInstPayment('${d.id}','${a.id}')`, debtId: d.id, old: a.due < m + '-01' });
+        });
+      } else if (Fin.isRecurring(d) && Fin.expandRecurringDebt) {
+        Fin.expandRecurringDebt(d, m + '-01', m + '-31').forEach(e => {
+          const paid = S.payments.some(p => p.debt_id === d.id && (p.payment_date || '').startsWith(m) && Fin.isApproved(p));
+          out.push({ who: d.borrower_name || d.name, what: d.name, due: e.date, amount: +d.total_amount || 0, cur: d.currency, st: paid ? 'ok' : e.date < today ? 'late' : 'wait', act: `go('amort','${d.id}')`, debtId: d.id });
+        });
+      }
+    });
+    // Partes de otras personas dentro de tus deudas (participantes, ej. tu cuñada en el préstamo de Mónica)
+    Fin.outgoingDebts().filter(d => !DebtFilter.isClosed(d) && Fin.hasAmort(d)).forEach(d => {
+      const parts = (S.parts || []).filter(p => p.debt_id === d.id && (+p.pct || 0) > 0 && !(p.user_id && p.user_id === user?.id));
+      if (!parts.length) return;
+      Fin.annotated(d.id).filter(a => (a.due || '').startsWith(m)).forEach(a => {
+        parts.forEach(p => {
+          const exp = (+a.total || 0) * p.pct / 100;
+          const got = (S.instPayments || []).filter(ip => ip.amort_id === a.id && ip.part_id === p.id && Fin.isApproved(ip)).reduce((s, ip) => s + (+ip.amount || 0), 0);
+          out.push({ who: p.name, what: d.name + ' (su parte)', due: a.due, amount: Math.max(0, exp - got), cur: d.currency, st: got >= exp * 0.99 ? 'ok' : a.due < today ? 'late' : 'wait', act: `go('amort','${d.id}')`, debtId: d.id });
+        });
+      });
+    });
+    return out.sort((x, y) => (x.st === 'ok') - (y.st === 'ok') || (x.due || '').localeCompare(y.due || ''));
+  },
+  /* Ingresos recurrentes (sueldo) esperados este mes que aún no confirmas */
+  ingresosPend(m) {
+    const first = m + '-01', last = m + '-' + String(V63.daysIn(m)).padStart(2, '0');
+    const out = [];
+    (S.incomeSources || []).filter(s => s.active !== false).forEach(src => {
+      (Fin.expandSource(src, first, last) || []).forEach(o => {
+        const done = (S.incomes || []).some(i => i.source_id === src.id && ((i.month || (i.date || '').slice(0, 7)) === m));
+        if (!done) out.push({ src, date: o.date, amount: o.amount, cur: o.currency || 'USD' });
+      });
+    });
+    return out;
+  },
+};
+
+function v64Cards(m) {
+  const today = V6.today();
+  const cob = V64.cobrosMes(m);
+  const inc = V64.ingresosPend(m);
+  const late = cob.filter(c => c.st === 'late');
+  const incDue = inc.filter(i => i.date <= today);
+  const alerts = [];
+  if (incDue.length) alerts.push(`💼 ${incDue.length === 1 ? 'Tu ' + esc(incDue[0].src.name) + ' debía llegar el ' + V6.short(incDue[0].date) : incDue.length + ' ingresos debían llegar'}: ¿ya lo recibiste? Confírmalo abajo.`);
+  if (late.length) alerts.push(`🔴 ${late.length} cobro${late.length > 1 ? 's' : ''} atrasado${late.length > 1 ? 's' : ''}: ${[...new Set(late.map(c => esc(c.who)))].slice(0, 4).join(', ')} no ${late.length > 1 ? 'han' : 'ha'} pagado.`);
+  const alertHtml = alerts.length ? `<div class="v6-alert" style="background:var(--amd);color:var(--am);cursor:default">${alerts.join('<br>')}</div>` : '';
+
+  const pill = st => st === 'ok' ? '<span class="v64-pill ok">✓ Recibido</span>' : st === 'late' ? '<span class="v64-pill late">Atrasado</span>' : '<span class="v64-pill wait">Por recibir</span>';
+  const tot = cob.reduce((s, c) => s + Fin.toPrimary(c.amount, c.cur || 'USD'), 0);
+  const got = cob.filter(c => c.st === 'ok').reduce((s, c) => s + Fin.toPrimary(c.amount, c.cur || 'USD'), 0);
+  const cobHtml = cob.length ? `<div class="v6-card"><div class="v6-card-h" style="display:flex;justify-content:space-between">📥 Cobros de este mes <span class="v6-seg-n">recibido ${V6.money(got)} de ${V6.money(tot)}</span></div>
+    ${cob.map(c => `<div class="v6-row">
+      <div class="v6-row-main" onclick="go('amort','${c.debtId}')"><div class="v6-row-t">${esc(c.who)}</div><div class="v6-row-s">${esc(c.what)} · ${c.old ? 'venció ' : ''}${V6.short(c.due)}</div></div>
+      <div class="v6-row-r" style="flex-direction:column;align-items:flex-end;gap:3px"><div class="v6-amt">${V6.cur(c.amount, c.cur)}</div>${pill(c.st)}</div>
+      ${c.st !== 'ok' ? `<button class="v6-pay" onclick="${c.act}">Registrar</button>` : ''}
+    </div>`).join('')}</div>` : '';
+
+  const incHtml = inc.length ? `<div class="v6-card"><div class="v6-card-h">💼 Ingresos por confirmar</div>
+    ${inc.map(i => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${esc(i.src.name)}</div><div class="v6-row-s">${i.date <= today ? 'debía llegar' : 'llega'} ${V6.short(i.date)}</div></div>
+      <div class="v6-amt">${V6.cur(i.amount, i.cur)}</div>
+      <button class="v6-pay v6-wa" onclick="confirmVirtual('${i.src.id}','${i.date}','${i.amount}','${i.cur}')">Confirmar</button></div>`).join('')}
+    <div class="v6-muted" style="margin-top:4px">Al confirmar, el ingreso se suma a "Entró" con el monto real que recibiste.</div></div>`
+    : (!(S.incomeSources || []).length ? `<div class="v6-card"><div class="v6-card-h">💼 Tu sueldo</div><div class="v6-muted" style="margin-bottom:8px">Registra tu sueldo como ingreso recurrente: cada mes te aviso para confirmarlo con un toque.</div><button class="btn bp btn-sm" onclick="go('income');setTimeout(()=>modalIncomeSourceForm(),300)">+ Registrar mi sueldo</button></div>` : '');
+  return { alertHtml, incHtml, cobHtml };
+}
+
+(function () {
+  const _rh = renderHome;
+  renderHome = function () {
+    _rh();
+    const wrap = document.querySelector('#content .v6-wrap'); if (!wrap) return;
+    const m = S.homeMonth || Fin.currentMonth();
+    const c = v64Cards(m);
+    const hero = wrap.querySelector('.v6-hero');
+    if (hero) hero.insertAdjacentHTML('beforebegin', c.alertHtml);
+    const cards = [...wrap.querySelectorAll('.v6-card')];
+    const teDeben = cards.find(x => (x.querySelector('.v6-card-h')?.textContent || '').includes('Te deben'));
+    if (teDeben) teDeben.insertAdjacentHTML('beforebegin', c.incHtml + c.cobHtml);
+    // Debo en total: separar bancos y personas
+    const out = V63.openOutgoing();
+    const bank = out.filter(V64.isBank).reduce((s, d) => s + Fin.toPrimary(Fin.remaining(d), d.currency || 'USD'), 0);
+    const pers = out.filter(d => !V64.isBank(d)).reduce((s, d) => s + Fin.toPrimary(Fin.remaining(d), d.currency || 'USD'), 0);
+    const tiles = [...wrap.querySelectorAll('.v6-tile')];
+    const debo = tiles.find(t => (t.querySelector('.v6-tile-l')?.textContent || '').includes('Debo en total'));
+    if (debo) debo.querySelector('.v6-tile-s').innerHTML = `bancos ${V6.money(bank)} · personas ${V6.money(pers)}`;
+  };
+  // Lista compacta de "Lo que debo": agrupar en bancos y personas
+  const _cl = v6CompactList;
+  v6CompactList = function (list, view) {
+    if (view !== 'debts' || !list.length) return _cl(list, view);
+    const bank = list.filter(V64.isBank), pers = list.filter(d => !V64.isBank(d));
+    const sec = (t, l) => l.length ? `<div class="v6-lbl" style="margin:12px 2px 6px">${t}</div>` + _cl(l, view) : '';
+    return sec('🏦 Deudas con bancos', bank) + sec('👤 Deudas con personas', pers);
+  };
+})();
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   v6.5 — Mi mes compacto: resumen · pendientes · pestañas Pagar / Cobrar / Gastos
+═══════════════════════════════════════════════════════════ */
+S.homeTab = S.homeTab || 'pagar';
+function v65Groups(cob) {
+  const g = {};
+  cob.forEach(x => {
+    const k = x.who + '|' + x.debtId;
+    const o = g[k] = g[k] || { who: x.who, what: x.what.replace(' (su parte)', ''), debtId: x.debtId, cur: x.cur, late: 0, lateAmt: 0, wait: 0, waitAmt: 0, ok: 0, okAmt: 0, next: null };
+    o[x.st]++; o[x.st + 'Amt'] += Fin.toPrimary(x.amount, x.cur || 'USD');
+    if (x.st !== 'ok' && (!o.next || x.due < o.next.due)) o.next = x;
+  });
+  return Object.values(g).sort((a, b) => b.lateAmt - a.lateAmt || (b.waitAmt - a.waitAmt));
+}
+function v65Remind(g) {
+  const link = publicLinkFor(g.debtId);
+  const owe = g.lateAmt + g.waitAmt;
+  const msg = `Hola ${g.who}, te recuerdo ${g.late ? `que tienes ${g.late} cuota${g.late > 1 ? 's' : ''} pendiente${g.late > 1 ? 's' : ''} de "${g.what}"` : `tu cuota de "${g.what}"`}: ${V6.money(owe)}.${link ? ' Aquí ves el detalle y puedes reportar tu pago: ' + link : ''} ¡Gracias!`;
+  return 'https://wa.me/?text=' + encodeURIComponent(msg);
+}
+renderHome = function () {
+  const m = S.homeMonth || Fin.currentMonth();
+  const isCur = m === Fin.currentMonth();
+  const today = V6.today();
+  const h = homeData(m);
+  const cob = V64.cobrosMes(m);
+  const groups = v65Groups(cob);
+  const inc = V64.ingresosPend(m);
+  let score = null; try { score = v63Health().score; } catch (e) {}
+  const neg = h.resultado < 0;
+  // Proyección de gastos
+  const day = new Date().getDate(), dim = V63.daysIn(m);
+  const proj = isCur && S.mov.ready && day >= 3 ? h.gastos / day * dim : null;
+  const budget = S.mov.ready ? Mov.catsOf('gasto').reduce((s, c) => s + (+c.budget || 0), 0) : 0;
+
+  /* ── Pendientes (lo que requiere acción hoy) ── */
+  const pend = [];
+  inc.filter(i => i.date <= today).forEach(i => pend.push(`<div class="v65-p"><span>💼 ¿Recibiste tu <b>${esc(i.src.name)}</b>? ${V6.cur(i.amount, i.cur)}</span><button class="v6-pay v6-wa" onclick="confirmVirtual('${i.src.id}','${i.date}','${i.amount}','${i.cur}')">Confirmar</button></div>`));
+  h.upcoming.filter(r => r.status === 'overdue' || r.status === 'partial' || r.due < today).slice(0, 2).forEach(r => pend.push(`<div class="v65-p"><span>⚠️ Cuota vencida: <b>${esc(r.debt.name)}</b></span><button class="v6-pay" onclick="modalInstPayment('${r.debt.id}','${r.id}')">Pagar</button></div>`));
+  const lateG = groups.filter(g => g.late);
+  const byWho = {}; lateG.forEach(g => byWho[g.who] = (byWho[g.who] || 0) + g.lateAmt);
+  if (lateG.length) pend.push(`<div class="v65-p"><span>🔴 Te deben atrasado: ${Object.entries(byWho).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([w, v]) => `<b>${esc(w)}</b> ${V6.money(v)}`).join(' · ')}</span><button class="v6-pay" onclick="S.homeTab='cobrar';go('home')">Ver</button></div>`);
+  const pendHtml = pend.length ? `<div class="v6-card v65-pend"><div class="v6-card-h">Para hoy</div>${pend.join('')}</div>` : '';
+
+  /* ── Pestaña PAGAR ── */
+  const pagar = h.upcoming.length ? h.upcoming.map(r => {
+    const over = r.status === 'overdue' || r.status === 'partial' || r.due < today;
+    const dl = Math.round((new Date(r.due + 'T12:00:00') - new Date(today + 'T12:00:00')) / 86400000);
+    const when = over ? `vencida hace ${-dl} día${-dl === 1 ? '' : 's'}` : dl === 0 ? 'vence hoy' : dl === 1 ? 'vence mañana' : `${V6.short(r.due)} · en ${dl} días`;
+    return `<div class="v6-row ${over ? 'v6-over' : ''}"><div class="v6-row-main" onclick="go('amort','${r.debt.id}')"><div class="v6-row-t">${esc(r.debt.name)}</div><div class="v6-row-s">${when}${r.n ? ' · cuota ' + r.n : ''}</div></div>
+      <div class="v6-amt">${V6.cur((+r.total || 0) - (+r.instTotal || 0), r.debt.currency)}</div>
+      ${r._rec ? '' : `<button class="v6-pay" onclick="modalInstPayment('${r.debt.id}','${r.id}')">Pagar</button>`}</div>`;
+  }).join('') : '<div class="v6-empty">Sin cuotas en los próximos 21 días ✅</div>';
+
+  /* ── Pestaña COBRAR (agrupado por persona) ── */
+  const totCob = groups.reduce((s, g) => s + g.lateAmt + g.waitAmt + g.okAmt, 0), gotCob = groups.reduce((s, g) => s + g.okAmt, 0);
+  const cobrar = (inc.length ? inc.map(i => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">💼 ${esc(i.src.name)}</div><div class="v6-row-s">${i.date <= today ? 'debía llegar' : 'llega'} ${V6.short(i.date)}</div></div><div class="v6-amt">${V6.cur(i.amount, i.cur)}</div><button class="v6-pay v6-wa" onclick="confirmVirtual('${i.src.id}','${i.date}','${i.amount}','${i.cur}')">Confirmar</button></div>`).join('') : '')
+    + (groups.length ? groups.map(g => {
+      const st = g.late ? `<span class="v64-pill late">${g.late} atrasada${g.late > 1 ? 's' : ''}</span>` : g.wait ? '<span class="v64-pill wait">Por recibir</span>' : '<span class="v64-pill ok">✓ Al día</span>';
+      const sub = [esc(g.what), g.next && g.next.st === 'wait' ? 'próx. ' + V6.short(g.next.due) : ''].filter(Boolean).join(' · ');
+      const owe = g.lateAmt + g.waitAmt;
+      return `<div class="v6-row"><div class="v6-row-main" onclick="go('amort','${g.debtId}')"><div class="v6-row-t">${esc(g.who)} ${st}</div><div class="v6-row-s">${sub}</div></div>
+        <div class="v6-amt" style="color:${owe ? 'var(--gn)' : 'var(--tx3)'}">${owe ? V6.money(owe) : V6.money(g.okAmt)}</div>
+        ${owe ? `<button class="v6-pay" onclick="${g.next ? g.next.act : `go('amort','${g.debtId}')`}">Registrar</button><a class="v6-more" href="${v65Remind(g)}" target="_blank" rel="noopener" aria-label="Recordar por WhatsApp" title="Recordar por WhatsApp">💬</a>` : ''}</div>`;
+    }).join('') : '<div class="v6-empty">Nadie tiene cuotas contigo este mes.</div>')
+    + `<div class="v65-foot"><span>Recibido ${V6.money(gotCob)} de ${V6.money(totCob)} este mes</span><a href="javascript:void(0)" onclick="go('receivables')">Todo lo que me deben ›</a></div>`;
+
+  /* ── Pestaña GASTOS ── */
+  let gastos;
+  if (!S.mov.ready) gastos = `<div class="v6-empty">${S.mov.missing ? 'Ejecuta 2_migracion_v6.3.sql en Supabase para activar los gastos.' : 'Cargando…'}</div>`;
+  else {
+    const maxC = h.cats[0]?.v || 1;
+    gastos = `<div class="v65-proj"><div><div class="v6-tile-l">Llevas gastado</div><div class="v65-big">${V6.money(h.gastos)}</div></div>
+        ${proj !== null ? `<div style="text-align:right"><div class="v6-tile-l">Cierre estimado</div><div class="v65-big" style="color:${budget && proj > budget ? 'var(--rd)' : 'var(--tx)'}">${V6.money(proj)}</div></div>` : ''}</div>
+      ${budget ? `<div class="v6-bar" style="margin:6px 0 2px"><div style="width:${Math.min(100, h.gastos / budget * 100)}%;${h.gastos > budget ? 'background:var(--rd)' : ''}"></div></div><div class="v6-muted">Presupuesto ${V6.money(budget)} · ${h.gastos > budget ? 'te pasaste ' + V6.money(h.gastos - budget) : 'quedan ' + V6.money(budget - h.gastos)}</div>` : ''}
+      ${h.cats.length ? h.cats.slice(0, 5).map(x => { const over = x.c?.budget && x.v > x.c.budget; return `<div class="v6-cat"><div class="v6-cat-h"><span>${x.c?.icon || '📦'} ${esc(x.c?.name || 'Sin categoría')}</span><span ${over ? 'style="color:var(--rd)"' : ''}>${V6.money(x.v)}${x.c?.budget ? ` <span class="v6-muted">/ ${V6.money(x.c.budget)}</span>` : ''}</span></div><div class="v6-bar"><div style="width:${Math.max(3, x.v / maxC * 100)}%;${over ? 'background:var(--rd)' : ''}"></div></div></div>`; }).join('') : '<div class="v6-empty">Aún no hay gastos este mes.</div>'}
+      <div class="v65-foot"><a href="javascript:void(0)" onclick="modalNewTx()">＋ Registrar gasto</a><a href="javascript:void(0)" onclick="S.mov.month='${m}';S.mov.tab='resumen';go('movements')">Ver detalle ›</a></div>`;
+  }
+  const tab = S.homeTab;
+  const nP = h.upcoming.length, nC = groups.filter(g => g.late || g.wait).length + inc.length;
+  const tabs = `<div class="v6-tabs v65-tabs">
+    <button class="${tab === 'pagar' ? 'on' : ''}" onclick="S.homeTab='pagar';go('home')">Pagar${nP ? ` <i>${nP}</i>` : ''}</button>
+    <button class="${tab === 'cobrar' ? 'on' : ''}" onclick="S.homeTab='cobrar';go('home')">Cobrar${nC ? ` <i>${nC}</i>` : ''}</button>
+    <button class="${tab === 'gastos' ? 'on' : ''}" onclick="S.homeTab='gastos';go('home')">Gastos</button></div>`;
+
+  document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="go('health')">${score === null ? '❤️' : (score >= 70 ? '🟢' : score >= 40 ? '🟡' : '🔴') + ' ' + score}<span class="v6-hide-m">/100 · ¿Cómo estoy?</span></button>`;
+  document.getElementById('content').innerHTML = `<div class="v6-wrap">
+    ${v63Onboarding()}
+    <div class="v6-monthnav">
+      <button onclick="S.homeMonth=V6.shiftMonth('${m}',-1);go('home')" aria-label="Mes anterior">‹</button>
+      <div>${V6.monthLabel(m)}${isCur ? '' : ` <a href="javascript:void(0)" onclick="S.homeMonth=Fin.currentMonth();go('home')" class="v6-muted">· hoy</a>`}</div>
+      <button onclick="S.homeMonth=V6.shiftMonth('${m}',1);go('home')" aria-label="Mes siguiente">›</button>
+    </div>
+    <div class="v6-hero ${neg ? 'neg' : 'pos'}">
+      <div class="v6-hero-l">${isCur ? 'Te queda este mes' : 'Resultado del mes'}</div>
+      <div class="v6-hero-v">${neg ? '−' : ''}${V6.money(Math.abs(h.resultado))}</div>
+      <div class="v65-mini">
+        <div><span>Entró</span><b>${V6.money(h.entro)}</b></div>
+        <div><span>Cuotas</span><b>${V6.money(h.cuotas)}</b>${h.faltan > 0.01 ? `<small>faltan ${V6.money(h.faltan)}</small>` : '<small>pagadas ✓</small>'}</div>
+        <div><span>Gastos</span><b>${V6.money(h.gastos)}</b>${proj !== null ? `<small>→ ${V6.money(proj)}</small>` : ''}</div>
+      </div>
+    </div>
+    ${pendHtml}
+    ${tabs}
+    <div class="v6-card v65-tabbody">${tab === 'cobrar' ? cobrar : tab === 'gastos' ? gastos : pagar}</div>
+    <div class="v65-totals" onclick="go('health')">
+      <div><span>Debo</span><b>${V6.money(h.totalOwed)}</b></div>
+      <div><span>Me deben</span><b style="color:var(--gn)">${V6.money(h.totalRec + (h.othersTotal || 0))}</b></div>
+      <div><span>Salud</span><b>${score === null ? '—' : score + '/100'}</b></div>
+    </div>
+  </div>`;
+  if (location.hash === '#gasto' && S.mov.ready) { history.replaceState(null, '', location.pathname); setTimeout(modalNewTx, 250); }
+};
 
 
 /* ═══════════════════════════════════════════════════════════
