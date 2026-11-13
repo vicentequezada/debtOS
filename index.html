@@ -753,6 +753,17 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 .v65-totals span{font-size:10.5px;color:var(--tx3)}
 .v65-totals b{font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 a.v6-more{text-decoration:none;font-size:16px}
+.v66-det{padding:10px 14px}.v66-det summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:700;font-size:13px;list-style:none}
+.v66-det summary::-webkit-details-marker{display:none}
+.v66-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+@media(max-width:760px){.v66-grid{grid-template-columns:1fr;gap:10px}}
+.v66-h{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--bd);padding-bottom:4px;margin-bottom:4px}
+.v66-h b{color:var(--tx);text-transform:none}
+.v66-l{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0}
+.v66-l span{min-width:0;overflow:hidden;text-overflow:ellipsis}.v66-l small{display:block;font-size:10.5px;color:var(--tx3)}
+.v66-l b{white-space:nowrap;font-weight:600}.v66-l.late b{color:var(--rd)}.v66-l.wait b{color:var(--tx2)}.v66-l.tot{border-top:1px dashed var(--bd);margin-top:3px;font-weight:600}
+.v66-sum{border-top:1px solid var(--bd);margin-top:10px;padding-top:6px}.v66-sum .v66-l{font-size:13px}
+.v66-sum .v66-l.ok b{color:var(--gn)}
 </style>
 </head>
 <body>
@@ -786,7 +797,7 @@ a.v6-more{text-decoration:none;font-size:16px}
     <div class="slogo">
       <div class="slogo-wrap">
         <div class="slogo-mark">DebtOS</div>
-        <div class="slogo-sub">Financial OS · v6.6 · 13-11-2026 12:29</div>
+        <div class="slogo-sub">Financial OS · v6.7 · 13-11-2026 13:20</div>
       </div>
     </div>
     <nav class="snav">
@@ -3312,6 +3323,20 @@ const DB = {
     // Helper: ejecuta una query y devuelve [] o {} en caso de error
     const safe = async (queryFn, fallback = [], label = 'query') => {
       try {
+        // Supabase devuelve máximo 1000 filas por consulta: se pide por páginas para no perder cuotas
+        if (!/^ai_/.test(label)) {
+          const all = [];
+          for (let from = 0; from < 200000; from += 1000) {
+            const q = queryFn();
+            if (!q || typeof q.range !== 'function') break;
+            const rp = await q.order('id', { ascending: true }).range(from, from + 999);
+            if (rp && rp.error) { if (from === 0) break; throw rp.error; }
+            const rows = (rp && rp.data) || [];
+            all.push(...rows);
+            if (rows.length < 1000) return all;
+          }
+          if (all.length) return all;
+        }
         const r = await queryFn();
         if (r && r.error) {
           const msg = r.error.message || String(r.error);
@@ -14821,7 +14846,18 @@ function esc(v) {
   return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-const DEBTOS_VERSION = 'v6.6', DEBTOS_BUILD = '13-11-2026 12:29';
+/* Trae todas las filas de una consulta, de 1000 en 1000 (límite de Supabase) */
+async function sbAll(mk) {
+  const all = [];
+  for (let from = 0; from < 200000; from += 1000) {
+    const r = await mk().range(from, from + 999);
+    if (r.error) return from ? { data: all, error: null } : r;
+    all.push(...(r.data || []));
+    if ((r.data || []).length < 1000) break;
+  }
+  return { data: all, error: null };
+}
+const DEBTOS_VERSION = 'v6.7', DEBTOS_BUILD = '13-11-2026 13:20';
 const V6 = {
   today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
   addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); },
@@ -14917,7 +14953,7 @@ const Mov = {
     try {
       const [a, c, t, r] = await Promise.all([
         q('fin_accounts'), q('fin_categories'),
-        q('fin_transactions').order('date', { ascending: false }).limit(10000), q('fin_rules'),
+        sbAll(() => q('fin_transactions').order('date', { ascending: false }).order('id', { ascending: true })), q('fin_rules'),
       ]);
       const err = a.error || c.error || t.error || r.error;
       if (err) {
@@ -16332,6 +16368,66 @@ function v64Cards(m) {
    v6.5 — Mi mes compacto: resumen · pendientes · pestañas Pagar / Cobrar / Gastos
 ═══════════════════════════════════════════════════════════ */
 S.homeTab = S.homeTab || 'pagar';
+
+/* v6.7 · Detalle del mes: de dónde sale "Te queda este mes" */
+function v66Detail(m, h, cob, inc) {
+  const today = V6.today(), P = (v, c) => Fin.toPrimary(+v || 0, c || 'USD');
+  const line = (l, v, cls = '', sub = '') => `<div class="v66-l ${cls}"><span>${l}${sub ? `<small>${sub}</small>` : ''}</span><b>${v}</b></div>`;
+  // Entró
+  const incs = (S.incomes || []).filter(i => (i.month || (i.date || '').slice(0, 7)) === m);
+  const incSum = incs.reduce((s, i) => s + P(i.amount, i.currency), 0);
+  const otros = Math.max(0, h.entro - incSum);
+  const pendInc = inc.reduce((s, i) => s + P(i.amount, i.cur), 0);
+  // Cuotas del mes (tus deudas activas)
+  const rows = [];
+  Fin.outgoingDebts().filter(d => !DebtFilter.isClosed(d)).forEach(d => {
+    if (Fin.hasAmort(d)) Fin.annotated(d.id).filter(a => (a.due || '').startsWith(m)).forEach(a => rows.push({ d, due: a.due, amt: P(a.total, d.currency), left: a.status === 'paid' ? 0 : P(Math.max(0, (+a.total || 0) - (+a.instTotal || 0)), d.currency), st: a.status === 'paid' ? 'ok' : a.due < today ? 'late' : 'wait' }));
+    else if (Fin.isRecurring(d) && Fin.expandRecurringDebt) Fin.expandRecurringDebt(d, m + '-01', m + '-31').slice(0, 1).forEach(e => {
+      const paid = S.payments.some(p => p.debt_id === d.id && (p.payment_date || '').startsWith(m) && Fin.isApproved(p));
+      rows.push({ d, due: e.date, amt: P(d.total_amount, d.currency), left: paid ? 0 : P(d.total_amount, d.currency), st: paid ? 'ok' : e.date < today ? 'late' : 'wait' });
+    });
+  });
+  rows.sort((a, b) => a.due.localeCompare(b.due));
+  const ico = { ok: '✅', late: '🔴', wait: '⏳' };
+  const cuotaLines = rows.map(r => line(`${ico[r.st]} ${esc(r.d.name)}`, V6.money(r.amt), r.st, `${V64.isBank(r.d) ? '🏦' : '👤'} ${V6.short(r.due)}${r.st === 'ok' ? ' · pagada' : r.st === 'late' ? ' · vencida' : ''}`)).join('');
+  const cPag = rows.reduce((s, r) => s + r.amt - r.left, 0), cPend = rows.reduce((s, r) => s + r.left, 0);
+  // Lo que otros te devuelven de cuotas de ESTE mes
+  const cm = cob.filter(x => (x.due || '').startsWith(m));
+  const devOk = cm.filter(x => x.st === 'ok').reduce((s, x) => s + P(x.amount, x.cur), 0);
+  const devPend = cm.filter(x => x.st !== 'ok').reduce((s, x) => s + P(x.amount, x.cur), 0);
+  const byWho = {}; cm.filter(x => x.st !== 'ok').forEach(x => byWho[x.who] = (byWho[x.who] || 0) + P(x.amount, x.cur));
+  const conCobros = h.resultado + devPend + pendInc;
+  const open = S.homeDetOpen !== false;
+  return `<details class="v6-card v66-det" ${open ? 'open' : ''} ontoggle="S.homeDetOpen=this.open">
+    <summary><span>Detalle del mes</span><span class="v6-muted">${open ? 'ocultar' : 'ver de dónde sale'}</span></summary>
+    <div class="v66-grid">
+      <div class="v66-col">
+        <div class="v66-h">💰 Entró <b>${V6.money(h.entro)}</b></div>
+        ${incs.map(i => line(esc(i.description || i.category || 'Ingreso'), V6.money(P(i.amount, i.currency)), 'ok', V6.short(i.date || ''))).join('')}
+        ${otros > 0.01 ? line('Cobros y otros ingresos', V6.money(otros), 'ok', 'pagos que te hicieron') : ''}
+        ${inc.map(i => line(`⏳ ${esc(i.src.name)}`, V6.money(P(i.amount, i.cur)), 'wait', 'por confirmar ' + V6.short(i.date))).join('')}
+        ${!incs.length && otros <= 0.01 && !inc.length ? '<div class="v6-muted">Sin ingresos registrados.</div>' : ''}
+      </div>
+      <div class="v66-col">
+        <div class="v66-h">🏦 Cuotas <b>${V6.money(h.cuotas)}</b></div>
+        ${cuotaLines || '<div class="v6-muted">Sin cuotas este mes.</div>'}
+        ${rows.length ? line('Pagado / falta', `${V6.money(cPag)} / ${V6.money(cPend)}`, 'tot') : ''}
+      </div>
+      <div class="v66-col">
+        <div class="v66-h">🤝 Te devuelven <b>${V6.money(devOk + devPend)}</b></div>
+        ${Object.entries(byWho).map(([w, v]) => line(`⏳ ${esc(w)}`, V6.money(v), 'wait', 'por recibir este mes')).join('')}
+        ${devOk > 0.01 ? line('✅ Ya recibido', V6.money(devOk), 'ok') : ''}
+        ${!cm.length ? '<div class="v6-muted">Nadie te debe cuotas este mes.</div>' : ''}
+        <div class="v66-h" style="margin-top:8px">🛒 Gastos <b>${V6.money(h.gastos)}</b></div>
+        ${(h.cats || []).slice(0, 4).map(x => line(`${x.c?.icon || '📦'} ${esc(x.c?.name || 'Sin categoría')}`, V6.money(x.v))).join('') || '<div class="v6-muted">Sin gastos registrados.</div>'}
+      </div>
+    </div>
+    <div class="v66-sum">
+      ${line('Entró − cuotas − gastos', (h.resultado < 0 ? '−' : '') + V6.money(Math.abs(h.resultado)), h.resultado < 0 ? 'late' : 'ok')}
+      ${devPend + pendInc > 0.01 ? line('Si llega lo pendiente (cobros + ingresos)', (conCobros < 0 ? '−' : '') + V6.money(Math.abs(conCobros)), conCobros < 0 ? 'late' : 'ok', `+${V6.money(devPend + pendInc)} por recibir`) : ''}
+    </div>
+  </details>`;
+}
 function v65Groups(cob) {
   const g = {};
   cob.forEach(x => {
@@ -16430,6 +16526,7 @@ renderHome = function () {
         <div><span>Gastos</span><b>${V6.money(h.gastos)}</b>${proj !== null ? `<small>→ ${V6.money(proj)}</small>` : ''}</div>
       </div>
     </div>
+    ${v66Detail(m, h, cob, inc)}
     ${pendHtml}
     ${tabs}
     <div class="v6-card v65-tabbody">${tab === 'cobrar' ? cobrar : tab === 'gastos' ? gastos : pagar}</div>
