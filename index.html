@@ -689,6 +689,7 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 .v6-seg{border:none;background:transparent;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:var(--fm)}
 .v6-seg.on{background:var(--bg2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .v6-seg-n{font-size:10.5px;color:var(--tx3);margin-left:2px}
+.v6-stamp{font-size:10px;color:var(--tx3);margin-top:1px;white-space:nowrap}
 .v6-more{border:none;background:none;color:var(--tx3);font-size:18px;cursor:pointer;padding:4px 2px;flex-shrink:0}
 
 /* Barra inferior: solo en celular */
@@ -9386,7 +9387,7 @@ function renderAmort(debtId) {
 
   document.getElementById('content').innerHTML = `
   <div class="kgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px">
-    ${UI.kc('am','Deuda',`<span style="font-size:12px">${debt.name.length>15?debt.name.slice(0,13)+'…':debt.name}</span>`,UI.typeChip(debt.type),'')}
+    ${UI.kc('am','Deuda',`<span style="font-size:12px">${esc(debt.name.length>15?debt.name.slice(0,13)+'…':debt.name)}</span>`,UI.typeChip(debt.type)+V6.stampSmall(debt),'')}
     ${UI.kc('gn','Cuotas Pagadas',`${paid} <span style="font-size:11px;color:var(--tx3)">/ ${rows.length}</span>`,(paid && rows.length ? Fin.pct(paid,rows.length).toFixed(0)+'%' : ''),'')}
     ${UI.kc(ov?'rd':'gn','Atrasadas',ov,ov?'cuotas vencidas':'al día','')}
     ${UI.kc('bl','Pendientes',pend,'sin pagar','')}
@@ -9988,7 +9989,7 @@ function renderAmortRecurring(debtId, debt) {
         if (userSec && userSec !== cur && userSec !== userPri) { const c2 = Cur.convert(amt, cur, userSec); if (c2!=null) subs.push('≈ ' + Cur.fmt(c2, userSec, {k:true})); }
         const amtStr = subs.length ? `${main}<div style="font-size:9px;color:var(--tx3);font-weight:400">${subs.join(' · ')}</div>` : main;
         return `<tr>
-        <td>${p.payment_date||'—'}</td>
+        <td>${p.payment_date||'—'}${V6.stampSmall(p)}</td>
         <td class="tdn fw7 txt-gn">${amtStr}</td>
         <td>${esc(p.notes||'—')}</td>
         <td><button class="btn bs btn-sm" onclick="modalEditPayment('${p.id}')">Ver</button></td>
@@ -10072,7 +10073,7 @@ function renderAmortFreeForm(debtId, debt) {
 
   document.getElementById('content').innerHTML = `
   <div class="kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
-    ${UI.kc('am','Deuda', `<span style="font-size:13px">${debt.name.length>15?debt.name.slice(0,13)+'…':debt.name}</span>`, UI.typeChip(debt.type), '')}
+    ${UI.kc('am','Deuda', `<span style="font-size:13px">${esc(debt.name.length>15?debt.name.slice(0,13)+'…':debt.name)}</span>`, UI.typeChip(debt.type)+V6.stampSmall(debt), '')}
     ${UI.kc('bl','Capital total', Fin.fmtDebt(total, debt, true), 'monto original', '🏦')}
     ${UI.kc('gn','Capital pagado', Fin.fmtDebt(paid, debt, true), pct.toFixed(1)+'%', '✅')}
     ${UI.kc(remaining>0?'rd':'gn','Capital restante', Fin.fmtDebt(remaining, debt, true), remaining>0?'por pagar':'¡liquidada!', '⏳')}
@@ -10797,7 +10798,7 @@ function showInstPayments(amortId) {
                        : '<span class="chip cgn">✓ OK</span>';
           return `<tr>
             <td class="tdm">${esc(pp?.name || 'General')}</td>
-            <td>${p.paid_date || '—'}</td>
+            <td>${p.paid_date || '—'}${V6.stampSmall(p)}</td>
             <td style="color:var(--tx3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p.notes||'').replace(/"/g,'&quot;')}">${esc(p.notes || '—')}</td>
             <td class="tdc">${p.receipt_url ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">📎</button>` : '<span class="txt-mu" style="font-size:10px">—</span>'}</td>
             <td>${stChip}</td>
@@ -12352,7 +12353,7 @@ function filterPays() {
       <td class="tdm">${esc(debt?.name||'—')}</td>
       <td class="tdc">#${amort?.n||'—'}</td>
       <td>${pp ? UI.chip(pp.name,'bl') : '<span class="txt-mu">General</span>'}</td>
-      <td>${p.paid_date||'—'}</td>
+      <td>${p.paid_date||'—'}${V6.stampSmall(p)}</td>
       <td style="color:var(--tx3)">${esc(p.notes||'—')}</td>
       <td class="tdc">${receiptCell(p.receipt_url)}</td>
       <td class="tdc">${statusCell(p)}</td>
@@ -12367,7 +12368,7 @@ function filterPays() {
     return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
       <td class="tdm">${esc(debt?.name||'—')}</td>
       <td>${debt?UI.typeChip(debt.type):''}</td>
-      <td>${p.payment_date||'—'}</td>
+      <td>${p.payment_date||'—'}${V6.stampSmall(p)}</td>
       <td style="color:var(--tx3)">${esc(p.notes||'—')}</td>
       <td class="tdc">${receiptCell(p.receipt_url)}</td>
       <td class="tdc">${statusCell(p)}</td>
@@ -12518,7 +12519,7 @@ function renderParticipantBalances(debtId) {
             const from = parts.find(p => p.id === t.from_part);
             const to   = parts.find(p => p.id === t.to_part);
             return `<tr>
-              <td>${t.paid_date || '—'}</td>
+              <td>${t.paid_date || '—'}${V6.stampSmall(t)}</td>
               <td class="tdm">${esc(from?.name || '?')}</td>
               <td class="tdm">${esc(to?.name || '?')}</td>
               <td class="tdn fw7 txt-gn">${Fin.fmt(t.amount, true)}</td>
@@ -14793,6 +14794,16 @@ const V6 = {
   money(n) { return Fin.fmt(n); },
   short(iso) { if (!iso) return '—'; return new Date(iso + 'T12:00:00').toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric', month: 'short' }); },
   uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); },
+  /* Fecha y hora en que se registró algo: created_at, o el sello de tiempo que lleva su ID (d-1780…, gp-1780…) */
+  created(o) {
+    if (!o) return null;
+    if (o.created_at) return new Date(o.created_at);
+    const m = String(o.id || '').match(/(\d{13})/); if (m) return new Date(+m[1]);
+    const b = String(o.id || '').match(/-([0-9a-z]{8,9})[0-9a-z]{5}$/); if (b) { const t = parseInt(b[1], 36); if (t > 1.6e12 && t < 2.2e12) return new Date(t); }
+    return null;
+  },
+  stamp(o) { const d = V6.created(o); return d ? d.toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' }) : ''; },
+  stampSmall(o) { const t = V6.stamp(o); return t ? `<div class="v6-stamp">🕒 ${t}</div>` : ''; },
   isMobile() { return window.innerWidth <= 768; },
 };
 
@@ -15251,7 +15262,7 @@ function movLista() {
       const sub = [a?.name, t.kind === 'gasto' || t.kind === 'ingreso' ? (c ? `${c.icon||''} ${esc(c.name)}` : 'sin categoría') : k.lbl, debt?.name, t.counterparty].filter(Boolean).map(esc).join(' · ');
       return `<div class="v6-row v6-tx ${t.kind==='pendiente'?'v6-pend':''}" onclick="modalClassifyTx('${t.id}')">
         <div class="v6-txi">${k.ico}</div>
-        <div class="v6-row-main"><div class="v6-row-t">${esc(t.description || '—')}</div><div class="v6-row-s">${sub}${t.linked_payment?' · ✓ registrado':''}${v6Who(t)}</div></div>
+        <div class="v6-row-main"><div class="v6-row-t">${esc(t.description || '—')}</div><div class="v6-row-s">${sub}${t.linked_payment?' · ✓ registrado':''}${v6Who(t)}</div>${V6.stampSmall(t)}</div>
         <div class="v6-amt" style="color:${(+t.amount)<0?'var(--tx)':'var(--gn)'}">${(+t.amount)<0?'−':'+'}${V6.cur(Math.abs(+t.amount), Mov.cur(t))}</div>
       </div>`; }).join('')}`).join('');
 
@@ -15281,7 +15292,7 @@ function modalClassifyTx(id) {
     <div class="mhd"><div class="mti">Clasificar movimiento</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="v6-txhead">
-        <div><div style="font-weight:600">${esc(t.description || '—')}</div><div class="v6-muted">${V6.short(t.date)} · ${esc(a?.name || 'Sin cuenta')}</div></div>
+        <div><div style="font-weight:600">${esc(t.description || '—')}</div><div class="v6-muted">${V6.short(t.date)} · ${esc(a?.name || 'Sin cuenta')}</div>${V6.stamp(t) ? `<div class="v6-muted">Registrado: ${V6.stamp(t)}${t.created_label ? ' por ' + esc(t.created_label) : ''}</div>` : ''}</div>
         <div style="font-size:18px;font-weight:700;color:${out?'var(--tx)':'var(--gn)'}">${out?'−':'+'}${V6.cur(Math.abs(+t.amount), Mov.cur(t))}</div>
       </div>
       <label class="v6-lbl">¿Qué es?</label>
@@ -15740,6 +15751,7 @@ function v6CompactList(list, view) {
       <div class="v6-row-main" onclick="go('amort','${d.id}')">
         <div class="v6-row-t">${who}${esc(d.name)}</div>
         <div class="v6-row-s">${sub || '—'}</div>
+        ${V6.stampSmall(d)}
         ${pct !== null ? `<div class="v6-bar" style="height:4px;margin-top:5px"><div style="width:${Math.max(2, pct)}%;background:${closed ? 'var(--gn)' : view === 'receivables' ? 'var(--gn)' : 'var(--bl)'}"></div></div>` : ''}
       </div>
       <div class="v6-row-r" style="flex-direction:column;align-items:flex-end;gap:2px">
