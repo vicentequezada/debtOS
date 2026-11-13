@@ -203,6 +203,34 @@ tbody tr:last-child td{border-bottom:none}
 .alrt-info{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--bl);padding:10px 12px;border-radius:6px;font-size:12px;margin-bottom:12px}
 .alrt-err {background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25); color:var(--rd);padding:10px 12px;border-radius:6px;font-size:12px;margin-bottom:12px}
 .alrt-ok  {background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--gn);padding:10px 12px;border-radius:6px;font-size:12px;margin-bottom:12px}
+
+/* ═══ v6.0 · estilo limpio y móvil ═══ */
+.hero,.card,.kc,.modal{box-shadow:none!important}
+.hero{border-radius:16px}
+.hero::before{display:none}
+.card{border-radius:14px}
+.kc{border-radius:12px}
+.ro-banner{border-radius:12px!important}
+.v6-big{margin:14px 0 4px;padding:14px 16px;background:var(--bg3s);border:1px solid var(--bd);border-radius:12px}
+.v6-big-l{font-size:11px;color:var(--tx3)}
+.v6-big-v{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--tx)}
+.v6-next{display:flex;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd);font-size:12.5px}
+.v6-details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
+.v6-details[open] summary{margin-bottom:14px}
+.v6-details summary::-webkit-details-marker{display:none}
+.v6-sum-n{font-size:11px;font-weight:500;color:var(--tx3)}
+@media(max-width:600px){
+  table{min-width:0!important}
+  th,td{padding:8px 8px!important}
+  .t-ov th:nth-child(4),.t-ov td:nth-child(4),.t-ov th:nth-child(5),.t-ov td:nth-child(5),
+  .t-up th:nth-child(3),.t-up td:nth-child(3),.t-up th:nth-child(4),.t-up td:nth-child(4),
+  .t-full th:nth-child(3),.t-full td:nth-child(3),.t-full th:nth-child(4),.t-full td:nth-child(4),.t-full th:nth-child(5),.t-full td:nth-child(5),
+  .t-hist th:nth-child(2),.t-hist td:nth-child(2),
+  .t-ov th:nth-child(1),.t-ov td:nth-child(1){display:none}
+  .ro-banner{display:block!important;line-height:1.5}
+  .v6-big-v{font-size:24px}
+  .hero-sub{font-size:11px}
+}
 </style>
 </head>
 <body>
@@ -259,6 +287,9 @@ const CURRENCY_INFO = {
   PEN: { symbol: 'S/', locale: 'es-PE', name: 'Sol' },
   VES: { symbol: 'Bs', locale: 'es-VE', name: 'Bolívar' },
 };
+function esc(v) { if (v === null || v === undefined) return ''; return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+const pubDesc = t => String(t || '').split('🔒')[0].trim();  // lo que va después de 🔒 es nota privada del acreedor
+const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? esc(u) : '';
 const curInfo = code => CURRENCY_INFO[code] || CURRENCY_INFO.USD;
 
 const fmt = (n, currency, short) => {
@@ -357,7 +388,7 @@ function annotateAmorts(amorts, instPays) {
 function renderError(msg, sub) {
   document.getElementById('root').innerHTML = `
   <div class="phead">
-    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v5.5</div></div>
+    <div><div class="brand">DebtOS</div><div class="brand-sub">Vista pública · v6.0</div></div>
     <button class="theme-btn" onclick="toggleTheme()">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</button>
   </div>
   <div class="center-screen">
@@ -451,7 +482,7 @@ function renderPublicRecurring(data, cur, f) {
   <div class="phead">
     <div>
       <div class="brand">DebtOS</div>
-      <div class="brand-sub">Vista pública · v5.5</div>
+      <div class="brand-sub">Vista pública · v6.0</div>
       <div style="font-size:10px;color:var(--tx3);margin-top:4px;display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.4)"></span>
         Actualizado · ${new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
@@ -467,9 +498,9 @@ function renderPublicRecurring(data, cur, f) {
 
   <!-- Hero -->
   <div class="hero">
-    ${debt.borrower_name ? `<div class="hero-borrower">👤 ${debt.borrower_name}</div>` : ''}
-    <div class="hero-title">🔄 ${debt.name}</div>
-    <div class="hero-sub">${debt.description || 'Gasto recurrente'} · ${freqLbl} · Inicio: ${fmtDate(debt.start_date)}${debt.recurring_end_date ? ' · Fin: '+fmtDate(debt.recurring_end_date) : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
+    ${debt.borrower_name ? `<div class="hero-borrower">👤 ${esc(debt.borrower_name)}</div>` : ''}
+    <div class="hero-title">🔄 ${esc(debt.name)}</div>
+    <div class="hero-sub">${esc(pubDesc(debt.description) || 'Gasto recurrente')} · ${freqLbl} · Inicio: ${fmtDate(debt.start_date)}${debt.recurring_end_date ? ' · Fin: '+fmtDate(debt.recurring_end_date) : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
     <div class="status-pill ${statusCls}"><span class="dot"></span>${statusLbl}</div>
 
     <div style="text-align:center;margin-top:14px;padding:14px;background:var(--bg3s);border-radius:8px">
@@ -547,7 +578,7 @@ function renderPublicRecurring(data, cur, f) {
       <tbody>${approvedPays.filter(p => !expected.some(e => e.month === (p.payment_date||'').slice(0,7))).map(p => `<tr>
         <td>${fmtDate(p.payment_date)}</td>
         <td class="tdn fw7 txt-gn">${f(p.amount)}</td>
-        <td>${p.notes||'—'}</td>
+        <td>${esc(p.notes||'—')}</td>
       </tr>`).join('')}</tbody>
     </table></div>
   </div>` : ''}
@@ -622,7 +653,7 @@ function renderPublic(data) {
   <div class="phead">
     <div>
       <div class="brand">DebtOS</div>
-      <div class="brand-sub">Vista pública · v5.5</div>
+      <div class="brand-sub">Vista pública · v6.0</div>
       <div style="font-size:10px;color:var(--tx3);margin-top:4px;display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.4)"></span>
         Actualizado · ${new Date().toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})}
@@ -638,10 +669,17 @@ function renderPublic(data) {
 
   <!-- Hero -->
   <div class="hero">
-    ${debt.borrower_name ? `<div class="hero-borrower">👤 ${debt.borrower_name}</div>` : ''}
-    <div class="hero-title">${debt.name}</div>
-    <div class="hero-sub">${debt.description || 'Sin descripción'} · Inicio: ${fmtDate(debt.start_date)}${debt.months ? ' · Plazo: '+debt.months+' meses' : ''}${debt.interest_rate ? ' · Tasa: '+debt.interest_rate+'% anual' : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
+    ${debt.borrower_name ? `<div class="hero-borrower">👤 ${esc(debt.borrower_name)}</div>` : ''}
+    <div class="hero-title">${esc(debt.name)}</div>
+    <div class="hero-sub">${esc(pubDesc(debt.description) || 'Sin descripción')} · Inicio: ${fmtDate(debt.start_date)}${debt.months ? ' · Plazo: '+debt.months+' meses' : ''}${debt.interest_rate ? ' · Tasa: '+debt.interest_rate+'% anual' : ''} · Moneda: <strong>${curInfo(cur).symbol} ${cur}</strong></div>
     <div class="status-pill ${statusCls}"><span class="dot"></span>${statusLbl}</div>
+
+    ${remaining > 0.01 ? `<div class="v6-big">
+      <div class="v6-big-l">Te falta pagar</div>
+      <div class="v6-big-v">${f(remaining)}</div>
+      ${(() => { const nx = annotated.find(a => a.status !== 'paid'); const last = annotated[annotated.length - 1];
+        return nx ? `<div class="v6-next"><div><div class="v6-big-l">${nx.status === 'overdue' || nx.status === 'partial' ? '⚠️ Cuota pendiente' : 'Próxima cuota'}</div><strong>${f(nx.total - (nx.instTotal || 0))}</strong> · ${fmtDate(nx.due)}</div><div style="text-align:right"><div class="v6-big-l">Cuota ${nx.n} de ${annotated.length}</div>última: ${fmtDate(last.due)}</div></div>` : ''; })()}
+    </div>` : ''}
 
     <div class="pwrap">
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
@@ -672,7 +710,7 @@ function renderPublic(data) {
   <!-- Overdue alert -->
   <div class="card" style="border-color:rgba(239,68,68,.3);background:linear-gradient(135deg,var(--rdd) 0%,var(--bg2) 60%)">
     <div class="card-ti" style="color:var(--rd)">⚠️ Cuotas Atrasadas — Requieren Atención</div>
-    <div class="tw"><table>
+    <div class="tw"><table class="t-ov">
       <thead><tr><th>#</th><th>Vencimiento</th><th>Días Atraso</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${overdueRows.map(r => `<tr class="ro">
         <td class="tdm">#${r.n}</td>
@@ -690,7 +728,7 @@ function renderPublic(data) {
   <!-- Upcoming -->
   <div class="card">
     <div class="card-ti">📅 Próximas Cuotas</div>
-    <div class="tw"><table>
+    <div class="tw"><table class="t-up">
       <thead><tr><th>#</th><th>Vencimiento</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th class="tdn">Saldo restante</th></tr></thead>
       <tbody>${upcoming.map(r => `<tr>
         <td class="tdm">#${r.n}</td>
@@ -705,9 +743,9 @@ function renderPublic(data) {
 
   <!-- Full schedule -->
   ${annotated.length > 0 ? `
-  <div class="card">
-    <div class="card-ti">📋 Plan Completo de Pagos</div>
-    <div class="tw"><table>
+  <details class="card v6-details">
+    <summary class="card-ti">📋 Plan completo de pagos <span class="v6-sum-n">${annotated.filter(r=>r.status==='paid').length} de ${annotated.length} pagadas · ver</span></summary>
+    <div class="tw"><table class="t-full">
       <thead><tr><th>#</th><th>Vencimiento</th><th>Fecha de Pago</th><th class="tdn">Capital</th><th class="tdn">Interés</th><th class="tdn">Cuota</th><th>Estado</th></tr></thead>
       <tbody>${annotated.map(r => {
         const rc = r.status==='paid'?'rp' : (r.status==='overdue'||r.status==='partial')?'ro' : '';
@@ -727,25 +765,25 @@ function renderPublic(data) {
         </tr>`;
       }).join('')}</tbody>
     </table></div>
-  </div>` : ''}
+  </details>` : ''}
 
   <!-- Payment history -->
   ${allPayments.length > 0 ? `
   <div class="card">
     <div class="card-ti">💸 Historial de Pagos</div>
-    <div class="tw"><table>
+    <div class="tw"><table class="t-hist">
       <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th class="tdc">📎</th><th>Estado</th><th class="tdn">Monto</th></tr></thead>
       <tbody>${allPayments.map(p => {
         let statusBadge;
         if (isPending(p))       statusBadge = '<span class="chip cam">⏳ Por aprobar</span>';
-        else if (isRejected(p)) statusBadge = `<span class="chip crd" title="${(p.reviewer_note||'').replace(/"/g,'&quot;')}">✕ Rechazado</span>`;
+        else if (isRejected(p)) statusBadge = `<span class="chip crd" title="${esc(p.reviewer_note||'')}">✕ Rechazado</span>`;
         else                    statusBadge = '<span class="chip cgn">✓ Aprobado</span>';
         const amountStyle = isApproved(p) ? 'color:var(--gn);font-weight:700' : isRejected(p) ? 'color:var(--rd);text-decoration:line-through;opacity:.6' : 'color:var(--am);font-weight:700';
         return `<tr>
           <td class="tdm">${fmtDate(p.date)}</td>
           <td>${p._type === 'cuota' ? '<span class="chip cgn">Cuota</span>' : '<span class="chip cam">Abono</span>'}</td>
-          <td style="color:var(--tx3)">${p.notes || '—'}${p.reported_by==='borrower'?'<br><span style="font-size:9px;color:var(--am)">📤 reportado por ti</span>':''}${isRejected(p) && p.reviewer_note?`<br><span style="font-size:9px;color:var(--rd)">Motivo: ${p.reviewer_note}</span>`:''}</td>
-          <td class="tdc">${p.receipt_url ? `<a href="${p.receipt_url}" target="_blank" style="color:var(--am);text-decoration:none;font-size:13px" title="Ver comprobante">📎</a>` : '<span style="color:var(--tx3);font-size:10px">—</span>'}</td>
+          <td style="color:var(--tx3)">${esc(p.notes || '—')}${p.reported_by==='borrower'?'<br><span style="font-size:9px;color:var(--am)">📤 reportado por ti</span>':''}${isRejected(p) && p.reviewer_note?`<br><span style="font-size:9px;color:var(--rd)">Motivo: ${esc(p.reviewer_note)}</span>`:''}</td>
+          <td class="tdc">${p.receipt_url ? `<a href="${safeUrl(p.receipt_url)}" target="_blank" rel="noopener" style="color:var(--am);text-decoration:none;font-size:13px" title="Ver comprobante">📎</a>` : '<span style="color:var(--tx3);font-size:10px">—</span>'}</td>
           <td>${statusBadge}</td>
           <td class="tdn" style="${amountStyle}">${f(p.amount)}</td>
         </tr>`;
@@ -792,7 +830,7 @@ function modalReportPayment() {
     </div>
     <div class="mbd">
       <div class="alrt-info">
-        <strong>${debt.name}</strong>${debt.borrower_name ? ' · ' + debt.borrower_name : ''}<br>
+        <strong>${esc(debt.name)}</strong>${debt.borrower_name ? ' · ' + esc(debt.borrower_name) : ''}<br>
         <span style="font-size:11px;opacity:.85">Tu pago aparecerá como "Por aprobar" hasta que el acreedor lo confirme.</span>
       </div>
 
@@ -833,14 +871,14 @@ function previewReportFile(input) {
       prev.innerHTML = `<div style="margin-top:8px;padding:6px;background:var(--bg3s);border:1px solid var(--bd);border-radius:6px;display:flex;gap:8px;align-items:center">
         <img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:6px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${file.name}</div>
+          <div style="font-size:11px;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(file.name)}</div>
           <div style="font-size:10px;color:var(--tx3)">${(file.size/1024).toFixed(0)} KB</div>
         </div>
       </div>`;
     };
     reader.readAsDataURL(file);
   } else {
-    prev.innerHTML = `<div style="margin-top:8px;padding:8px 10px;background:var(--bg3s);border:1px solid var(--bd);border-radius:6px;font-size:11px">📄 ${file.name} · ${(file.size/1024).toFixed(0)} KB</div>`;
+    prev.innerHTML = `<div style="margin-top:8px;padding:8px 10px;background:var(--bg3s);border:1px solid var(--bd);border-radius:6px;font-size:11px">📄 ${esc(file.name)} · ${(file.size/1024).toFixed(0)} KB</div>`;
   }
 }
 

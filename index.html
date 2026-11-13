@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DebtOS — Control Financiero</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#d97706">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DebtOS">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -612,6 +620,109 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
 }
 .print-only { display:none; }
 .print-header { display:none; }
+
+/* ═══════════════════════════════════════════════════════════
+   DebtOS v6.0 — Interfaz limpia y compacta (estilo propuesta)
+═══════════════════════════════════════════════════════════ */
+/* Ajustes globales: superficies planas, menos sombras y degradados */
+.kcard,.dc,.card,.section,.modal{box-shadow:none!important}
+.kcard{border-radius:12px!important;padding:12px 14px!important}
+.kcard .kico{opacity:.18}
+.modal{border-radius:16px!important}
+#ai-advisor-btn{background:var(--bg3s)!important;color:var(--tx)!important;border:1px solid var(--bd2)!important;box-shadow:none!important}
+.topbar{backdrop-filter:none}
+
+/* Contenedor de vistas v6 */
+.v6-wrap{max-width:720px;margin:0 auto;padding:4px 0 20px}
+.v6-muted{color:var(--tx3);font-size:11.5px}
+.v6-monthnav{display:flex;align-items:center;justify-content:space-between;margin:0 0 12px;font-weight:600;font-size:14px}
+.v6-monthnav button{width:34px;height:34px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-size:18px;cursor:pointer}
+.v6-hero{border-radius:14px;padding:14px 16px;margin-bottom:10px;border:1px solid transparent}
+.v6-hero.neg{background:var(--rdd);border-color:rgba(220,38,38,.25)}
+.v6-hero.pos{background:var(--gnd);border-color:rgba(5,150,105,.25)}
+.v6-hero-l{font-size:12px;opacity:.85}
+.v6-hero.neg .v6-hero-l,.v6-hero.neg .v6-hero-v{color:var(--rd)}
+.v6-hero.pos .v6-hero-l,.v6-hero.pos .v6-hero-v{color:var(--gn)}
+.v6-hero-v{font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.v6-hero-s{font-size:11px;color:var(--tx2);margin-top:2px}
+.v6-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.v6-tile{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;min-width:0}
+.v6-tile-l{font-size:11px;color:var(--tx3)}
+.v6-tile-v{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v6-tile-s{font-size:10.5px;color:var(--tx3);margin-top:1px}
+.v6-card{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.v6-card-h{font-size:13px;font-weight:700;margin-bottom:4px;align-items:center}
+.v6-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.v6-row:last-child{border-bottom:none}
+.v6-row-main{flex:1;min-width:0;cursor:pointer}
+.v6-row-t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v6-row-s{font-size:11px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v6-row-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.v6-amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+.v6-over .v6-row-s{color:var(--rd);font-weight:600}
+.v6-pay{border:1px solid var(--bd2);background:var(--bg3s);color:var(--tx);border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;text-decoration:none;font-family:var(--fm)}
+.v6-pay:hover{border-color:var(--am)}
+.v6-wa{background:var(--gnd);color:var(--gn);border-color:rgba(5,150,105,.3)}
+.v6-empty{color:var(--tx3);font-size:12px;padding:10px 0}
+.v6-cat{padding:7px 0}
+.v6-cat-h{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;gap:8px}
+.v6-cat-h span:last-child{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.v6-bar{height:6px;background:var(--bg3s);border-radius:3px;overflow:hidden}
+.v6-bar>div{height:100%;background:var(--bl);border-radius:3px}
+.v6-tabs{display:flex;gap:4px;background:var(--bg3s);border:1px solid var(--bd);border-radius:10px;padding:3px;margin-bottom:10px}
+.v6-tabs button{flex:1;border:none;background:transparent;padding:7px 4px;border-radius:8px;font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:var(--fm)}
+.v6-tabs button.on{background:var(--bg2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.v6-sel{width:100%;margin-bottom:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);font-family:var(--fm);font-size:12.5px}
+.v6-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.v6-chips button{border:1px solid var(--bd2);background:var(--bg2);color:var(--tx2);border-radius:999px;padding:6px 11px;font-size:12px;cursor:pointer;font-family:var(--fm)}
+.v6-chips button.on{background:var(--bld);color:var(--bl);border-color:var(--bl);font-weight:600}
+.v6-dayh{font-size:11px;color:var(--tx3);font-weight:600;padding:10px 0 2px;text-transform:capitalize}
+.v6-tx{cursor:pointer}
+.v6-txi{width:30px;height:30px;border-radius:9px;background:var(--bg3s);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.v6-pend .v6-txi{background:var(--amd)}
+.v6-alert{background:var(--amd);color:var(--am);border-radius:12px;padding:10px 12px;font-size:12.5px;margin-bottom:10px;cursor:pointer}
+.v6-lbl{display:block;font-size:10px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px}
+.v6-check{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--tx2);margin-top:8px;cursor:pointer;line-height:1.4}
+.v6-txhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;background:var(--bg3s);border-radius:10px;padding:10px 12px}
+.v6-filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.v6-segs{display:inline-flex;background:var(--bg3s);border:1px solid var(--bd);border-radius:10px;padding:3px;gap:2px}
+.v6-seg{border:none;background:transparent;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:var(--fm)}
+.v6-seg.on{background:var(--bg2);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.v6-seg-n{font-size:10.5px;color:var(--tx3);margin-left:2px}
+.v6-more{border:none;background:none;color:var(--tx3);font-size:18px;cursor:pointer;padding:4px 2px;flex-shrink:0}
+
+/* Barra inferior: solo en celular */
+#v6-bottomnav{display:none}
+#v6-fab{display:none}
+@media(max-width:768px){
+  .v6-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #v6-bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--bg2);border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .v6-bn-i{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;border:none;background:none;color:var(--tx3);font-size:10px;font-family:var(--fm);padding:2px 0;cursor:pointer}
+  .v6-bn-i span{font-size:18px;line-height:1.2;filter:grayscale(1);opacity:.7}
+  .v6-bn-i.on{color:var(--bl);font-weight:700}
+  .v6-bn-i.on span{filter:none;opacity:1}
+  #content{padding-bottom:84px!important}
+  #userInfoChip{display:none!important}
+  .v6-sheet{max-width:100%!important;margin-top:auto;border-radius:16px 16px 0 0!important}
+  .mover:has(.v6-sheet){align-items:flex-end!important;padding:0!important}
+  .v6-hero-v{font-size:26px}
+  .v6-hide-m{display:none}
+  #v6-fab{display:block;position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:151;background:var(--am);color:#1a1200;border:none;border-radius:999px;padding:12px 18px;font-weight:800;font-size:14px;font-family:var(--fm);box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  .topbar-title{white-space:nowrap}
+}
+
+/* v6.3 */
+.v63-score{width:64px;height:64px;border-radius:50%;border:3px solid;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0;flex-direction:column;line-height:1}
+.v63-score small{font-size:9px;font-weight:600;opacity:.8}
+.v63-health-link{display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;cursor:pointer}
+.v63-health-link span:last-child{color:var(--bl);font-weight:600}
+.v63-flow-h,.v63-flow{display:grid;grid-template-columns:62px 1fr 1fr 1.4fr;gap:6px;align-items:center;font-size:12px;padding:7px 0;border-bottom:1px solid var(--bd);font-variant-numeric:tabular-nums}
+.v63-flow-h{font-size:10.5px;color:var(--tx3);font-weight:600}
+.v63-flow span:nth-child(2),.v63-flow span:nth-child(3),.v63-flow-h span:nth-child(2),.v63-flow-h span:nth-child(3){text-align:right}
+.v63-flow.neg{background:var(--rdd)}
+.v63-bal{position:relative;height:20px;display:flex;align-items:center;justify-content:flex-end}
+.v63-bal i{position:absolute;left:0;top:7px;height:6px;border-radius:3px;opacity:.35}
+.v63-bal b{position:relative;font-size:12px}
 </style>
 </head>
 <body>
@@ -645,24 +756,28 @@ th.sort-desc::after{content:'▼';opacity:1;color:var(--am);font-size:8px}
     <div class="slogo">
       <div class="slogo-wrap">
         <div class="slogo-mark">DebtOS</div>
-        <div class="slogo-sub">Financial OS · v5.74</div>
+        <div class="slogo-sub">Financial OS · v6.3</div>
       </div>
     </div>
     <nav class="snav">
       <div class="snav-lbl">General</div>
-      <div class="ni on" onclick="go('dashboard')" data-v="dashboard"><span class="ic">📊</span>Dashboard</div>
+      <div class="ni on" onclick="go('home')" data-v="home"><span class="ic">🏠</span>Mi mes</div>
+      <div class="ni" onclick="go('health')" data-v="health"><span class="ic">❤️</span>¿Cómo estoy?</div>
+      <div class="ni" onclick="go('plan')" data-v="plan"><span class="ic">🧭</span>Mi plan</div>
+      <div class="ni" onclick="go('dashboard')" data-v="dashboard"><span class="ic">📊</span>Dashboard</div>
+      <div class="ni" onclick="go('movements')" data-v="movements"><span class="ic">🔁</span>Movimientos</div>
       <div class="ni" onclick="go('income')" data-v="income"><span class="ic">💰</span>Ingresos</div>
       <div class="snav-lbl">Deudas</div>
-      <div class="ni" onclick="go('debts')" data-v="debts"><span class="ic">💳</span>Mis Deudas<span class="bdg hidden" id="mdbadge" style="background:var(--rd)">0</span></div>
-      <div class="ni" onclick="go('receivables')" data-v="receivables"><span class="ic">💚</span>Por Cobrar<span class="bdg hidden" id="rbadge" style="background:var(--gn)">0</span></div>
-      <div class="ni" onclick="go('third_party')" data-v="third_party"><span class="ic">👤</span>De Terceros<span class="bdg hidden" id="tpbadge" style="background:var(--bl)">0</span></div>
-      <div class="ni" onclick="go('amort')" data-v="amort"><span class="ic">📋</span>Amortización</div>
-      <div class="ni" onclick="go('payments')" data-v="payments"><span class="ic">💸</span>Pagos</div>
+      <div class="ni" onclick="go('debts')" data-v="debts"><span class="ic">💳</span>Lo que debo<span class="bdg hidden" id="mdbadge" style="background:var(--rd)">0</span></div>
+      <div class="ni" onclick="go('receivables')" data-v="receivables"><span class="ic">💚</span>Me deben<span class="bdg hidden" id="rbadge" style="background:var(--gn)">0</span></div>
+      <div class="ni" onclick="go('third_party')" data-v="third_party"><span class="ic">👤</span>A mi nombre, paga otro<span class="bdg hidden" id="tpbadge" style="background:var(--bl)">0</span></div>
+      <div class="ni" onclick="go('amort')" data-v="amort"><span class="ic">📋</span>Calendario de cuotas</div>
+      <div class="ni" onclick="go('payments')" data-v="payments"><span class="ic">💸</span>Pagos registrados</div>
       <div class="ni" id="nav-loan-use" onclick="go('loan_use')" data-v="loan_use" style="display:none"><span class="ic">💰</span>Uso de Dinero<span class="bdg hidden" id="lubadge" style="background:var(--cy)">0</span></div>
       <div class="snav-lbl">Control</div>
       <div class="ni" onclick="go('approvals')" data-v="approvals"><span class="ic">⏳</span>Aprobaciones<span class="bdg hidden" id="abadge" style="background:var(--am)">0</span></div>
-      <div class="ni" onclick="go('participants')" data-v="participants"><span class="ic">👥</span>Participantes</div>
-      <div class="ni" onclick="go('delinquency')" data-v="delinquency"><span class="ic">⚠️</span>Morosidad<span class="bdg hidden" id="dbadge">0</span></div>
+      <div class="ni" onclick="go('participants')" data-v="participants"><span class="ic">👥</span>Deudas compartidas</div>
+      <div class="ni" onclick="go('delinquency')" data-v="delinquency"><span class="ic">⚠️</span>Atrasos<span class="bdg hidden" id="dbadge">0</span></div>
       <div class="ni" id="nav-users" onclick="go('users')" data-v="users" style="display:none"><span class="ic">🛡️</span>Usuarios<span class="bdg hidden" id="ubadge" style="background:var(--pu)">0</span></div>
     </nav>
     <div class="sfooter">
@@ -733,7 +848,7 @@ let S = {
   incomes: [],
   incomeSources: [],
   disbursements: [],       // {id, user_id, amount, category, description, date, month}
-  view: 'dashboard',
+  view: 'home',
   selDebt: null,
   // ── MULTI-USUARIO ──
   profile: null,          // { user_id, email, display_name, role, active }
@@ -932,7 +1047,7 @@ function previewReceipt(input, previewId) {
       prev.innerHTML = `<div style="margin-top:8px;padding:6px;background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);display:flex;gap:8px;align-items:center">
         <img src="${e.target.result}" style="width:60px;height:60px;object-fit:cover;border-radius:6px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${file.name}</div>
+          <div style="font-size:11px;color:var(--tx);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(file.name)}</div>
           <div style="font-size:10px;color:var(--tx3)">${(file.size/1024).toFixed(0)} KB · listo para subir</div>
         </div>
       </div>`;
@@ -940,7 +1055,7 @@ function previewReceipt(input, previewId) {
     reader.readAsDataURL(file);
   } else {
     prev.innerHTML = `<div style="margin-top:8px;padding:8px 10px;background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);font-size:11px">
-      📄 ${file.name} · ${(file.size/1024).toFixed(0)} KB
+      📄 ${esc(file.name)} · ${(file.size/1024).toFixed(0)} KB
     </div>`;
   }
 }
@@ -3060,7 +3175,7 @@ const UI = {
   debtSelect(selectedId) {
     return `<option value="">-- Seleccionar deuda --</option>${S.debts.map(d => {
       const prefix = Fin.isIncoming(d) ? '💚 ' : Fin.isThirdParty(d) ? '👤 ' : '🏦 ';
-      return `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${prefix}${d.name}</option>`;
+      return `<option value="${d.id}" ${d.id === selectedId ? 'selected' : ''}>${prefix}${esc(d.name)}</option>`;
     }).join('')}`;
   },
 };
@@ -4023,7 +4138,7 @@ async function initApp() {
     } catch (e) { console.warn('[initApp/dom]', e); }
 
     try { updateBadge(); } catch (e) { console.warn('[initApp/updateBadge]', e); }
-    try { go('dashboard'); } catch (e) {
+    try { go('home'); } catch (e) {
       console.error('[initApp/go(dashboard)]', e);
       document.getElementById('content').innerHTML = `<div class="alrt ae" style="margin:20px;font-size:13px">
         <strong>⚠️ Error al renderizar el dashboard</strong><br>
@@ -4301,7 +4416,7 @@ function modalAIMenu() {
       </div>
 
       <div style="font-size:10.5px;color:var(--tx3);margin-top:12px;padding:8px 10px;background:var(--bg3s);border-radius:6px;line-height:1.5">
-        <strong>ℹ️ Sobre los costos:</strong> con ${modelInfo?.name}, cada consulta cuesta aproximadamente ${modelInfo?.costIn ? '~$0.0005 USD' : 'N/A'}.
+        <strong>ℹ️ Sobre los costos:</strong> con ${esc(modelInfo?.name)}, cada consulta cuesta aproximadamente ${modelInfo?.costIn ? '~$0.0005 USD' : 'N/A'}.
         ${modelInfo?.freeRPD ? `Tienes <strong>${modelInfo.freeRPD} consultas gratis al día</strong> en el free tier de tu API key.` : 'No tiene free tier — cada consulta se cobra.'}
         Tu límite local es ${limit}/día para evitar gastos accidentales.
       </div>
@@ -4341,7 +4456,7 @@ function modalAISetup() {
       <div class="fg">
         <label>Proveedor de IA</label>
         <select id="ai-provider" onchange="onAIProviderChange()">
-          ${Object.entries(AI.PROVIDERS).map(([k, p]) => `<option value="${k}" ${currentProv===k?'selected':''}>${p.name}</option>`).join('')}
+          ${Object.entries(AI.PROVIDERS).map(([k, p]) => `<option value="${k}" ${currentProv===k?'selected':''}>${esc(p.name)}</option>`).join('')}
         </select>
       </div>
 
@@ -4394,7 +4509,7 @@ function onAIProviderChange() {
   // Llenar modelos
   const sel = document.getElementById('ai-model');
   const current = AI.provider() === prov ? AI.model() : p.models[0].id;
-  sel.innerHTML = p.models.map(m => `<option value="${m.id}" ${current===m.id?'selected':''}>${m.name}</option>`).join('');
+  sel.innerHTML = p.models.map(m => `<option value="${m.id}" ${current===m.id?'selected':''}>${esc(m.name)}</option>`).join('');
   // Hint y desc
   document.getElementById('ai-key-hint').textContent = p.keyHint;
   onAIModelChange();
@@ -4584,7 +4699,7 @@ function showAdvice(kind, contentOverride) {
 
   UI.modal(`<div class="mover"><div class="modal" style="max-width:760px;max-height:90vh">
     <div class="mhd" style="background:linear-gradient(135deg, ${t.color}, ${t.color}dd);color:white">
-      <div class="mti" style="color:white">${t.ico} ${t.name}</div>
+      <div class="mti" style="color:white">${t.ico} ${esc(t.name)}</div>
       <button class="mcl" onclick="UI.cm()" style="color:white">✕</button>
     </div>
     <div class="mbd" style="max-height:75vh;overflow-y:auto">${body}</div>
@@ -4684,7 +4799,7 @@ function renderSavingsPlan(a) {
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <div style="font-size:22px">${b.icon || '💰'}</div>
             <div style="flex:1">
-              <div style="font-weight:700;font-size:14px">${b.name}</div>
+              <div style="font-weight:700;font-size:14px">${esc(b.name)}</div>
               ${b.where_to_keep ? `<div style="font-size:10px;color:var(--tx3)">📍 ${b.where_to_keep}</div>` : ''}
             </div>
             ${b.estimated_months_to_complete ? `<div style="font-size:10px;background:var(--amd);color:var(--am);padding:2px 8px;border-radius:8px;font-weight:600">${b.estimated_months_to_complete} meses</div>` : ''}
@@ -4745,7 +4860,7 @@ function renderDiagnostic(a) {
         return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;margin-bottom:6px">
           <div style="width:8px;height:40px;background:${c.bg};border-radius:4px;flex-shrink:0"></div>
           <div style="flex:1">
-            <div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px">${r.name}</div>
+            <div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px">${esc(r.name)}</div>
             <div style="font-size:16px;font-weight:700;font-family:var(--fmono)">${r.value}</div>
             <div style="font-size:11px;color:var(--tx3);line-height:1.4">${r.interpretation || ''}</div>
           </div>
@@ -4823,13 +4938,13 @@ function modalUserPrefs() {
       <div class="frow c2">
         <div class="fg"><label>Moneda principal</label>
           <select id="pref-primary">
-            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${primary===c.code?'selected':''}>${c.symbol} ${c.code} — ${c.name}</option>`).join('')}
+            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${primary===c.code?'selected':''}>${c.symbol} ${c.code} — ${esc(c.name)}</option>`).join('')}
           </select>
         </div>
         <div class="fg"><label>Moneda secundaria (opcional)</label>
           <select id="pref-secondary" onchange="onSecondaryChange()">
             <option value="">— Sin moneda secundaria —</option>
-            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${secondary===c.code?'selected':''}>${c.symbol} ${c.code} — ${c.name}</option>`).join('')}
+            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${secondary===c.code?'selected':''}>${c.symbol} ${c.code} — ${esc(c.name)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -4976,7 +5091,7 @@ function setDashExcludeMortgage(checked) {
 function go(view, extra) {
   S.view = view; if (extra !== undefined) S.selDebt = extra;
   document.querySelectorAll('.ni').forEach(el => el.classList.toggle('on', el.dataset.v === view));
-  const titles = { dashboard: 'Dashboard', income: 'Ingresos', debts: 'Mis Deudas', receivables: 'Cuentas por Cobrar', third_party: 'Deudas de Terceros', amort: 'Amortización', payments: 'Pagos', approvals: 'Aprobaciones', participants: 'Participantes', delinquency: 'Morosidad', users: 'Gestión de Usuarios', loan_use: 'Uso de Dinero' };
+  const titles = { dashboard: 'Dashboard', income: 'Ingresos', debts: 'Lo que debo', receivables: 'Me deben', third_party: 'A mi nombre, paga otro', amort: 'Calendario de cuotas', payments: 'Pagos registrados', approvals: 'Aprobaciones', participants: 'Deudas compartidas', delinquency: 'Atrasos', users: 'Gestión de Usuarios', loan_use: 'Uso de Dinero' };
   document.getElementById('ptitle').textContent = titles[view] || view;
   document.getElementById('tbactions').innerHTML = '';
   document.getElementById('content').innerHTML = '';
@@ -5241,13 +5356,13 @@ function renderDashboard() {
     <label style="font-size:11px;color:var(--tx3);font-weight:600;letter-spacing:.5px;text-transform:uppercase">Filtrar por deuda:</label>
     <select id="dash-filter-debt" onchange="setDashFilterDebt(this.value)" style="background:var(--bg2);border:1px solid var(--bd2);color:var(--tx);padding:7px 12px;border-radius:var(--r);font-family:var(--fm);font-size:12px;min-width:240px">
       <option value="">— Todas las deudas (consolidado) —</option>
-      ${allOut.length ? `<optgroup label="🏦 Yo Debo">${allOut.map(d => `<option value="${d.id}" ${filterDebtId===d.id?'selected':''}>${d.name}${Fin.myShareOfDebt(d)<100?` (mi parte: ${Fin.myShareOfDebt(d)}%)`:''}</option>`).join('')}</optgroup>` : ''}
-      ${allIn.length ? `<optgroup label="💚 Me Deben">${allIn.map(d => `<option value="${d.id}" ${filterDebtId===d.id?'selected':''}>${d.name}</option>`).join('')}</optgroup>` : ''}
+      ${allOut.length ? `<optgroup label="🏦 Yo Debo">${allOut.map(d => `<option value="${d.id}" ${filterDebtId===d.id?'selected':''}>${esc(d.name)}${Fin.myShareOfDebt(d)<100?` (mi parte: ${Fin.myShareOfDebt(d)}%)`:''}</option>`).join('')}</optgroup>` : ''}
+      ${allIn.length ? `<optgroup label="💚 Me Deben">${allIn.map(d => `<option value="${d.id}" ${filterDebtId===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>` : ''}
     </select>
     ${filterDebtId ? `
       <button class="btn bs btn-xs" onclick="setDashFilterDebt('')" title="Quitar filtro">✕ Limpiar</button>
       <span style="font-size:10.5px;color:var(--am);background:rgba(245,158,11,.1);padding:3px 9px;border-radius:10px;border:1px solid var(--am)">
-        Viendo: <strong>${filterDebt?.name || '—'}</strong>${Fin.myShareOfDebt(filterDebt)<100?` · tu parte ${Fin.myShareOfDebt(filterDebt)}%`:''}
+        Viendo: <strong>${esc(filterDebt?.name || '—')}</strong>${Fin.myShareOfDebt(filterDebt)<100?` · tu parte ${Fin.myShareOfDebt(filterDebt)}%`:''}
       </span>
     ` : ''}
   </div>
@@ -5978,7 +6093,7 @@ function renderDashboard() {
 
               return `<div onclick="go('amort','${b.id}')" style="cursor:pointer">
                 <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
-                  <div style="font-size:12px;font-weight:600">${b.name}${b.myShare<100 ? ` <span style="font-size:9.5px;color:var(--tx3);font-weight:400">· tu parte ${b.myShare}%</span>` : ''}${b.isRecurring?'<span style="font-size:9px;background:rgba(168,85,247,.15);color:var(--pu);padding:1px 5px;border-radius:6px;margin-left:5px">🔄</span>':''}</div>
+                  <div style="font-size:12px;font-weight:600">${esc(b.name)}${b.myShare<100 ? ` <span style="font-size:9.5px;color:var(--tx3);font-weight:400">· tu parte ${b.myShare}%</span>` : ''}${b.isRecurring?'<span style="font-size:9px;background:rgba(168,85,247,.15);color:var(--pu);padding:1px 5px;border-radius:6px;margin-left:5px">🔄</span>':''}</div>
                   <div style="font-family:var(--fmono);font-size:11px;color:var(--tx3)">${Fin.fmtDebt(totBar, b.debt, true)}</div>
                 </div>
                 <div style="display:flex;height:22px;border-radius:5px;overflow:hidden;background:var(--bg3s);border:1px solid var(--bd);width:${barWidth}%;min-width:200px">
@@ -5990,7 +6105,7 @@ function renderDashboard() {
                   </div>` : ''}
                 </div>
                 ${b.othersBreakdown.length ? `<div style="font-size:9.5px;color:var(--tx3);margin-top:3px">
-                  ${b.othersBreakdown.map(o => `<span style="margin-right:8px"><strong style="color:var(--gn)">${o.name}</strong>${o.paidByOther?' (paga todo)':' ('+o.pct+'%)'}: ${Cur.fmt(o.amount, b.currency, {k:true})}</span>`).join('')}
+                  ${b.othersBreakdown.map(o => `<span style="margin-right:8px"><strong style="color:var(--gn)">${esc(o.name)}</strong>${o.paidByOther?' (paga todo)':' ('+o.pct+'%)'}: ${Cur.fmt(o.amount, b.currency, {k:true})}</span>`).join('')}
                 </div>` : ''}
               </div>`;
             }).filter(Boolean).join('')}
@@ -6013,7 +6128,7 @@ function renderDashboard() {
             </tr></thead>
             <tbody>${balanceData.map(b => `<tr onclick="go('amort','${b.id}')" style="cursor:pointer">
               <td class="tdm">
-                <div style="font-weight:600">${b.name}</div>
+                <div style="font-weight:600">${esc(b.name)}</div>
                 ${b.debt.description ? `<div style="font-size:9.5px;color:var(--tx3);font-weight:400">${b.debt.description.length>40?b.debt.description.slice(0,38)+'…':b.debt.description}</div>` : ''}
               </td>
               <td class="tdn">${Fin.fmtDebt(b.total, b.debt, true)}</td>
@@ -6108,7 +6223,7 @@ function renderDashboard() {
             );
             if (others.length) {
               const remaining = Fin.capitalRemaining(d);
-              othersDetail = others.map(pp => `${pp.name} (${pp.pct}%): ${Fin.fmtDebt(remaining * (+pp.pct||0)/100, d, true)}`).join(' · ');
+              othersDetail = others.map(pp => `${esc(pp.name)} (${pp.pct}%): ${Fin.fmtDebt(remaining * (+pp.pct||0)/100, d, true)}`).join(' · ');
             }
           }
 
@@ -6127,8 +6242,8 @@ function renderDashboard() {
 
           return `<tr onclick="go('amort','${d.id}')" style="cursor:pointer">
             <td class="tdm">
-              <div style="font-weight:600">${d.name}</div>
-              ${d.description ? `<div style="font-size:10px;color:var(--tx3);font-weight:400">${d.description}</div>` : ''}
+              <div style="font-weight:600">${esc(d.name)}</div>
+              ${d.description ? `<div style="font-size:10px;color:var(--tx3);font-weight:400">${esc(d.description)}</div>` : ''}
             </td>
             <td>${dirLbl}</td>
             <td class="tdn">${Fin.fmtDebt(total, d, true)}</td>
@@ -6167,7 +6282,7 @@ function renderDashboard() {
             linkChip = ` <span style="font-size:9px;background:rgba(168,85,247,.12);color:var(--pu);padding:1px 5px;border-radius:6px;font-weight:500" title="Creada por ${ownerName}">🔗 ${ownerName}</span>`;
           }
           return `<tr style="cursor:pointer" onclick="go('amort','${d.id}')">
-            <td class="tdm">${d.name}${linkChip}</td>
+            <td class="tdm">${esc(d.name)}${linkChip}</td>
             <td class="tdn txt-rd fw7">${Fin.fmtDebt(d._rem, d, true)}</td>
             <td style="min-width:100px"><div class="pbar"><div class="pfill ${pct>80?'gn':''}" style="width:${pct}%"></div></div><div style="font-size:9px;color:var(--tx3)">${pct.toFixed(1)}%</div></td>
           </tr>`;
@@ -6198,7 +6313,7 @@ function renderDashboard() {
             linkChip = ` <span style="font-size:9px;background:rgba(168,85,247,.12);color:var(--pu);padding:1px 5px;border-radius:6px" title="Vinculada con ${cpName}">🔗 ${cpName}</span>`;
           }
           return `<tr style="cursor:pointer" onclick="go('receivables')">
-            <td class="tdm">💚 ${d.name}${linkChip}<div style="font-size:10px;color:var(--tx3)">${d.borrower_name||'—'}</div></td>
+            <td class="tdm">💚 ${esc(d.name)}${linkChip}<div style="font-size:10px;color:var(--tx3)">${esc(d.borrower_name||'—')}</div></td>
             <td class="tdn txt-am fw7">${Fin.fmtDebt(d._rem, d, true)}</td>
             <td style="min-width:100px"><div class="pbar"><div class="pfill gn" style="width:${pct}%"></div></div><div style="font-size:9px;color:var(--tx3)">${pct.toFixed(1)}% cobrado</div></td>
           </tr>`;
@@ -6207,7 +6322,7 @@ function renderDashboard() {
           const debtId = c.debt.id;
           const namesList = c.settlements.map(s => s.fromName).join(', ');
           return `<tr style="cursor:pointer" onclick="go('participants','${debtId}')">
-            <td class="tdm">⚖️ ${c.debt.name}<div style="font-size:10px;color:var(--tx3)">Me deben: ${namesList}</div></td>
+            <td class="tdm">⚖️ ${esc(c.debt.name)}<div style="font-size:10px;color:var(--tx3)">Me deben: ${namesList}</div></td>
             <td class="tdn txt-am fw7">${Fin.fmtPriDual(c.amount)}</td>
             <td style="font-size:10px;color:var(--tx3)">Pago entre participantes</td>
           </tr>`;
@@ -6215,7 +6330,7 @@ function renderDashboard() {
         ${holderLoans.slice(0, 5).map(h => {
           const isTP = Fin.isThirdParty(h.debt);
           return `<tr style="cursor:pointer" onclick="go('${isTP?'third_party':'debts'}')">
-            <td class="tdm">💵 ${h.debt.name}<div style="font-size:10px;color:var(--tx3)">${h.holder} te debe (yo pagué)</div></td>
+            <td class="tdm">💵 ${esc(h.debt.name)}<div style="font-size:10px;color:var(--tx3)">${h.holder} te debe (yo pagué)</div></td>
             <td class="tdn txt-am fw7">${Fin.fmtDebt(h.amount, h.debt, true)}</td>
             <td style="font-size:10px;color:var(--tx3)">Préstamo al titular</td>
           </tr>`;
@@ -6243,7 +6358,7 @@ function renderDashboard() {
         const dirChip = isIn ? UI.chip('Me deben','gn') : UI.chip('Yo debo','rd');
         const targetView = isIn ? 'receivables' : 'amort';
         return `<tr onclick="go('${targetView}'${isIn?'':",'"+d.id+"'"})" style="cursor:pointer;border-left:3px solid ${isIn?'var(--gn)':'var(--rd)'}">
-          <td class="tdm">${d.name}</td>
+          <td class="tdm">${esc(d.name)}</td>
           <td>${dirChip}</td>
           <td>${UI.typeChip(d.type)}</td>
           <td class="tdn">${Fin.fmtDebt(total, d, true)}</td>
@@ -6352,7 +6467,7 @@ function renderDashboard() {
       // 1) INCOMING formal
       inDebts.forEach(d => {
         const rem = Fin.toPrimary(Fin.remaining(d), d.currency || 'USD');
-        addDebt(d.borrower_name || d.name, rem, `${d.name} (formal)`, 'formal');
+        addDebt(d.borrower_name || d.name, rem, `${esc(d.name)} (formal)`, 'formal');
       });
 
       // 2) PARTICIPANTES de mis outgoing me deben (% que les corresponde)
@@ -6370,7 +6485,7 @@ function renderDashboard() {
           if (isMe) return;
           const owed = remaining * (+pp.pct || 0) / 100;
           if (owed > 0.01) {
-            addDebt(pp.name, Fin.toPrimary(owed, d.currency || 'USD'), `${d.name} (${pp.pct}%)`, 'participant');
+            addDebt(pp.name, Fin.toPrimary(owed, d.currency || 'USD'), `${esc(d.name)} (${pp.pct}%)`, 'participant');
           }
         });
       });
@@ -6388,7 +6503,7 @@ function renderDashboard() {
         const cpName = cp?.display_name || (cp?.email || '').split('@')[0] || 'Otra persona';
         const rem = Fin.capitalRemaining(d);
         if (rem > 0.01) {
-          addDebt(cpName, Fin.toPrimary(rem, d.currency || 'USD'), `${d.name} (paga por mí)`, 'paid_by_other');
+          addDebt(cpName, Fin.toPrimary(rem, d.currency || 'USD'), `${esc(d.name)} (paga por mí)`, 'paid_by_other');
         }
       });
 
@@ -6409,7 +6524,7 @@ function renderDashboard() {
         });
         const labels = debtors.map(d => {
           const prefix = d.kind === 'paid_by_other' ? '🤝 ' : d.kind === 'participant' ? '👥 ' : '💚 ';
-          return `${prefix}${d.name}`;
+          return `${prefix}${esc(d.name)}`;
         });
         _charts['donut-in'] = new Chart(dc2, {
           type: 'doughnut',
@@ -6427,7 +6542,7 @@ function renderDashboard() {
                   const kindLbl = d.kind === 'paid_by_other' ? ' (compensación)' :
                                   d.kind === 'participant' ? ' (participante)' : ' (formal)';
                   const sources = d.sources.length > 1 ? ` (${d.sources.length} fuentes)` : ` · ${d.sources[0]}`;
-                  return `${d.name}${kindLbl}: ${Cur.fmt(d.rem, Cur.primary(), {k:true})}${sources}`;
+                  return `${esc(d.name)}${kindLbl}: ${Cur.fmt(d.rem, Cur.primary(), {k:true})}${sources}`;
                 }
               }}
             }
@@ -6528,7 +6643,7 @@ function modalRepairPartPayments(debtId) {
     </div>
     <div class="mbd">
       <div class="alrt aw" style="font-size:12px;margin-bottom:14px">
-        <strong>${debt.name}</strong> tiene <strong>${brokenRows.length} cuota${brokenRows.length>1?'s':''}</strong> marcada${brokenRows.length>1?'s':''} como <em>pagada${brokenRows.length>1?'s':''}</em> pero <strong>sin rastro de pagos individuales por participante</strong>. Eso te impide saber si todos pagaron o si alguno te debe.
+        <strong>${esc(debt.name)}</strong> tiene <strong>${brokenRows.length} cuota${brokenRows.length>1?'s':''}</strong> marcada${brokenRows.length>1?'s':''} como <em>pagada${brokenRows.length>1?'s':''}</em> pero <strong>sin rastro de pagos individuales por participante</strong>. Eso te impide saber si todos pagaron o si alguno te debe.
       </div>
 
       <div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:8px">📋 Cuotas a reparar (${brokenRows.length})</div>
@@ -6552,7 +6667,7 @@ function modalRepairPartPayments(debtId) {
             <div style="font-size:10.5px;color:var(--tx3);margin-top:4px">Cada participante paga su % de cada cuota:</div>
             <div style="margin-top:6px;font-size:10.5px">
               ${previewPerPart.map(pp => `<div style="display:flex;justify-content:space-between;padding:2px 0">
-                <span><strong>${pp.name}</strong> (${pp.pct}%)</span>
+                <span><strong>${esc(pp.name)}</strong> (${pp.pct}%)</span>
                 <strong style="font-family:var(--fmono);color:var(--gn)">${Fin.fmtDebt(pp.portion, debt)}</strong>
               </div>`).join('')}
             </div>
@@ -6564,7 +6679,7 @@ function modalRepairPartPayments(debtId) {
             <div style="font-size:12px;font-weight:600;color:var(--am)">🙋 Solo UNO pagó todo</div>
             <div style="font-size:10.5px;color:var(--tx3);margin-top:2px;margin-bottom:4px">Asignar todas las cuotas al participante seleccionado:</div>
             <select id="repairAssignOne" style="font-size:11px;padding:4px 6px;width:100%" onchange="document.querySelector('input[name=repairMode][value=one]').checked=true">
-              ${parts.map(pp => `<option value="${pp.id}">${pp.name} (${pp.pct}%)</option>`).join('')}
+              ${parts.map(pp => `<option value="${pp.id}">${esc(pp.name)} (${pp.pct}%)</option>`).join('')}
             </select>
           </div>
         </label>
@@ -6725,10 +6840,10 @@ function modalBulkMarkPaid(debtId) {
 
       <!-- Info de la deuda -->
       <div class="alrt ai" style="font-size:12px;margin-bottom:12px">
-        <div style="font-weight:600">${debt.name}</div>
+        <div style="font-weight:600">${esc(debt.name)}</div>
         <div style="color:var(--tx3);font-size:11px;margin-top:3px">
           ${pending.length} cuota${pending.length>1?'s':''} pendiente${pending.length>1?'s':''}
-          ${hasParts ? ` · 👥 ${parts.length} participantes (${parts.map(p => `${p.name} ${p.pct}%`).join(', ')})` : ''}
+          ${hasParts ? ` · 👥 ${parts.length} participantes (${parts.map(p => `${esc(p.name)} ${p.pct}%`).join(', ')})` : ''}
         </div>
       </div>
 
@@ -6804,7 +6919,7 @@ function bulkRenderRow(r, idx, parts, hasParts) {
         </select>
         ${r._mode==='one' ? `
         <select onchange="bulkSetOneParticipant(${idx}, this.value)" style="font-size:10.5px;padding:4px 6px;background:var(--bg2);border:1px solid var(--bd2);color:var(--tx);border-radius:4px;flex:1">
-          ${parts.map(pp => `<option value="${pp.id}" ${r._oneParticipantId===pp.id?'selected':''}>${pp.name}</option>`).join('')}
+          ${parts.map(pp => `<option value="${pp.id}" ${r._oneParticipantId===pp.id?'selected':''}>${esc(pp.name)}</option>`).join('')}
         </select>
         ` : ''}
       </div>
@@ -7087,7 +7202,7 @@ async function repairAmortTable(debtId) {
   const ins = +debt.monthly_insurance || 0;
   const ok = confirm(
     '¿Regenerar la tabla de amortización?\n\n' +
-    `Deuda: ${debt.name}\n` +
+    `Deuda: ${esc(debt.name)}\n` +
     `Monto: $${debt.total_amount} · Tasa: ${debt.interest_rate||0}% · Plazo: ${debt.months} meses\n` +
     `Fecha inicio: ${debt.start_date}` +
     (ins > 0 ? `\nSeguro mensual: $${ins}` : '') +
@@ -7130,7 +7245,7 @@ function modalResetDebt(debtId) {
       </div>
 
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:12px 14px;margin-bottom:12px">
-        <div style="font-weight:600;margin-bottom:8px">${debt.name}</div>
+        <div style="font-weight:600;margin-bottom:8px">${esc(debt.name)}</div>
         <div style="font-size:11px;color:var(--tx3);line-height:1.7">
           <div>📊 Monto: <strong style="color:var(--tx)">${Cur.fmt(+debt.total_amount||0, debt.currency||'USD')}</strong></div>
           <div>📅 Plazo: <strong style="color:var(--tx)">${debt.months || '—'} meses</strong> · Tasa: <strong style="color:var(--tx)">${debt.interest_rate || 0}%</strong></div>
@@ -7399,7 +7514,7 @@ function renderIncome() {
               ${plan.incomeDetails.length ? plan.incomeDetails.map((i, idx) => `
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px dashed var(--bd);font-size:12px;${i.type==='expected_from_others'?(i._pbo?'background:rgba(6,182,212,.04)':'background:rgba(168,85,247,.04)'):''}">
                   <div style="flex:1;min-width:0">
-                    <div style="font-weight:500;${i.status==='paid'?'text-decoration:line-through;color:var(--tx3)':''}">${i.name}</div>
+                    <div style="font-weight:500;${i.status==='paid'?'text-decoration:line-through;color:var(--tx3)':''}">${esc(i.name)}</div>
                     <div style="font-size:10px;color:var(--tx3);margin-top:1px">${i.dueDate || ''}${
                       i.type==='source'?' · 💼 sueldo':
                       i.type==='receivable_installment'?' · 💚 cobro formal':
@@ -7628,7 +7743,7 @@ function renderIncomeDiagnosticsTab() {
               return `<tr style="border-top:1px solid var(--bd);${isDup ? 'background:rgba(239,68,68,.05)' : ''}">
                 <td style="padding:6px 9px;font-family:var(--fmono);font-size:10.5px">${i.date || '⚠️ sin fecha'}</td>
                 <td style="padding:6px 9px;font-size:10.5px">
-                  ${i.source_id ? `<span style="background:rgba(168,85,247,.15);color:var(--pu);padding:1px 6px;border-radius:6px;font-size:10px">🔄 ${src?.name || 'fuente borrada'}</span>` : '<span style="color:var(--tx3)">— manual</span>'}
+                  ${i.source_id ? `<span style="background:rgba(168,85,247,.15);color:var(--pu);padding:1px 6px;border-radius:6px;font-size:10px">🔄 ${esc(src?.name || 'fuente borrada')}</span>` : '<span style="color:var(--tx3)">— manual</span>'}
                   ${isDup ? '<span style="color:var(--rd);font-size:9px;margin-left:4px">⚠️ duplicado</span>' : ''}
                 </td>
                 <td style="padding:6px 9px;font-size:10.5px;color:var(--tx2);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(i.description || i.notes || '').replace(/"/g, '&quot;')}">${i.description || i.notes || '—'}</td>
@@ -7888,7 +8003,7 @@ function renderIncomeSourcesTab() {
 
         const freqLbl = s.frequency === 'biweekly' ? `Quincenal` : `Mensual día ${s.monthly_day||1}`;
         return `<tr>
-          <td class="tdm"><strong>${s.name}</strong>${s.notes?`<div style="font-size:10px;color:var(--tx3);font-weight:400">${s.notes}</div>`:''}</td>
+          <td class="tdm"><strong>${esc(s.name)}</strong>${s.notes?`<div style="font-size:10px;color:var(--tx3);font-weight:400">${esc(s.notes)}</div>`:''}</td>
           <td>${UI.catChip(s.category)}</td>
           <td class="tdn fw7 txt-gn">${(() => {
             const cur = s.currency || 'USD';
@@ -7971,7 +8086,7 @@ function filterIncomes() {
       // Fila virtual: badge + acciones especiales
       return `<tr style="background:rgba(59,130,246,.05)">
         <td>${i.date || '—'} <span style="font-size:9px;background:var(--bld);color:var(--bl);padding:1px 5px;border-radius:6px;margin-left:4px" title="Ingreso esperado generado por fuente recurrente">🔮 Esperado</span></td>
-        <td class="tdm">${i.description || '—'}<div style="font-size:10px;color:var(--tx3);font-weight:400">de fuente recurrente</div></td>
+        <td class="tdm">${esc(i.description || '—')}<div style="font-size:10px;color:var(--tx3);font-weight:400">de fuente recurrente</div></td>
         <td>${UI.catChip(i.category)}</td>
         <td class="tdn txt-bl fw7">${amtStr}</td>
         <td style="white-space:nowrap">
@@ -7981,7 +8096,7 @@ function filterIncomes() {
     }
     return `<tr>
       <td>${i.date || '—'}${i.source_id?' <span style="font-size:9px;background:var(--gnd);color:var(--gn);padding:1px 5px;border-radius:6px;margin-left:4px" title="De una fuente recurrente">🔄</span>':''}</td>
-      <td class="tdm">${i.description || '—'}</td>
+      <td class="tdm">${esc(i.description || '—')}</td>
       <td>${UI.catChip(i.category)}</td>
       <td class="tdn txt-gn fw7">${amtStr}</td>
       <td style="white-space:nowrap">
@@ -8053,7 +8168,7 @@ function modalIncomeSourceForm(editId) {
         <div class="fg">
           <label>Moneda</label>
           <select id="src-cur">
-            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${v.currency===c.code?'selected':''}>${c.symbol} ${c.code} — ${c.name}</option>`).join('')}
+            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${v.currency===c.code?'selected':''}>${c.symbol} ${c.code} — ${esc(c.name)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -8191,8 +8306,8 @@ function confirmDelSource(id) {
   // Contar cuántos ingresos reales están vinculados
   const linked = S.incomes.filter(i => i.source_id === id).length;
   const msg = linked
-    ? `¿Eliminar la fuente "${s.name}"?\n\nHay ${linked} ingreso${linked!==1?'s':''} confirmado${linked!==1?'s':''} en BD que quedará${linked!==1?'n':''} sin vínculo (no se eliminan, solo se desligan).`
-    : `¿Eliminar la fuente "${s.name}"?\n\nSe dejarán de generar ingresos esperados de esta fuente.`;
+    ? `¿Eliminar la fuente "${esc(s.name)}"?\n\nHay ${linked} ingreso${linked!==1?'s':''} confirmado${linked!==1?'s':''} en BD que quedará${linked!==1?'n':''} sin vínculo (no se eliminan, solo se desligan).`
+    : `¿Eliminar la fuente "${esc(s.name)}"?\n\nSe dejarán de generar ingresos esperados de esta fuente.`;
   if (!confirm(msg)) return;
   delIncomeSource(id);
 }
@@ -8217,7 +8332,7 @@ function confirmVirtual(sourceId, date, expectedAmount, currency) {
     <div class="mhd"><div class="mti">✓ Confirmar ingreso recibido</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt as_" style="font-size:12px;margin-bottom:14px">
-        <strong>${src.name}</strong> · esperado: <strong>${Cur.fmt(+expectedAmount, currency, {k:false})}</strong> el <strong>${date}</strong>
+        <strong>${esc(src.name)}</strong> · esperado: <strong>${Cur.fmt(+expectedAmount, currency, {k:false})}</strong> el <strong>${date}</strong>
       </div>
 
       <div class="fg">
@@ -8538,7 +8653,7 @@ function renderDebtRow(d, opts = {}) {
   return `<tr class="dt-row" style="border-left:3px solid ${borderCol};cursor:pointer" oncontextmenu="ctxDebt(event,'${d.id}')" onclick="event.target.closest('.dt-acts')||event.target.closest('.dt-arrow')?null:go('amort','${d.id}')">
     <td style="padding:9px 10px">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
-        <strong style="font-size:13px;color:var(--tx)">${d.name}</strong>
+        <strong style="font-size:13px;color:var(--tx)">${esc(d.name)}</strong>
         ${Fin.isRecurring(d) ? `<span style="font-size:9px;background:rgba(168,85,247,.12);color:var(--pu);padding:1px 6px;border-radius:6px" title="Gasto recurrente">🔄 ${d.recurring_frequency === 'biweekly' ? 'quincenal' : 'mensual'}</span>` : ''}
         ${linkBadge}
       </div>
@@ -8754,8 +8869,9 @@ function renderDebtsTable(debts, kind) {
    VIEW: DEBTS
 ═══════════════════════════════════════════════════════════ */
 function renderDebts() {
+  /* v6: filtro Activas/Pagadas */
   document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="modalBulkImportDebts('outgoing')" title="Importar varias deudas desde Excel, imagen o PDF">📥 Importar</button> <button class="btn bp btn-sm" onclick="modalCreateDebt('outgoing')">+ Nueva Deuda</button>`;
-  const debts = Fin.outgoingDebts();
+  const debts = DebtFilter.apply(Fin.outgoingDebts());
   if (!debts.length) { document.getElementById('content').innerHTML = UI.empty('💳', 'Sin deudas registradas', 'Crea tu primera deuda para comenzar el control', '+ Nueva Deuda', "modalCreateDebt('outgoing')"); return; }
 
   const useTable = shouldUseTable(debts.length);
@@ -8819,8 +8935,8 @@ function renderDebts() {
     return `<div class="dc" oncontextmenu="ctxDebt(event,'${d.id}')">
       <div class="dc-type ${d.type}">${debtTypeInfo(d.type).icon} ${debtTypeInfo(d.type).label}${subtypeChip}</div>
       ${ownerInfo ? `<div style="margin:6px 0 -2px 0;display:flex;flex-wrap:wrap;gap:4px">${ownerInfo}</div>` : ''}
-      <div class="dc-name">${d.name}</div>
-      <div class="dc-desc">${d.description || '—'}</div>
+      <div class="dc-name">${esc(d.name)}</div>
+      <div class="dc-desc">${esc(d.description || '—')}</div>
       ${(() => {
         // Calcular cuota mensual y total pendiente para esta deuda
         let cuotaMen = 0, totalPend = 0;
@@ -8878,7 +8994,7 @@ function renderDebts() {
 function ctxDebt(e, id) {
   const d = S.debts.find(x => x.id === id);
   const items = [
-    { lbl_only: d.name }, 'div',
+    { lbl_only: esc(d.name) }, 'div',
     { ico: '📋', lbl: 'Ver amortización', fn: `()=>go('amort','${id}')` },
   ];
   if (canEditDebt(d)) {
@@ -8962,7 +9078,7 @@ function renderThirdParty() {
       : '<span style="display:inline-block;font-size:9px;color:var(--bl);background:var(--bld);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">💸 Libre</span>';
     return `<div class="dc" style="border-left:3px solid var(--bl)">
       <div class="dc-type" style="background:var(--bld);color:var(--bl)">De tercero${subtypeChip}</div>
-      <div class="dc-name">${d.name}</div>
+      <div class="dc-name">${esc(d.name)}</div>
       <div class="dc-desc">${d.holder_name ? '👤 Titular: <strong>'+d.holder_name+'</strong>' : (d.description || '—')}${d.holder_email ? ' · '+d.holder_email : ''}</div>
       <div class="dc-total">${Fin.fmtDebt(total, d)}</div>
       <div style="font-size:11px;color:var(--tx3)">Capital pendiente: <strong class="txt-am">${Fin.fmtDebt(capRem, d)}</strong></div>
@@ -8992,7 +9108,7 @@ function renderThirdParty() {
 ═══════════════════════════════════════════════════════════ */
 function renderReceivables() {
   document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="modalBulkImportDebts('incoming')" title="Importar varias por cobrar desde Excel, imagen o PDF">📥 Importar</button> <button class="btn bg btn-sm" onclick="modalCreateDebt('incoming')">+ Nueva por Cobrar</button>`;
-  const debts = Fin.incomingDebts();
+  const debts = DebtFilter.apply(Fin.incomingDebts());
 
   // Cálculos correctos: capital amortizado vs capital pendiente
   const totalReceivable = debts.reduce((s, d) => s + (+d.total_amount || 0), 0);
@@ -9037,7 +9153,7 @@ function renderReceivables() {
       : '<span style="display:inline-block;font-size:9px;color:var(--bl);background:var(--bld);padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle">💸 Libre</span>';
     return `<div class="dc" style="border-left:3px solid var(--gn)">
       <div class="dc-type" style="background:var(--gnd);color:var(--gn)">Me deben${subtypeChip}</div>
-      <div class="dc-name">${d.name}</div>
+      <div class="dc-name">${esc(d.name)}</div>
       <div class="dc-desc">${d.borrower_name ? '👤 '+d.borrower_name : (d.description || '—')}${d.borrower_email ? ' · '+d.borrower_email : ''}</div>
       ${(() => {
         const isRec = Fin.isRecurring(d);
@@ -9127,10 +9243,10 @@ function modalShareLink(debtId) {
   }
   const url = publicLinkFor(debtId);
   UI.modal(`<div class="mover"><div class="modal" style="max-width:520px">
-    <div class="mhd"><div class="mti">🔗 Compartir link público — ${d.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">🔗 Compartir link público — ${esc(d.name)}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ai">
-        Comparte este link con <strong>${d.borrower_name || 'el deudor'}</strong> para que pueda ver el estado de la deuda en tiempo real.
+        Comparte este link con <strong>${esc(d.borrower_name || 'el deudor')}</strong> para que pueda ver el estado de la deuda en tiempo real.
         <br><span style="font-size:11px;color:var(--tx3)">Solo lectura · sin login · token único</span>
       </div>
       <div class="fg">
@@ -9256,7 +9372,7 @@ function renderAmort(debtId) {
           const { owes, paid: ppaid, due } = Fin.partBalance(debtId, pp.id);
           const nc = nextRow ? nextRow.total * (pp.pct / 100) : 0;
           return `<tr>
-            <td class="tdm">${pp.name}</td><td class="tdn">${pp.pct}%</td>
+            <td class="tdm">${esc(pp.name)}</td><td class="tdn">${pp.pct}%</td>
             <td class="tdn">${Fin.fmtDebt(owes, debt, true)}</td>
             <td class="tdn txt-gn">${Fin.fmtDebt(ppaid, debt, true)}</td>
             <td class="tdn ${due > 0 ? 'txt-rd' : ''} fw7">${Fin.fmtDebt(due, debt, true)}</td>
@@ -9412,7 +9528,7 @@ function renderAmort(debtId) {
             cls_ = 'due';
             label = `${pp.name.split(' ')[0]} debe ${Fin.fmt(exp_, true)}`;
           }
-          const titleDetail = `${pp.name}: pagó ${Fin.fmt(directPays)} directo${anonShare?' + '+Fin.fmt(anonShare)+' anónimo':''}${coveredByOther?' + '+Fin.fmt(coveredByOther)+' cubierto por otro':''} de ${Fin.fmt(exp_)} (${pp.pct}%)`;
+          const titleDetail = `${esc(pp.name)}: pagó ${Fin.fmt(directPays)} directo${anonShare?' + '+Fin.fmt(anonShare)+' anónimo':''}${coveredByOther?' + '+Fin.fmt(coveredByOther)+' cubierto por otro':''} de ${Fin.fmt(exp_)} (${pp.pct}%)`;
           return `<span class="pp-badge ${cls_}" title="${titleDetail}">${label}</span>`;
         }).join('') : '';
 
@@ -9585,7 +9701,7 @@ function renderDisbursementsSection(debtId, debt) {
           <td>${d.date || '—'}</td>
           <td class="tdn fw7 txt-am">${Cur.fmt(d.amount, debt.currency||'USD', {k:true})}</td>
           <td>${catLabels[d.category] || '📦 ' + (d.category || 'other')}</td>
-          <td style="color:var(--tx2)">${d.description || '—'}</td>
+          <td style="color:var(--tx2)">${esc(d.description || '—')}</td>
           <td style="white-space:nowrap;text-align:right">
             <button class="btn bs btn-xs" onclick="modalAddDisbursement('${debtId}','${d.id}')" title="Editar">✏️</button>
             <button class="btn bs btn-xs" onclick="confirmDelDisbursement('${d.id}')" title="Eliminar">🗑</button>
@@ -9642,7 +9758,7 @@ function modalAddDisbursement(debtId, editId) {
     : (isEdit ? '✏️ Editar gasto' : '+ Registrar gasto');
   const infoMsg = isIncoming
     ? `💚 Cada préstamo individual <strong>suma</strong> al total que te deben. Total acumulado actual: <strong>${Cur.fmt(Fin.totalDisbursed(debt.id), cur)}</strong>`
-    : `💰 Deuda: <strong>${debt.name}</strong> · Disponible: <strong>${Cur.fmt(available, cur, {k:false})}</strong>`;
+    : `💰 Deuda: <strong>${esc(debt.name)}</strong> · Disponible: <strong>${Cur.fmt(available, cur, {k:false})}</strong>`;
   const amountLabel = isIncoming ? `Monto prestado (${cur}) *` : `Monto (${cur}) *`;
   const descPlaceholder = isIncoming
     ? 'Ej: Le di efectivo en la casa, le pagué la luz, le compré un regalo, etc.'
@@ -9815,7 +9931,7 @@ function renderAmortRecurring(debtId, debt) {
   <div class="card mb4">
     <div class="card-hd">
       <div>
-        <div class="card-ti">🔄 ${debt.name}</div>
+        <div class="card-ti">🔄 ${esc(debt.name)}</div>
         <div class="card-su">Gasto recurrente · ${freqLbl} · ${Fin.fmtDebt(monthlyAmount, debt, false)} cada vez${debt.recurring_end_date?' · termina '+debt.recurring_end_date:''}</div>
       </div>
       <button class="btn ${Fin.isOutgoing(debt)?'bp':'bg'} btn-sm" onclick="modalGenericPay('${debtId}')">+ Registrar pago</button>
@@ -9874,7 +9990,7 @@ function renderAmortRecurring(debtId, debt) {
         return `<tr>
         <td>${p.payment_date||'—'}</td>
         <td class="tdn fw7 txt-gn">${amtStr}</td>
-        <td>${p.notes||'—'}</td>
+        <td>${esc(p.notes||'—')}</td>
         <td><button class="btn bs btn-sm" onclick="modalEditPayment('${p.id}')">Ver</button></td>
       </tr>`;}).join('')}</tbody>
     </table></div>
@@ -9887,7 +10003,7 @@ function confirmRecurringPayment(debtId, expectedDate, expectedAmount, currency)
   if (!debt) return UI.toast('Deuda no encontrada', 'error');
 
   UI.modal(`<div class="mover"><div class="modal" style="max-width:440px">
-    <div class="mhd"><div class="mti">✓ Confirmar pago de "${debt.name}"</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">✓ Confirmar pago de "${esc(debt.name)}"</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt as_" style="font-size:12px;margin-bottom:14px">
         Esperado: <strong>${Cur.fmt(+expectedAmount, currency, {k:false})}</strong> el <strong>${expectedDate}</strong>
@@ -10002,7 +10118,7 @@ function renderAmortFreeForm(debtId, debt) {
             : (p.reported_by==='borrower' ? '<span class="chip cgn">✓ Aprobado</span>' : '<span class="chip cgn">✓ OK</span>');
         return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
           <td>${p.date||'—'}</td>
-          <td style="color:var(--tx3)">${p.notes||'—'}</td>
+          <td style="color:var(--tx3)">${esc(p.notes||'—')}</td>
           <td class="tdc">${receiptCell}</td>
           <td class="tdc">${statusCell}</td>
           <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${Fin.fmt(p.amount)}</td>
@@ -10076,7 +10192,7 @@ function openAmortActions(debtId, amortId) {
             ? `<span style="color:var(--am)">parcial: ${Fin.fmt(paidByThis)} de ${Fin.fmt(expected)}</span>`
             : `debe ${Fin.fmt(expected)} (${pct}%)`;
         payActions.push({
-          ico, lbl: `${isFullyPaid ? '✓ ' : ''}Pago de ${pp.name}`,
+          ico, lbl: `${isFullyPaid ? '✓ ' : ''}Pago de ${esc(pp.name)}`,
           desc: status_,
           cls: isFullyPaid ? 'bs' : 'bp',
           fn: `UI.cm();modalInstPayment('${debtId}','${amortId}','${pp.id}')`
@@ -10186,7 +10302,7 @@ function openAmortActions(debtId, amortId) {
       <div class="alrt ai" style="margin-bottom:14px;font-size:12px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
           <div>
-            <div style="font-weight:600;color:var(--tx)">${debt.name}</div>
+            <div style="font-weight:600;color:var(--tx)">${esc(debt.name)}</div>
             <div style="color:var(--tx3);font-size:11px;margin-top:2px">Vence: ${amort.due} · Cuota: ${Fin.fmt(amort.total)}${isPartial?` · Pagado: <span class="txt-gn">${Fin.fmt(annot.instTotal||0)}</span> · Falta: <span class="txt-rd">${Fin.fmt(annot.partialRemaining||amort.total)}</span>`:''}</div>
           </div>
           <div>${badge}</div>
@@ -10242,7 +10358,7 @@ function modalMarkPaidWithParts(amortId, debtId) {
     <div class="mhd"><div class="mti">✅ Marcar Cuota #${amort.n} como pagada</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ai" style="font-size:12px;margin-bottom:14px">
-        <strong>${debt.name}</strong> · Cuota #${amort.n} · ${Fin.fmt(cuotaTotal)}<br>
+        <strong>${esc(debt.name)}</strong> · Cuota #${amort.n} · ${Fin.fmt(cuotaTotal)}<br>
         Esta deuda tiene <strong>${parts.length} participantes</strong>. Para no perder el rastro de quién pagó, dinos cómo se cubrió la cuota:
       </div>
 
@@ -10251,7 +10367,7 @@ function modalMarkPaidWithParts(amortId, debtId) {
         ${partsInfo.map(pp => {
           const isFull = pp.remaining < 0.01;
           return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0">
-            <div><strong>${pp.name}</strong> <span style="color:var(--tx3);font-size:10px">(${pp.pct}% · debe ${Fin.fmt(pp.expected)})</span></div>
+            <div><strong>${esc(pp.name)}</strong> <span style="color:var(--tx3);font-size:10px">(${pp.pct}% · debe ${Fin.fmt(pp.expected)})</span></div>
             <div style="font-family:var(--fmono);color:${isFull?'var(--gn)':'var(--am)'}">${Fin.fmt(pp.paid)} ${isFull?'✓':`/ falta ${Fin.fmt(pp.remaining)}`}</div>
           </div>`;
         }).join('')}
@@ -10265,8 +10381,8 @@ function modalMarkPaidWithParts(amortId, debtId) {
           <button class="amort-action-btn" onclick="confirmMarkOnePartPaid('${amortId}','${debtId}','${pp.id}',${pp.remaining.toFixed(2)})" data-cls="bp">
             <div class="aab-ico">👤</div>
             <div class="aab-body">
-              <div class="aab-lbl">${pp.name} pagó SU parte (${Fin.fmt(pp.remaining)})</div>
-              <div class="aab-desc">Registra solo el pago de ${pp.name}. El resto sigue pendiente para los otros.</div>
+              <div class="aab-lbl">${esc(pp.name)} pagó SU parte (${Fin.fmt(pp.remaining)})</div>
+              <div class="aab-desc">Registra solo el pago de ${esc(pp.name)}. El resto sigue pendiente para los otros.</div>
             </div>
             <div class="aab-arrow">›</div>
           </button>
@@ -10283,8 +10399,8 @@ function modalMarkPaidWithParts(amortId, debtId) {
           return `<button class="amort-action-btn" onclick="confirmCoverAllByOne('${amortId}','${debtId}','${pp.id}',${remainingTotal.toFixed(2)})" data-cls="am">
             <div class="aab-ico">💰</div>
             <div class="aab-body">
-              <div class="aab-lbl">${pp.name} pagó TODO lo que faltaba (${Fin.fmt(remainingTotal)})</div>
-              <div class="aab-desc">${pp.name} cubre lo que faltaba a todos. Quedará registro de que los otros le deben.</div>
+              <div class="aab-lbl">${esc(pp.name)} pagó TODO lo que faltaba (${Fin.fmt(remainingTotal)})</div>
+              <div class="aab-desc">${esc(pp.name)} cubre lo que faltaba a todos. Quedará registro de que los otros le deben.</div>
             </div>
             <div class="aab-arrow">›</div>
           </button>`;
@@ -10495,7 +10611,7 @@ function modalInstPayment(debtId, amortId, partId) {
         const isFull = pp.remaining < 0.01;
         const cls = isFull ? 'txt-gn' : 'txt-am';
         return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0">
-          <span><strong>${pp.name}</strong> <span style="color:var(--tx3)">(${pp.pct}%)</span></span>
+          <span><strong>${esc(pp.name)}</strong> <span style="color:var(--tx3)">(${pp.pct}%)</span></span>
           <span class="${cls}" style="font-family:var(--fmono)">
             ${Fin.fmt(pp.paid, true)} / ${Fin.fmt(pp.expected, true)}
             ${isFull ? ' ✓' : ' (falta ' + Fin.fmt(pp.remaining, true) + ')'}
@@ -10510,17 +10626,17 @@ function modalInstPayment(debtId, amortId, partId) {
   ` : '';
 
   UI.modal(`<div class="mover"><div class="modal" style="max-width:540px">
-    <div class="mhd"><div class="mti">${part ? `Pago de ${part.name}` : 'Pago de cuota'} — #${amort.n}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">${part ? `Pago de ${esc(part.name)}` : 'Pago de cuota'} — #${amort.n}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ai">
-        Cuota #${amort.n} · vence ${amort.due || '—'} · ${part ? `<strong>${part.name}</strong> (${part.pct}%)` : 'Cuota total'}<br>
+        Cuota #${amort.n} · vence ${amort.due || '—'} · ${part ? `<strong>${esc(part.name)}</strong> (${part.pct}%)` : 'Cuota total'}<br>
         Debe: <strong>${Fin.fmt(exp_)}</strong>${alreadyPaid > 0 ? ` · Ya pagado: <span class="txt-gn">${Fin.fmt(alreadyPaid)}</span> · Pendiente: <span class="txt-rd">${Fin.fmt(remaining_)}</span>` : ''}
       </div>
       ${infoBlock}
       ${!partId && parts.length ? `<div class="fg" style="margin-top:10px"><label>Quién paga</label>
         <select id="ip-part" onchange="updateInstPayPreview('${amortId}')">
           <option value="">— Pago general (sin participante específico) —</option>
-          ${parts.map(pp => `<option value="${pp.id}">${pp.name} (${pp.pct}%)</option>`).join('')}
+          ${parts.map(pp => `<option value="${pp.id}">${esc(pp.name)} (${pp.pct}%)</option>`).join('')}
         </select></div>` : ''}
       <div class="frow c2">
         <div class="fg"><label>Monto ($)</label><input type="number" id="ip-amt" value="${remaining_.toFixed(2)}" min="0.01" step="0.01" oninput="updateInstPayPreview('${amortId}')"></div>
@@ -10586,9 +10702,9 @@ function updateInstPayPreview(amortId) {
       const othersList = others.map(p => p.name).join(', ');
       overpayWarning = `
         <div class="alrt aw" style="font-size:11.5px;margin-top:8px">
-          <div style="font-weight:600;margin-bottom:3px">⚠️ ${part.name} está pagando de más</div>
+          <div style="font-weight:600;margin-bottom:3px">⚠️ ${esc(part.name)} está pagando de más</div>
           <div>Su parte era <strong>${Fin.fmt(expPart, true)}</strong> pero está aportando <strong>${Fin.fmt(totalAfterPart, true)}</strong> (excedente: <strong>${Fin.fmt(overpay, true)}</strong>).</div>
-          <div style="margin-top:4px;color:var(--tx3)">Esto se registrará automáticamente como deuda interna: <strong>${othersList}</strong> le deberá${others.length>1?'n':''} a ${part.name} en el módulo de Participantes.</div>
+          <div style="margin-top:4px;color:var(--tx3)">Esto se registrará automáticamente como deuda interna: <strong>${othersList}</strong> le deberá${others.length>1?'n':''} a ${esc(part.name)} en el módulo de Participantes.</div>
         </div>
       `;
     }
@@ -10680,9 +10796,9 @@ function showInstPayments(amortId) {
                        : Fin.isRejected(p) ? '<span class="chip crd">✕ Rech.</span>'
                        : '<span class="chip cgn">✓ OK</span>';
           return `<tr>
-            <td class="tdm">${pp?.name || 'General'}</td>
+            <td class="tdm">${esc(pp?.name || 'General')}</td>
             <td>${p.paid_date || '—'}</td>
-            <td style="color:var(--tx3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p.notes||'').replace(/"/g,'&quot;')}">${p.notes || '—'}</td>
+            <td style="color:var(--tx3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p.notes||'').replace(/"/g,'&quot;')}">${esc(p.notes || '—')}</td>
             <td class="tdc">${p.receipt_url ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">📎</button>` : '<span class="txt-mu" style="font-size:10px">—</span>'}</td>
             <td>${stChip}</td>
             <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${Fin.fmt(p.amount)}</td>
@@ -10730,14 +10846,14 @@ function modalGenericPay(debtId) {
 
   const titleVerb = isIn ? 'Cobro Recibido' : isTP ? 'Pago Hecho por Mí' : (isCC ? 'Abono a Tarjeta' : 'Abono a Capital');
   const btnLbl    = isIn ? '📥 Registrar Cobro' : 'Registrar Abono';
-  const noteDef   = isIn ? `Cobro de ${debt?.borrower_name || 'deudor'}` : isTP ? `Pago por cuenta de ${debt?.holder_name || 'titular'}` : (isCC ? 'Abono tarjeta' : 'Abono a capital');
+  const noteDef   = isIn ? `Cobro de ${esc(debt?.borrower_name || 'deudor')}` : isTP ? `Pago por cuenta de ${esc(debt?.holder_name || 'titular')}` : (isCC ? 'Abono tarjeta' : 'Abono a capital');
 
   // Para third_party o deudas con holder_name, mostrar opción "es préstamo al titular"
   const showLoanOption = (isTP || (Fin.isOutgoing(debt) && debt?.holder_name)) && !isIn;
   const holderLabel = debt?.holder_name || 'el titular';
 
   UI.modal(`<div class="mover"><div class="modal" style="max-width:540px">
-    <div class="mhd"><div class="mti">${titleVerb} — ${debt?.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">${titleVerb} — ${esc(debt?.name)}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ${isIn?'as_':isTP?'ai':'ai'}">
         ${isIn?'💚 Saldo por cobrar':isTP?'👤 Pago a deuda de '+holderLabel:'Saldo pendiente'}: <strong>${Fin.fmtDebt(rem, debt)}</strong>${isIn && debt?.borrower_name ? ' · 👤 '+debt.borrower_name : ''}${normalQuota > 0 ? ' · Cuota normal: <strong>'+Fin.fmtDebt(normalQuota, debt)+'</strong>' : ''}
@@ -11152,7 +11268,7 @@ function modalEditPayment(paymentId) {
       </div>`:''}
 
       <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">
-        ${debt?.name || '—'} ${isInst && p.amort_id ? '· Cuota #' + (S.amorts.find(a=>a.id===p.amort_id)?.n || '?') : ''}
+        ${esc(debt?.name || '—')} ${isInst && p.amort_id ? '· Cuota #' + (S.amorts.find(a=>a.id===p.amort_id)?.n || '?') : ''}
       </div>
 
       <div class="frow c2">
@@ -11395,7 +11511,7 @@ GISS: 1500
       <div class="fg">
         <label>💱 Moneda predeterminada</label>
         <select id="bi-currency" class="fselect">
-          ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${c.code===Cur.primary()?'selected':''}>${c.symbol} ${c.code} — ${c.name}</option>`).join('')}
+          ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${c.code===Cur.primary()?'selected':''}>${c.symbol} ${c.code} — ${esc(c.name)}</option>`).join('')}
         </select>
         <div style="font-size:10.5px;color:var(--tx3);margin-top:4px">Si los datos indican otra moneda en alguna fila, la IA la detecta y la usa.</div>
       </div>
@@ -11421,7 +11537,7 @@ function onBulkImportFileChange(event) {
   }
   _bulkImportFile = file;
   const size = (file.size / 1024).toFixed(1);
-  document.getElementById('bi-file-info').innerHTML = `📄 <strong>${file.name}</strong> · ${size} KB · ${file.type || 'tipo desconocido'}`;
+  document.getElementById('bi-file-info').innerHTML = `📄 <strong>${esc(file.name)}</strong> · ${size} KB · ${file.type || 'tipo desconocido'}`;
 }
 
 async function bulkImportAnalyze(direction) {
@@ -11636,7 +11752,7 @@ async function bulkImportCreate(direction) {
       created++;
     } catch (e) {
       failed++;
-      errors.push(`${d.name}: ${e.message || 'error'}`);
+      errors.push(`${esc(d.name)}: ${e.message || 'error'}`);
     }
   }
 
@@ -11654,7 +11770,7 @@ async function bulkImportCreate(direction) {
 function modalImportCSV(debtId) {
   const debt = S.debts.find(d => d.id === debtId);
   UI.modal(`<div class="mover"><div class="modal" style="max-width:680px">
-    <div class="mhd"><div class="mti">Importar Tabla de Amortización — ${debt?.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">Importar Tabla de Amortización — ${esc(debt?.name)}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ai" style="margin-bottom:14px;font-size:11.5px">
         <strong>📋 Formato soportado:</strong>
@@ -12037,7 +12153,7 @@ function modalBulkPaymentsPicker() {
           const isMirror = d._is_mirror;
           return `<div onclick="UI.cm();modalBulkMarkPaid('${d.id}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;background:var(--bg3s);border:1px solid var(--bd);border-radius:var(--r);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--am)';this.style.background='var(--am-d,var(--bg2))'" onmouseout="this.style.borderColor='var(--bd)';this.style.background='var(--bg3s)'">
             <div style="flex:1;min-width:0">
-              <div style="font-size:12.5px;font-weight:600;margin-bottom:2px">${d.name}</div>
+              <div style="font-size:12.5px;font-weight:600;margin-bottom:2px">${esc(d.name)}</div>
               <div style="font-size:10.5px;color:var(--tx3);display:flex;gap:6px;flex-wrap:wrap">
                 <span>${pending.length} cuota${pending.length>1?'s':''} vencida${pending.length>1?'s':''}</span>
                 ${isShared ? `<span style="color:var(--pu)">· 👥 ${parts.length} participantes</span>` : ''}
@@ -12057,7 +12173,7 @@ function modalBulkPaymentsPicker() {
 }
 
 function renderPayments() {
-  const debtOpts = `<option value="">Todas las deudas</option>${S.debts.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}`;
+  const debtOpts = `<option value="">Todas las deudas</option>${S.debts.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}`;
   document.getElementById('content').innerHTML = `
   <div class="fbar">
     <span class="flbl">Deuda:</span>
@@ -12233,11 +12349,11 @@ function filterPays() {
     const amort = S.amorts.find(a => a.id === p.amort_id);
     const pp = S.parts.find(x => x.id === p.part_id);
     return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
-      <td class="tdm">${debt?.name||'—'}</td>
+      <td class="tdm">${esc(debt?.name||'—')}</td>
       <td class="tdc">#${amort?.n||'—'}</td>
       <td>${pp ? UI.chip(pp.name,'bl') : '<span class="txt-mu">General</span>'}</td>
       <td>${p.paid_date||'—'}</td>
-      <td style="color:var(--tx3)">${p.notes||'—'}</td>
+      <td style="color:var(--tx3)">${esc(p.notes||'—')}</td>
       <td class="tdc">${receiptCell(p.receipt_url)}</td>
       <td class="tdc">${statusCell(p)}</td>
       <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${fmtPayAmount(p.amount, debt)}</td>
@@ -12249,10 +12365,10 @@ function filterPays() {
   if (gt) gt.innerHTML = fg.length ? fg.map(p => {
     const debt = S.debts.find(d => d.id === p.debt_id);
     return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.04)':''}">
-      <td class="tdm">${debt?.name||'—'}</td>
+      <td class="tdm">${esc(debt?.name||'—')}</td>
       <td>${debt?UI.typeChip(debt.type):''}</td>
       <td>${p.payment_date||'—'}</td>
-      <td style="color:var(--tx3)">${p.notes||'—'}</td>
+      <td style="color:var(--tx3)">${esc(p.notes||'—')}</td>
       <td class="tdc">${receiptCell(p.receipt_url)}</td>
       <td class="tdc">${statusCell(p)}</td>
       <td class="tdn ${Fin.isApproved(p)?'txt-gn':'txt-mu'} fw7">${fmtPayAmount(p.amount, debt)}</td>
@@ -12284,7 +12400,7 @@ function renderParticipants(debtId) {
   document.getElementById('content').innerHTML = `
   <div class="card mb4">
     <div class="card-hd">
-      <div><div class="card-ti">Editor de Participantes — ${debt?.name}</div><div class="card-su">Total deuda: <strong>${Fin.fmtDebt(debt?.total_amount, debt, true)}</strong></div></div>
+      <div><div class="card-ti">Editor de Participantes — ${esc(debt?.name)}</div><div class="card-su">Total deuda: <strong>${Fin.fmtDebt(debt?.total_amount, debt, true)}</strong></div></div>
     </div>
     <div id="pw" class="alrt ae hidden">⚠️ Los % no suman 100%</div>
     <div id="pe"></div>
@@ -12365,7 +12481,7 @@ function renderParticipantBalances(debtId) {
         const cls  = Math.abs(b.balance) < 0.01 ? 'txt-mu' : (b.balance > 0 ? 'txt-gn' : 'txt-rd');
         const lbl  = Math.abs(b.balance) < 0.01 ? '✓ Al día' : (b.balance > 0 ? 'Le deben' : 'Debe');
         return `<tr>
-          <td class="tdm">${b.name}</td>
+          <td class="tdm">${esc(b.name)}</td>
           <td class="tdn">${b.pct}%</td>
           <td class="tdn">${Fin.fmt(b.expected, true)}</td>
           <td class="tdn">${Fin.fmt(b.real, true)}</td>
@@ -12403,10 +12519,10 @@ function renderParticipantBalances(debtId) {
             const to   = parts.find(p => p.id === t.to_part);
             return `<tr>
               <td>${t.paid_date || '—'}</td>
-              <td class="tdm">${from?.name || '?'}</td>
-              <td class="tdm">${to?.name || '?'}</td>
+              <td class="tdm">${esc(from?.name || '?')}</td>
+              <td class="tdm">${esc(to?.name || '?')}</td>
               <td class="tdn fw7 txt-gn">${Fin.fmt(t.amount, true)}</td>
-              <td style="color:var(--tx3);font-size:11px">${t.notes || '—'}</td>
+              <td style="color:var(--tx3);font-size:11px">${esc(t.notes || '—')}</td>
               <td class="tdc"><button class="btn bd_ btn-xs" onclick="confirmDeleteTransfer('${t.id}','${debtId}')">🗑</button></td>
             </tr>`;
           }).join('')}</tbody>
@@ -12431,13 +12547,13 @@ function modalAddTransfer(debtId, fromId, toId, suggestedAmount) {
         <div class="fg">
           <label>Quién paga (debía)</label>
           <select id="pt-from">
-            ${parts.map(p => `<option value="${p.id}" ${p.id===fromId?'selected':''}>${p.name}</option>`).join('')}
+            ${parts.map(p => `<option value="${p.id}" ${p.id===fromId?'selected':''}>${esc(p.name)}</option>`).join('')}
           </select>
         </div>
         <div class="fg">
           <label>Quién recibe (le debían)</label>
           <select id="pt-to">
-            ${parts.map(p => `<option value="${p.id}" ${p.id===toId?'selected':''}>${p.name}</option>`).join('')}
+            ${parts.map(p => `<option value="${p.id}" ${p.id===toId?'selected':''}>${esc(p.name)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -12681,7 +12797,7 @@ function updateEPSum(debtId, nextRow) {
     }
     const due_  = Math.max(0, owes - ppaid);
     const nc    = nextRow ? nextRow.total * (share / 100) : 0;
-    return `<tr><td class="tdm">${pp.name}</td><td class="tdn">${share}%</td><td class="tdn">${Fin.fmt(owes)}</td><td class="tdn txt-gn">${Fin.fmt(ppaid)}</td><td class="tdn ${due_ > 0 ? 'txt-rd' : ''} fw7">${Fin.fmt(due_)}</td><td class="tdn txt-am">${Fin.fmt(nc)}</td><td>${due_ <= 0.01 ? UI.chip('Al día', 'gn') : UI.chip('Debe', 'rd')}</td></tr>`;
+    return `<tr><td class="tdm">${esc(pp.name)}</td><td class="tdn">${share}%</td><td class="tdn">${Fin.fmt(owes)}</td><td class="tdn txt-gn">${Fin.fmt(ppaid)}</td><td class="tdn ${due_ > 0 ? 'txt-rd' : ''} fw7">${Fin.fmt(due_)}</td><td class="tdn txt-am">${Fin.fmt(nc)}</td><td>${due_ <= 0.01 ? UI.chip('Al día', 'gn') : UI.chip('Debe', 'rd')}</td></tr>`;
   }).join('');
 }
 
@@ -12705,8 +12821,8 @@ function renderApprovals() {
     const date = p.payment_date || p.paid_date || '—';
     return `<tr style="${Fin.isPending(p)?'background:rgba(245,158,11,.06)':''}">
       <td>${date}</td>
-      <td class="tdm">${debt?.name||'—'}${debt?.borrower_name?`<div style="font-size:10px;color:var(--tx3);font-weight:400">${debt.borrower_name}</div>`:''}</td>
-      <td>${p.notes||'—'}</td>
+      <td class="tdm">${esc(debt?.name||'—')}${debt?.borrower_name?`<div style="font-size:10px;color:var(--tx3);font-weight:400">${esc(debt.borrower_name)}</div>`:''}</td>
+      <td>${esc(p.notes||'—')}</td>
       <td class="tdc">${p.receipt_url ? `<button class="btn bghost btn-xs" onclick="viewReceipt('${p.receipt_url.replace(/'/g,"\\'")}')">📎 Ver</button>` : '<span class="txt-mu" style="font-size:10px">—</span>'}</td>
       <td>${p.reported_by==='borrower' ? '<span class="chip cbl">📥 Deudor</span>' : '<span class="chip cam">Tú</span>'}</td>
       <td class="tdn fw7 ${Fin.isApproved(p)?'txt-gn':Fin.isRejected(p)?'txt-rd':'txt-am'}">${(() => {
@@ -12719,7 +12835,7 @@ function renderApprovals() {
         if (userSec && userSec !== cur && userSec !== userPri) { const c2 = Cur.convert(amt, cur, userSec); if (c2!=null) subs.push('≈ ' + Cur.fmt(c2, userSec, {k:true})); }
         return subs.length ? `${main}<div style="font-size:9px;color:var(--tx3);font-weight:400">${subs.join(' · ')}</div>` : main;
       })()}</td>
-      ${showReviewedBy ? `<td style="font-size:10px;color:var(--tx3)">${p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('es-EC') : '—'}${p.reviewer_note?`<br><span style="color:var(--tx3)">"${p.reviewer_note}"</span>`:''}</td>` : ''}
+      ${showReviewedBy ? `<td style="font-size:10px;color:var(--tx3)">${p.reviewed_at ? new Date(p.reviewed_at).toLocaleDateString('es-EC') : '—'}${p.reviewer_note?`<br><span style="color:var(--tx3)">"${esc(p.reviewer_note)}"</span>`:''}</td>` : ''}
       <td><button class="btn ${Fin.isPending(p)?'bp':'bs'} btn-xs" onclick="modalEditPayment('${p.id}')">${Fin.isPending(p)?'⏳ Revisar':'Ver'}</button></td>
     </tr>`;
   };
@@ -13016,7 +13132,7 @@ function renderDelinquency() {
     <div class="tw"><table>
       <thead><tr><th>Participante</th><th>Deuda</th><th class="tdn">Debe</th><th class="tdn">Ha Pagado</th><th class="tdn">Pendiente</th></tr></thead>
       <tbody>${partDue.sort((a,b)=>b.due-a.due).map(pp=>`<tr>
-        <td class="tdm">${pp.name}</td>
+        <td class="tdm">${esc(pp.name)}</td>
         <td>${pp.debtName}</td>
         <td class="tdn">${Fin.fmt(pp.owes)}</td>
         <td class="tdn txt-gn">${Fin.fmt(pp.paid)}</td>
@@ -13076,7 +13192,7 @@ function renderLoanUse() {
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <label style="font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin:0">Ver:</label>
       <select id="loanuse-selector" onchange="setLoanUseSelected(this.value)" style="background:var(--bg2);border:1px solid var(--bd2);color:var(--tx);padding:6px 10px;border-radius:var(--r);font-family:var(--fm);font-size:12px;font-weight:600;min-width:230px;flex:1;max-width:400px">
-        ${allTracked.map(d => `<option value="${d.id}" ${selected===d.id?'selected':''}>${Fin.isIncoming(d) ? '💚 ' : '🏦 '}${d.name}${d.description ? ' — ' + d.description.slice(0,40) : ''}</option>`).join('')}
+        ${allTracked.map(d => `<option value="${d.id}" ${selected===d.id?'selected':''}>${Fin.isIncoming(d) ? '💚 ' : '🏦 '}${esc(d.name)}${d.description ? ' — ' + d.description.slice(0,40) : ''}</option>`).join('')}
         <option disabled>──────────────</option>
         <option value="TOTAL" ${isConsolidated?'selected':''}>📊 Ver totalizado (todas las deudas)</option>
       </select>
@@ -13176,7 +13292,7 @@ function renderLoanUse() {
           const count = Fin.disbursementsOf(d.id).length;
           return `<tr onclick="setLoanUseSelected('${d.id}')" style="cursor:pointer;border-left:3px solid var(--cy)">
             <td class="tdm">
-              <div style="font-weight:600">${d.name}</div>
+              <div style="font-weight:600">${esc(d.name)}</div>
               ${d.description ? `<div style="font-size:10px;color:var(--tx3);font-weight:400">${d.description.slice(0,50)}${d.description.length>50?'…':''}</div>` : ''}
             </td>
             <td>${UI.typeChip(d.type)}</td>
@@ -13237,11 +13353,11 @@ function renderLoanUse() {
           return `<tr>
             <td>${d.date || '—'}</td>
             <td class="tdm">
-              <a onclick="setLoanUseSelected('${d.debt_id}')" style="color:var(--am);cursor:pointer;text-decoration:none;font-weight:500">${debt?.name || '—'}</a>
+              <a onclick="setLoanUseSelected('${d.debt_id}')" style="color:var(--am);cursor:pointer;text-decoration:none;font-weight:500">${esc(debt?.name || '—')}</a>
             </td>
             <td class="tdn fw7 txt-am">${Cur.fmt(d.amount, cur, {k:true})}</td>
             <td><span style="font-size:11px">${catLabels[d.category] || '📦 ' + (d.category || 'other')}</span></td>
-            <td style="color:var(--tx2);font-size:11.5px">${d.description || '—'}</td>
+            <td style="color:var(--tx2);font-size:11.5px">${esc(d.description || '—')}</td>
             <td class="tdc">
               <button class="btn bs btn-xs" onclick="modalAddDisbursement('${d.debt_id}','${d.id}')" title="Editar">✏️</button>
             </td>
@@ -13289,8 +13405,8 @@ function renderLoanUse() {
   <div class="card mb4" style="border-left:3px solid var(--cy);padding:10px 13px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:3px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:700;line-height:1.25">${debt.name}</div>
-        ${debt.description ? `<div style="font-size:11px;color:var(--tx3);margin-top:1px">${debt.description}</div>` : ''}
+        <div style="font-size:13.5px;font-weight:700;line-height:1.25">${esc(debt.name)}</div>
+        ${debt.description ? `<div style="font-size:11px;color:var(--tx3);margin-top:1px">${esc(debt.description)}</div>` : ''}
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
         ${UI.typeChip(debt.type)}
@@ -13375,7 +13491,7 @@ function renderLoanUse() {
           <td style="white-space:nowrap">${d.date || '—'}</td>
           <td class="tdn fw7 txt-am">${Cur.fmt(d.amount, cur, {k:false})}</td>
           <td><span style="font-size:11px">${catLabels[d.category] || '📦 ' + (d.category || 'other')}</span></td>
-          <td style="color:var(--tx2);font-size:11.5px">${d.description || '—'}</td>
+          <td style="color:var(--tx2);font-size:11.5px">${esc(d.description || '—')}</td>
           <td><span style="font-size:10px;color:${isMine?'var(--gn)':'var(--tx3)'}">${creatorName}</span></td>
           <td class="tdc">
             ${(isMine || (debt._is_mirror === undefined && Fin.isOutgoing(debt))) ? `
@@ -13460,7 +13576,7 @@ function modalApproveExpectedIncome(idx, month, isPartial) {
     </div>
     <div class="mbd">
       <div class="alrt ${isPartial?'aw':'as_'}" style="font-size:11.5px;margin-bottom:11px">
-        <div style="font-weight:600;margin-bottom:2px">${item.name}</div>
+        <div style="font-weight:600;margin-bottom:2px">${esc(item.name)}</div>
         <div style="font-size:10.5px;opacity:.85">${typeLabel} · esperado: <strong>${Cur.fmt(expectedAmt, cur)}</strong>${item.dueDate ? ' · vence: ' + item.dueDate : ''}</div>
       </div>
 
@@ -13537,7 +13653,7 @@ async function approveExpectedIncome(idx, month, opts = {}) {
   const today = new Date().toISOString().split('T')[0];
   const amount = +opts.amount || +item.originalAmount || 0;
   const paidDate = opts.paidDate || today;
-  const userNotes = opts.notes ? ` · ${opts.notes}` : '';
+  const userNotes = opts.notes ? ` · ${esc(opts.notes)}` : '';
   const partialTag = opts.isPartial ? ' [PARCIAL]' : '';
 
   try {
@@ -13885,7 +14001,7 @@ function modalShareDebt(debtId) {
   });
 
   UI.modal(`<div class="mover"><div class="modal" style="max-width:560px">
-    <div class="mhd"><div class="mti">🔗 Compartir deuda: ${debt.name}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mhd"><div class="mti">🔗 Compartir deuda: ${esc(debt.name)}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
     <div class="mbd">
       <div class="alrt ai" style="font-size:11.5px;margin-bottom:12px">
         Compartir esta deuda con otro usuario del sistema. Ellos podrán <strong>ver</strong> o <strong>editar</strong> la deuda según el permiso. El usuario debe ya estar registrado en el sistema.
@@ -13908,7 +14024,7 @@ function modalShareDebt(debtId) {
           <div class="tw"><table>
             <thead><tr><th>Usuario</th><th>Permiso</th><th class="tdc">Acciones</th></tr></thead>
             <tbody>${sharesDetailed.map(s => `<tr>
-              <td class="tdm">${s.name}<div style="font-size:10px;color:var(--tx3)">${s.email}</div></td>
+              <td class="tdm">${esc(s.name)}<div style="font-size:10px;color:var(--tx3)">${s.email}</div></td>
               <td>
                 <select onchange="changeSharePerm('${s.id}', this.value, '${debtId}')" style="font-size:11px;padding:2px 6px">
                   <option value="read" ${s.permission==='read'?'selected':''}>👁 Lectura</option>
@@ -14187,7 +14303,7 @@ function modalDebtForm(opts) {
           </select></div>
         <div class="fg"><label>💱 Moneda</label>
           <select id="dcurrency" onchange="onCurrencyChange()" ${isEdit ? 'disabled title="No se puede cambiar la moneda de una deuda existente"' : ''}>
-            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${v.currency===c.code?'selected':''}>${c.symbol} ${c.code} — ${c.name}</option>`).join('')}
+            ${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${v.currency===c.code?'selected':''}>${c.symbol} ${c.code} — ${esc(c.name)}</option>`).join('')}
           </select>
         </div>
         <div class="fg"><label id="damt-lbl">Monto Total (${Cur.info(v.currency).symbol} ${v.currency})</label><input type="number" id="damt" placeholder="10000" min="0" step="0.01" value="${v.amt}" oninput="calcCuota()"></div>
@@ -14651,11 +14767,1405 @@ function confirmDel(id) {
   const d = S.debts.find(x => x.id === id);
   UI.modal(`<div class="mover"><div class="modal" style="max-width:370px">
     <div class="mhd"><div class="mti">Eliminar Deuda</div><button class="mcl" onclick="UI.cm()">✕</button></div>
-    <div class="mbd"><p style="color:var(--tx2)">¿Eliminar "<strong>${d?.name}</strong>" junto con todos sus pagos y cuotas?</p><p style="color:var(--rd);margin-top:8px;font-size:12px">Esta acción no se puede deshacer.</p></div>
+    <div class="mbd"><p style="color:var(--tx2)">¿Eliminar "<strong>${esc(d?.name)}</strong>" junto con todos sus pagos y cuotas?</p><p style="color:var(--rd);margin-top:8px;font-size:12px">Esta acción no se puede deshacer.</p></div>
     <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bd_" onclick="doDel('${id}')">Eliminar</button></div>
   </div></div>`);
 }
 async function doDel(id) { await DB.deleteDebt(id); UI.cm(); updateBadge(); go('debts'); UI.toast('Deuda eliminada', 'warn'); }
+
+/* ═══════════════════════════════════════════════════════════
+   DebtOS v6.0 — Mi mes · Movimientos · Activas/Pagadas · Seguridad
+   Módulo añadido sobre v5.74 sin quitar funciones existentes.
+═══════════════════════════════════════════════════════════ */
+
+/* ── Seguridad: escapar cualquier texto que venga de usuarios ── */
+function esc(v) {
+  if (v === null || v === undefined) return '';
+  return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+const V6 = {
+  today() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
+  addDays(iso, n) { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0,10); },
+  monthLabel(m) { const [y, mo] = m.split('-').map(Number); const t = new Date(y, mo-1, 15).toLocaleDateString('es-EC', { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); },
+  cur(n, c) { return (!c || c === Cur.primary()) ? V6.money(n) : Fin.fmtCur(n, c); },
+  shiftMonth(m, k) { const [y, mo] = m.split('-').map(Number); const d = new Date(y, mo-1+k, 15); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; },
+  money(n) { return Fin.fmt(n); },
+  short(iso) { if (!iso) return '—'; return new Date(iso + 'T12:00:00').toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric', month: 'short' }); },
+  uid(p) { return p + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); },
+  isMobile() { return window.innerWidth <= 768; },
+};
+
+/* ═══════════════════════════════════════════════════════════
+   FILTRO ACTIVAS / PAGADAS (Mis Deudas y Por Cobrar)
+═══════════════════════════════════════════════════════════ */
+S.debtFilter = S.debtFilter || 'active';
+const DebtFilter = {
+  isClosed(d) {
+    if (Fin.isRecurring(d)) return !!(d.recurring_end_date && d.recurring_end_date < V6.today());
+    return (+d.total_amount || 0) > 0 && Fin.remaining(d) <= 0.01;
+  },
+  apply(list) {
+    const f = S.debtFilter || 'active';
+    if (f === 'all') return list;
+    return list.filter(d => f === 'paid' ? DebtFilter.isClosed(d) : !DebtFilter.isClosed(d));
+  },
+  bar(all) {
+    const f = S.debtFilter || 'active';
+    const paid = all.filter(d => DebtFilter.isClosed(d));
+    const act = all.length - paid.length;
+    const paidSum = paid.reduce((s, d) => s + Fin.toPrimary(+d.total_amount || 0, d.currency || 'USD'), 0);
+    const b = (k, l, n) => `<button class="v6-seg ${f===k?'on':''}" onclick="setDebtFilter('${k}')">${l} <span class="v6-seg-n">${n}</span></button>`;
+    return `<div class="v6-filterbar">
+      <div class="v6-segs">${b('active','Activas',act)}${b('paid','Pagadas',paid.length)}${b('all','Todas',all.length)}</div>
+      ${f==='paid' && paid.length ? `<div class="v6-muted">Liquidaste ${paid.length} deuda${paid.length>1?'s':''} por ${V6.money(paidSum)} 🎉</div>` : ''}
+    </div>`;
+  },
+};
+function setDebtFilter(f) { S.debtFilter = f; go(S.view); }
+
+/* ═══════════════════════════════════════════════════════════
+   MOVIMIENTOS — datos
+═══════════════════════════════════════════════════════════ */
+const MOV_KINDS = {
+  pendiente:     { lbl: 'Sin clasificar',     ico: '❔', cls: 'am' },
+  gasto:         { lbl: 'Gasto',              ico: '🛒', cls: 'rd' },
+  ingreso:       { lbl: 'Ingreso',            ico: '💰', cls: 'gn' },
+  transferencia: { lbl: 'Entre mis cuentas',  ico: '🔁', cls: 'bl' },
+  pago_deuda:    { lbl: 'Pago de deuda',      ico: '💳', cls: 'pu' },
+  cobro:         { lbl: 'Me pagan una deuda', ico: '💚', cls: 'gn' },
+  prestamo:      { lbl: 'Presto dinero',      ico: '🤝', cls: 'am' },
+  ignorar:       { lbl: 'Ignorar',            ico: '🚫', cls: '' },
+};
+const MOV_DEFAULT_CATS = [
+  ['gasto','Hogar','🏠'], ['gasto','Supermercado y tienda','🛒'], ['gasto','Comida fuera','🍔'],
+  ['gasto','Transporte y gasolina','🚕'], ['gasto','Salud','💊'], ['gasto','Educación','📚'],
+  ['gasto','Servicios e internet','💡'], ['gasto','Personal y ropa','👕'], ['gasto','Familia','👨‍👩‍👧'],
+  ['gasto','Negocio','🌸'], ['gasto','Suscripciones','📺'], ['gasto','Comisiones bancarias','🏦'], ['gasto','Otros gastos','📦'],
+  ['ingreso','Sueldo','💼'], ['ingreso','Negocio','🌸'], ['ingreso','Ayudas familiares','🤲'], ['ingreso','Otros ingresos','✨'],
+];
+
+S.mov = { ready: false, missing: false, accounts: [], cats: [], tx: [], rules: [],
+          month: Fin.currentMonth(), tab: 'resumen', filter: 'pendiente', account: 'all' };
+S.homeMonth = Fin.currentMonth();
+
+const Mov = {
+  owner() { return S.mov.ownerId || user?.id; },
+  isMember() { return !!S.mov.ownerId && S.mov.ownerId !== user?.id; },
+  async load() {
+    if (!sb || !user) return;
+    // ¿Soy miembro del hogar de otra persona? (gastos compartidos en familia)
+    S.mov.ownerId = user.id; S.mov.members = [];
+    try {
+      const hh = await sb.from('fin_household').select('*').or(`owner_user_id.eq.${user.id},member_user_id.eq.${user.id}`);
+      if (!hh.error && hh.data) {
+        const asMember = hh.data.find(r => r.member_user_id === user.id);
+        if (asMember) S.mov.ownerId = asMember.owner_user_id;
+        S.mov.members = hh.data.filter(r => r.owner_user_id === user.id);
+      }
+    } catch (e) {}
+    try { const lk = await sb.from('fin_share_links').select('*').eq('owner_user_id', user.id).order('created_at'); S.mov.links = lk.error ? [] : (lk.data || []); } catch (e) { S.mov.links = []; }
+    const q = t => sb.from(t).select('*').eq('owner_user_id', Mov.owner());
+    try {
+      const [a, c, t, r] = await Promise.all([
+        q('fin_accounts'), q('fin_categories'),
+        q('fin_transactions').order('date', { ascending: false }).limit(10000), q('fin_rules'),
+      ]);
+      const err = a.error || c.error || t.error || r.error;
+      if (err) {
+        S.mov.ready = false;
+        S.mov.missing = /relation|does not exist|schema cache|could not find/i.test(err.message || '');
+        console.warn('[v6/mov.load]', err.message);
+        return;
+      }
+      S.mov.accounts = a.data || []; S.mov.cats = (c.data || []).sort((x, y) => (x.sort||0) - (y.sort||0));
+      S.mov.tx = t.data || []; S.mov.rules = r.data || [];
+      S.mov.ready = true; S.mov.missing = false;
+      if (!S.mov.cats.length) await Mov.seedCats();
+    } catch (e) { console.warn('[v6/mov.load]', e); }
+  },
+  async seedCats() {
+    const rows = MOV_DEFAULT_CATS.map(([kind, name, icon], i) => ({ id: V6.uid('cat'), owner_user_id: Mov.owner(), kind, name, icon, sort: i }));
+    const { error } = await sb.from('fin_categories').insert(rows);
+    if (!error) S.mov.cats = rows;
+  },
+  cat(id) { return S.mov.cats.find(c => c.id === id); },
+  acc(id) { return S.mov.accounts.find(a => a.id === id); },
+  catsOf(kind) { return S.mov.cats.filter(c => c.kind === kind); },
+  key(desc) {
+    return String(desc || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[0-9]/g, ' ').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 48);
+  },
+  ruleFor(desc) {
+    const k = Mov.key(desc);
+    if (!k) return null;
+    return [...S.mov.rules].sort((a, b) => b.pattern.length - a.pattern.length).find(r => r.pattern && k.includes(r.pattern)) || null;
+  },
+  async saveAccount(acc) {
+    const row = { ...acc, owner_user_id: Mov.owner() };
+    const { error } = await sb.from('fin_accounts').upsert(row);
+    if (error) throw error;
+    const i = S.mov.accounts.findIndex(a => a.id === row.id);
+    if (i >= 0) S.mov.accounts[i] = row; else S.mov.accounts.push(row);
+  },
+  async saveCat(cat) {
+    const row = { ...cat, owner_user_id: Mov.owner() };
+    const { error } = await sb.from('fin_categories').upsert(row);
+    if (error) throw error;
+    const i = S.mov.cats.findIndex(c => c.id === row.id);
+    if (i >= 0) S.mov.cats[i] = row; else S.mov.cats.push(row);
+  },
+  async updateTx(id, patch) {
+    const { error } = await sb.from('fin_transactions').update(patch).eq('id', id);
+    if (error) throw error;
+    const t = S.mov.tx.find(x => x.id === id); if (t) Object.assign(t, patch);
+  },
+  async insertTx(rows) {
+    for (let i = 0; i < rows.length; i += 200) {
+      const { error } = await sb.from('fin_transactions').insert(rows.slice(i, i + 200));
+      if (error) throw error;
+    }
+    S.mov.tx = [...rows, ...S.mov.tx].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  },
+  async deleteTx(id) {
+    const { error } = await sb.from('fin_transactions').delete().eq('id', id);
+    if (error) throw error;
+    S.mov.tx = S.mov.tx.filter(t => t.id !== id);
+  },
+  async addRule(rule) {
+    const row = { id: V6.uid('rule'), owner_user_id: Mov.owner(), ...rule };
+    S.mov.rules = S.mov.rules.filter(r => r.pattern !== row.pattern);
+    await sb.from('fin_rules').delete().eq('owner_user_id', Mov.owner()).eq('pattern', row.pattern);
+    const { error } = await sb.from('fin_rules').insert(row);
+    if (error) throw error;
+    S.mov.rules.push(row);
+  },
+  async deleteRule(id) {
+    await sb.from('fin_rules').delete().eq('id', id);
+    S.mov.rules = S.mov.rules.filter(r => r.id !== id);
+  },
+  /* Moneda de un movimiento: la suya, la de su cuenta, o la principal del usuario */
+  cur(t) { return t.currency || Mov.acc(t.account_id)?.currency || Cur.primary(); },
+  /* Valor absoluto convertido a la moneda principal (para sumar) */
+  p(t) { return Fin.toPrimary(Math.abs(+t.amount || 0), Mov.cur(t)); },
+  /* Totales del mes desde movimientos */
+  monthTx(m, acc) { return S.mov.tx.filter(t => (t.date || '').startsWith(m) && (!acc || acc === 'all' || t.account_id === acc)); },
+  sum(list, kind) { return list.filter(t => t.kind === kind).reduce((s, t) => s + Mov.p(t), 0); },
+};
+
+// Cargar movimientos junto con el resto de datos
+(function () {
+  const _loadAll = DB.loadAll.bind(DB);
+  DB.loadAll = async function () { const r = await _loadAll(); await Mov.load(); return r; };
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   ROUTER: nuevas vistas + barra inferior en el celular
+═══════════════════════════════════════════════════════════ */
+(function () {
+  const _go = go;
+  const titles = { home: 'Mi mes', movements: 'Movimientos' };
+  go = function (view, extra) {
+    if (view === 'home' || view === 'movements') {
+      S.view = view; if (extra !== undefined) S.selDebt = extra;
+      document.querySelectorAll('.ni').forEach(el => el.classList.toggle('on', el.dataset.v === view));
+      document.getElementById('ptitle').textContent = titles[view];
+      document.getElementById('tbactions').innerHTML = '';
+      document.getElementById('content').innerHTML = '';
+      UI.destroyCharts();
+      if (V6.isMobile()) closeSidebar();
+      (view === 'home' ? renderHome : renderMovements)();
+    } else {
+      _go(view, extra);
+      if (view === 'debts' || view === 'receivables') {
+        const all = view === 'debts' ? Fin.outgoingDebts() : Fin.incomingDebts();
+        const c = document.getElementById('content');
+        const tog = `<button class="v6-seg" style="border:1px solid var(--bd);background:var(--bg2)" onclick="v6ToggleCompact()">${S.v6Compact ? '▦ Vista detallada' : '☰ Lista compacta'}</button>`;
+        if (all.length && S.v6Compact) {
+          c.innerHTML = `<div class="v6-wrap">${DebtFilter.bar(all).replace('</div>\n', '</div>' + tog + '\n')}${v6CompactList(DebtFilter.apply(all), view)}</div>`;
+        } else if (all.length) {
+          c.insertAdjacentHTML('afterbegin', DebtFilter.bar(all).replace('</div>\n', '</div>' + tog + '\n'));
+        }
+      }
+    }
+    document.querySelectorAll('.v6-bn-i').forEach(el => el.classList.toggle('on', el.dataset.v === view));
+    const fab = document.getElementById('v6-fab'); if (fab) fab.style.display = (view === 'home' || (view === 'movements' && ['resumen', 'lista'].includes(S.mov.tab))) && S.mov.ready ? '' : 'none';
+    const c = document.getElementById('content'); if (c) c.scrollTop = 0;
+  };
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   VISTA: MI MES
+═══════════════════════════════════════════════════════════ */
+function homeData(m) {
+  const today = V6.today();
+  const out = Fin.outgoingDebts().filter(d => !DebtFilter.isClosed(d));
+  const inc = Fin.incomingDebts().filter(d => !DebtFilter.isClosed(d));
+  const outIds = new Set(out.map(d => d.id));
+
+  // Cuotas del mes (tablas de amortización)
+  const rows = [];
+  out.forEach(d => {
+    if (!Fin.hasAmort(d)) return;
+    Fin.annotated(d.id).forEach(a => rows.push({ ...a, debt: d }));
+  });
+  const monthRows = rows.filter(r => (r.due || '').startsWith(m));
+  const cuotasMes = monthRows.reduce((s, r) => s + Fin.toPrimary(+r.total || 0, r.debt.currency || 'USD'), 0);
+  const pendingMonth = monthRows.filter(r => r.status !== 'paid').reduce((s, r) => s + Fin.toPrimary(Math.max(0, (+r.total || 0) - (+r.instTotal || 0)), r.debt.currency || 'USD'), 0);
+  // Recurrentes que debo (renta, etc.) esperadas este mes y no pagadas
+  let recMes = 0, recPend = 0;
+  out.filter(d => Fin.isRecurring(d)).forEach(d => {
+    const occ = Fin.expandRecurringDebt ? Fin.expandRecurringDebt(d, m + '-01', m + '-31') : [];
+    const paid = S.payments.some(p => p.debt_id === d.id && (p.payment_date || '').startsWith(m) && Fin.isApproved(p));
+    if (occ.length) recMes += +d.total_amount || 0;
+    if (occ.length && !paid) { recPend += +d.total_amount || 0; rows.push({ debt: d, due: occ[0].date, total: +d.total_amount || 0, status: occ[0].date < today ? 'overdue' : 'pending', _rec: true }); }
+  });
+
+  const upcoming = rows
+    .filter(r => r.status !== 'paid' && (r.status === 'overdue' || r.status === 'partial' || (r.due >= today && r.due <= V6.addDays(today, 21))))
+    .sort((a, b) => (a.due || '').localeCompare(b.due || ''))
+    .slice(0, 8);
+
+  // Movimientos del mes
+  const tx = S.mov.ready ? Mov.monthTx(m) : [];
+  const gastos = Mov.sum(tx, 'gasto');
+  const ingresosTx = tx.filter(t => (t.kind === 'ingreso' || t.kind === 'cobro') && !t.linked_payment).reduce((s, t) => s + Mov.p(t), 0);
+  const sinClasificar = tx.filter(t => t.kind === 'pendiente').length;
+
+  const entro = Fin.totalIncome(m) + ingresosTx;
+  const cuotas = cuotasMes + recMes;
+  const faltan = pendingMonth + recPend;
+  const extra = Math.max(0, Fin.totalExpenses(m) - (cuotas - faltan));
+  const resultado = entro - cuotas - gastos;
+
+  // Por cobrar
+  const cobrar = inc.map(d => {
+    const ov = Fin.hasAmort(d) ? Fin.overdueCount(d.id) : 0;
+    let recOver = 0;
+    if (Fin.isRecurring(d) && Fin.expandRecurringDebt) {
+      const exp = Fin.expandRecurringDebt(d, '2000-01-01', today);
+      const paidMonths = new Set(S.payments.filter(p => p.debt_id === d.id && Fin.isApproved(p)).map(p => (p.payment_date || '').slice(0, 7)));
+      recOver = exp.filter(e => !paidMonths.has(e.month)).length;
+    }
+    const rem = Fin.isRecurring(d) ? recOver * (+d.total_amount || 0) : Fin.remaining(d);
+    return { d, rem, late: ov + recOver };
+  }).filter(x => x.rem > 0.01).sort((a, b) => b.late - a.late || b.rem - a.rem);
+
+  // Partes de otras personas dentro de mis deudas (participantes)
+  const shares = {};
+  out.forEach(d => {
+    const parts = (S.parts || []).filter(p => p.debt_id === d.id && (+p.pct || 0) > 0 && !(p.user_id && p.user_id === user?.id));
+    if (!parts.length) return;
+    const rem = Fin.capitalRemaining(d);
+    const nx = Fin.hasAmort(d) ? Fin.annotated(d.id).find(a => a.status !== 'paid') : null;
+    parts.forEach(p => {
+      const k = (p.name || '—').trim();
+      const o = shares[k] = shares[k] || { name: k, saldo: 0, mensual: 0, debts: [] };
+      o.saldo += Fin.toPrimary(rem * p.pct / 100, d.currency || 'USD');
+      o.mensual += nx ? Fin.toPrimary((+nx.total || 0) * p.pct / 100, d.currency || 'USD') : 0;
+      o.debts.push(d.name);
+    });
+  });
+  const shareList = Object.values(shares).sort((a, b) => b.saldo - a.saldo);
+  const othersTotal = shareList.reduce((s, x) => s + x.saldo, 0);
+
+  // Gastos por categoría
+  const byCat = {};
+  tx.filter(t => t.kind === 'gasto').forEach(t => { const k = t.category_id || '_none'; byCat[k] = (byCat[k] || 0) + Mov.p(t); });
+  const cats = Object.entries(byCat).map(([id, v]) => ({ c: Mov.cat(id), v })).sort((a, b) => b.v - a.v);
+
+  return { entro, cuotas, faltan, extra, gastos, resultado, upcoming, cobrar, cats, sinClasificar,
+           totalOwed: Fin.totalOwed(), totalRec: Fin.totalReceivable(), shareList, othersTotal };
+}
+
+function renderHome() {
+  if (location.hash === '#gasto' && S.mov.ready) { history.replaceState(null, '', location.pathname); setTimeout(modalNewTx, 250); }
+  const m = S.homeMonth || Fin.currentMonth();
+  const h = homeData(m);
+  const isCur = m === Fin.currentMonth();
+  const today = V6.today();
+  document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="go('dashboard')">📊<span class="v6-hide-m"> Dashboard completo</span></button>`;
+
+  const neg = h.resultado < 0;
+  const tile = (lbl, val, sub, color) => `<div class="v6-tile"><div class="v6-tile-l">${lbl}</div><div class="v6-tile-v" ${color?`style="color:var(--${color})"`:''}>${val}</div>${sub?`<div class="v6-tile-s">${sub}</div>`:''}</div>`;
+
+  const upHtml = h.upcoming.length ? h.upcoming.map(r => {
+    const over = r.status === 'overdue' || r.status === 'partial' || r.due < today;
+    const dl = Math.round((new Date(r.due + 'T12:00:00') - new Date(today + 'T12:00:00')) / 86400000);
+    const when = over ? `Atrasada ${-dl} día${-dl===1?'':'s'}` : dl === 0 ? 'Hoy' : dl === 1 ? 'Mañana' : `${V6.short(r.due)} · en ${dl} días`;
+    const amt = (+r.total || 0) - (+r.instTotal || 0);
+    const btn = r._rec ? `<button class="v6-pay" onclick="go('amort','${r.debt.id}')">Ver</button>`
+      : `<button class="v6-pay" onclick="modalInstPayment('${r.debt.id}','${r.id}')">Pagar</button>`;
+    return `<div class="v6-row ${over?'v6-over':''}">
+      <div class="v6-row-main" onclick="go('amort','${r.debt.id}')"><div class="v6-row-t">${esc(r.debt.name)}${r.n?` <span class="v6-muted">#${r.n}</span>`:''}</div><div class="v6-row-s">${when}</div></div>
+      <div class="v6-row-r"><div class="v6-amt">${V6.cur(amt, r.debt.currency)}</div>${btn}</div>
+    </div>`;
+  }).join('') : `<div class="v6-empty">No tienes cuotas en los próximos 21 días ✅</div>`;
+
+  const cobHtml = h.cobrar.length ? h.cobrar.slice(0, 6).map(x => {
+    const link = publicLinkFor(x.d.id);
+    const msg = encodeURIComponent(`Hola ${x.d.borrower_name || ''}, te recuerdo el saldo pendiente de "${x.d.name}": ${Fin.fmtCur(x.rem, x.d.currency || 'USD')}.${link ? ' Aquí puedes ver el detalle y reportar tu pago: ' + link : ''} ¡Gracias!`);
+    return `<div class="v6-row">
+      <div class="v6-row-main" onclick="go('amort','${x.d.id}')"><div class="v6-row-t">${esc(x.d.borrower_name || x.d.name)}</div><div class="v6-row-s">${esc(x.d.name)}${x.late?` · <span style="color:var(--rd)">${x.late} atrasado${x.late>1?'s':''}</span>`:''}</div></div>
+      <div class="v6-row-r"><div class="v6-amt" style="color:var(--gn)">${V6.cur(x.rem, x.d.currency)}</div><a class="v6-pay v6-wa" href="https://wa.me/?text=${msg}" target="_blank" rel="noopener">Recordar</a></div>
+    </div>`;
+  }).join('') : `<div class="v6-empty">Nadie te debe por ahora</div>`;
+
+  const shareHtml = h.shareList.length ? `<div class="v6-lbl" style="margin-top:12px">Su parte dentro de tus deudas</div>` + h.shareList.map(x => {
+    const msg = encodeURIComponent(`Hola ${x.name}, te recuerdo tu aporte de ${V6.money(x.mensual)} de este mes (${x.debts.join(', ')}). Tu saldo pendiente es ${V6.money(x.saldo)}. ¡Gracias!`);
+    return `<div class="v6-row">
+      <div class="v6-row-main"><div class="v6-row-t">${esc(x.name)}</div><div class="v6-row-s">${esc(x.debts.join(' · '))} · aporta ${V6.money(x.mensual)}/mes</div></div>
+      <div class="v6-row-r"><div class="v6-amt" style="color:var(--gn)">${V6.money(x.saldo)}</div><a class="v6-pay v6-wa" href="https://wa.me/?text=${msg}" target="_blank" rel="noopener">Recordar</a></div>
+    </div>`; }).join('') : '';
+  const maxCat = h.cats[0]?.v || 1;
+  const catHtml = !S.mov.ready
+    ? `<div class="v6-empty">${S.mov.missing ? 'Para ver tus gastos ejecuta el SQL de la v6 en Supabase.' : 'Cargando movimientos…'}</div>`
+    : h.cats.length ? h.cats.slice(0, 6).map(x => {
+        const bud = x.c?.budget ? ` <span class="v6-muted">/ ${V6.money(x.c.budget)}</span>` : '';
+        const over = x.c?.budget && x.v > x.c.budget;
+        return `<div class="v6-cat"><div class="v6-cat-h"><span>${x.c?.icon || '📦'} ${esc(x.c?.name || 'Sin categoría')}</span><span ${over?'style="color:var(--rd)"':''}>${V6.money(x.v)}${bud}</span></div>
+          <div class="v6-bar"><div style="width:${Math.max(3, x.v / maxCat * 100)}%;${over?'background:var(--rd)':''}"></div></div></div>`;
+      }).join('') + `<button class="btn bs btn-sm" style="margin-top:8px" onclick="S.mov.month='${m}';S.mov.tab='resumen';go('movements')">Ver todos los gastos →</button>`
+      : `<div class="v6-empty">Aún no hay gastos este mes. <a href="javascript:void(0)" onclick="S.mov.tab='importar';go('movements')">Sube un estado de cuenta</a></div>`;
+
+  document.getElementById('content').innerHTML = `<div class="v6-wrap">
+    <div class="v6-monthnav">
+      <button onclick="S.homeMonth=V6.shiftMonth('${m}',-1);go('home')" aria-label="Mes anterior">‹</button>
+      <div>${V6.monthLabel(m)}${isCur ? '' : ` <a href="javascript:void(0)" onclick="S.homeMonth=Fin.currentMonth();go('home')" class="v6-muted">· hoy</a>`}</div>
+      <button onclick="S.homeMonth=V6.shiftMonth('${m}',1);go('home')" aria-label="Mes siguiente">›</button>
+    </div>
+
+    <div class="v6-hero ${neg ? 'neg' : 'pos'}">
+      <div class="v6-hero-l">${isCur ? 'Te queda este mes' : 'Resultado del mes'}</div>
+      <div class="v6-hero-v">${h.resultado < 0 ? '−' : ''}${V6.money(Math.abs(h.resultado))}</div>
+      <div class="v6-hero-s">Entró ${V6.money(h.entro)} − cuotas ${V6.money(h.cuotas)} − gastos ${V6.money(h.gastos)}${h.extra > 0.01 ? ` · abonos extra aparte: ${V6.money(h.extra)}` : ''}</div>
+    </div>
+
+    <div class="v6-tiles">
+      ${tile('Entró', V6.money(h.entro), 'ingresos y cobros', 'gn')}
+      ${tile('Cuotas del mes', V6.money(h.cuotas), h.faltan > 0.01 ? `faltan ${V6.money(h.faltan)}` : 'todo pagado ✅', '')}
+      ${tile('Gastado', V6.money(h.gastos), h.sinClasificar ? `<a href="javascript:void(0)" onclick="S.mov.month='${m}';S.mov.tab='lista';S.mov.filter='pendiente';go('movements')" style="color:var(--am)">${h.sinClasificar} sin clasificar</a>` : 'movimientos', 'rd')}
+      ${tile('Debo en total', V6.money(h.totalOwed), h.othersTotal > 0.01 ? `tuyo ${V6.money(h.totalOwed - h.othersTotal)} · de otros ${V6.money(h.othersTotal)}` : `me deben ${V6.money(h.totalRec)}`, '')}
+    </div>
+
+    <div class="v6-card"><div class="v6-card-h">📅 Próximos pagos</div>${upHtml}</div>
+    <div class="v6-card"><div class="v6-card-h">💚 Te deben</div>${cobHtml}${shareHtml}</div>
+    <div class="v6-card"><div class="v6-card-h">🛒 En qué gasté · ${V6.monthLabel(m)}</div>${catHtml}</div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VISTA: MOVIMIENTOS
+═══════════════════════════════════════════════════════════ */
+function renderMovements() {
+  const c = document.getElementById('content');
+  if (!S.mov.ready) {
+    c.innerHTML = `<div class="v6-wrap"><div class="alrt aw" style="font-size:13px;line-height:1.6">
+      <strong>Falta un paso para activar Movimientos.</strong><br>
+      Ejecuta el archivo <code>debtos_v6_migracion.sql</code> en Supabase → SQL Editor (una sola vez) y luego recarga la app.
+      ${S.mov.missing ? '' : '<br><small>Si ya lo ejecutaste, revisa tu conexión y pulsa “Conectado” en el menú para sincronizar.</small>'}
+    </div></div>`;
+    return;
+  }
+  document.getElementById('tbactions').innerHTML = `<button class="btn bp btn-sm" onclick="modalNewTx()">+ Movimiento</button>`;
+  const m = S.mov.month, tab = S.mov.tab;
+  const tabs = [['resumen','Resumen'],['lista','Movimientos'],['importar','Importar'],['ajustes','Ajustes']];
+  const accOpts = `<option value="all">Todas las cuentas</option>` + S.mov.accounts.map(a => `<option value="${a.id}" ${S.mov.account===a.id?'selected':''}>${esc(a.name)}</option>`).join('');
+  const head = `<div class="v6-monthnav">
+      <button onclick="S.mov.month=V6.shiftMonth('${m}',-1);go('movements')" aria-label="Mes anterior">‹</button>
+      <div>${V6.monthLabel(m)}</div>
+      <button onclick="S.mov.month=V6.shiftMonth('${m}',1);go('movements')" aria-label="Mes siguiente">›</button>
+    </div>
+    <div class="v6-tabs">${tabs.map(([k,l]) => `<button class="${tab===k?'on':''}" onclick="S.mov.tab='${k}';go('movements')">${l}</button>`).join('')}</div>
+    ${tab==='resumen'||tab==='lista' ? `<select class="v6-sel" onchange="S.mov.account=this.value;go('movements')">${accOpts}</select>` : ''}`;
+  let body = '';
+  if (tab === 'resumen') body = movResumen();
+  else if (tab === 'lista') body = movLista();
+  else if (tab === 'importar') body = movImportar();
+  else body = movAjustes();
+  c.innerHTML = `<div class="v6-wrap">${head}${body}</div>`;
+}
+
+function movResumen() {
+  const m = S.mov.month;
+  const tx = Mov.monthTx(m, S.mov.account);
+  const prev = Mov.monthTx(V6.shiftMonth(m, -1), S.mov.account);
+  const g = Mov.sum(tx, 'gasto'), gp = Mov.sum(prev, 'gasto');
+  const ing = Mov.sum(tx, 'ingreso') + Mov.sum(tx, 'cobro');
+  const deu = Mov.sum(tx, 'pago_deuda');
+  const trf = Mov.sum(tx, 'transferencia');
+  const pend = tx.filter(t => t.kind === 'pendiente');
+  const diff = gp ? ((g - gp) / gp * 100) : null;
+
+  const by = {}; const byPrev = {};
+  tx.filter(t => t.kind === 'gasto').forEach(t => { const k = t.category_id || '_none'; by[k] = (by[k] || 0) + Mov.p(t); });
+  prev.filter(t => t.kind === 'gasto').forEach(t => { const k = t.category_id || '_none'; byPrev[k] = (byPrev[k] || 0) + Mov.p(t); });
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]);
+  const max = rows[0]?.[1] || 1;
+
+  const people = {};
+  tx.filter(t => t.kind === 'gasto').forEach(t => { const k = (t.counterparty || t.description || '—').trim(); people[k] = (people[k] || 0) + Mov.p(t); });
+  const topP = Object.entries(people).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  return `
+  ${pend.length ? `<div class="v6-alert" onclick="S.mov.tab='lista';S.mov.filter='pendiente';go('movements')">❔ Tienes <strong>${pend.length}</strong> movimiento${pend.length>1?'s':''} sin clasificar · ${V6.money(pend.reduce((s,t)=>s+Mov.p(t),0))} → Clasificar</div>` : ''}
+  <div class="v6-tiles">
+    <div class="v6-tile"><div class="v6-tile-l">Gastado</div><div class="v6-tile-v" style="color:var(--rd)">${V6.money(g)}</div><div class="v6-tile-s">${diff===null?'—':(diff>0?'▲ ':'▼ ')+Math.abs(diff).toFixed(0)+'% vs mes anterior'}</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Entró</div><div class="v6-tile-v" style="color:var(--gn)">${V6.money(ing)}</div><div class="v6-tile-s">ingresos y cobros</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Pagos a deudas</div><div class="v6-tile-v">${V6.money(deu)}</div><div class="v6-tile-s">desde el banco</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Entre mis cuentas</div><div class="v6-tile-v">${V6.money(trf)}</div><div class="v6-tile-s">no cuenta como gasto</div></div>
+  </div>
+  <div class="v6-card"><div class="v6-card-h">🛒 Gastos por categoría</div>
+    ${rows.length ? rows.map(([id, v]) => {
+      const c = Mov.cat(id); const p = byPrev[id] || 0; const over = c?.budget && v > c.budget;
+      return `<div class="v6-cat" onclick="S.mov.tab='lista';S.mov.filter='cat:${id}';go('movements')" style="cursor:pointer">
+        <div class="v6-cat-h"><span>${c?.icon || '📦'} ${esc(c?.name || 'Sin categoría')}</span><span ${over?'style="color:var(--rd)"':''}>${V6.money(v)}${c?.budget?` <span class="v6-muted">/ ${V6.money(c.budget)}</span>`:''}</span></div>
+        <div class="v6-bar"><div style="width:${Math.max(3, v/max*100)}%;${over?'background:var(--rd)':''}"></div></div>
+        <div class="v6-muted" style="font-size:10.5px">${Math.round(v/g*100)}% del gasto${p?` · mes anterior ${V6.money(p)}`:''}</div>
+      </div>`; }).join('') : '<div class="v6-empty">Sin gastos clasificados este mes</div>'}
+  </div>
+  <div class="v6-card"><div class="v6-card-h">👤 A quién le pagué más</div>
+    ${topP.length ? topP.map(([n, v]) => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${esc(n)}</div></div><div class="v6-amt">${V6.money(v)}</div></div>`).join('') : '<div class="v6-empty">—</div>'}
+  </div>`;
+}
+
+function movLista() {
+  const m = S.mov.month, f = S.mov.filter || 'pendiente';
+  let tx = Mov.monthTx(m, S.mov.account);
+  const counts = { pendiente: tx.filter(t => t.kind === 'pendiente').length, all: tx.length };
+  if (f === 'pendiente') tx = tx.filter(t => t.kind === 'pendiente');
+  else if (f === 'gasto') tx = tx.filter(t => t.kind === 'gasto');
+  else if (f === 'ingreso') tx = tx.filter(t => t.kind === 'ingreso' || t.kind === 'cobro');
+  else if (f === 'deudas') tx = tx.filter(t => ['pago_deuda','cobro','prestamo'].includes(t.kind));
+  else if (f.startsWith('cat:')) { const id = f.slice(4); tx = tx.filter(t => t.kind === 'gasto' && (t.category_id || '_none') === id); }
+  const chip = (k, l) => `<button class="${f===k?'on':''}" onclick="S.mov.filter='${k}';go('movements')">${l}</button>`;
+  const catName = f.startsWith('cat:') ? (Mov.cat(f.slice(4))?.name || 'Sin categoría') : '';
+
+  const groups = {};
+  tx.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
+  const html = Object.keys(groups).sort().reverse().map(d => `
+    <div class="v6-dayh">${V6.short(d)}</div>
+    ${groups[d].map(t => {
+      const k = MOV_KINDS[t.kind] || MOV_KINDS.pendiente; const c = Mov.cat(t.category_id); const a = Mov.acc(t.account_id);
+      const debt = t.debt_id ? S.debts.find(x => x.id === t.debt_id) : null;
+      const sub = [a?.name, t.kind === 'gasto' || t.kind === 'ingreso' ? (c ? `${c.icon||''} ${esc(c.name)}` : 'sin categoría') : k.lbl, debt?.name, t.counterparty].filter(Boolean).map(esc).join(' · ');
+      return `<div class="v6-row v6-tx ${t.kind==='pendiente'?'v6-pend':''}" onclick="modalClassifyTx('${t.id}')">
+        <div class="v6-txi">${k.ico}</div>
+        <div class="v6-row-main"><div class="v6-row-t">${esc(t.description || '—')}</div><div class="v6-row-s">${sub}${t.linked_payment?' · ✓ registrado':''}${v6Who(t)}</div></div>
+        <div class="v6-amt" style="color:${(+t.amount)<0?'var(--tx)':'var(--gn)'}">${(+t.amount)<0?'−':'+'}${V6.cur(Math.abs(+t.amount), Mov.cur(t))}</div>
+      </div>`; }).join('')}`).join('');
+
+  return `<div class="v6-chips">${chip('pendiente', `Sin clasificar (${counts.pendiente})`)}${chip('all', `Todos (${counts.all})`)}${chip('gasto','Gastos')}${chip('ingreso','Ingresos')}${chip('deudas','Deudas')}${catName ? `<button class="on">${esc(catName)} ✕</button>` : ''}</div>
+    ${tx.length ? `<div class="v6-card" style="padding:4px 12px">${html}</div>` : `<div class="v6-empty" style="padding:30px">${f==='pendiente' ? '✅ Todo clasificado este mes' : 'Sin movimientos'}</div>`}`;
+}
+
+function v6Who(t) {
+  if (t.created_label) return ' · ' + esc(t.created_label) + (t.source === 'link' ? ' (link)' : '');
+  if (!t.created_by || t.created_by === user?.id) return (S.mov.members?.length || Mov.isMember()) && t.created_by ? ' · tú' : '';
+  const p = (S.allProfiles || []).find(x => x.user_id === t.created_by);
+  return ' · ' + esc(p?.display_name || (p?.email || '').split('@')[0] || 'familia');
+}
+
+/* ── Clasificar un movimiento ── */
+function modalClassifyTx(id) {
+  const t = S.mov.tx.find(x => x.id === id); if (!t) return;
+  const a = Mov.acc(t.account_id);
+  const out = +t.amount < 0;
+  const kinds = Mov.isMember() ? (out ? ['gasto','transferencia','ignorar'] : ['ingreso','transferencia','ignorar'])
+    : out ? ['gasto','pago_deuda','transferencia','prestamo','ignorar'] : ['ingreso','cobro','transferencia','ignorar'];
+  const curKind = t.kind === 'pendiente' ? (Mov.ruleFor(t.description)?.kind || (out ? 'gasto' : 'ingreso')) : t.kind;
+  const similar = S.mov.tx.filter(x => x.id !== t.id && x.kind === 'pendiente' && Mov.key(x.description) === Mov.key(t.description)).length;
+  window._v6tx = { id, kind: curKind, cat: t.category_id || null };
+
+  UI.modal(`<div class="mover"><div class="modal v6-sheet" style="max-width:480px">
+    <div class="mhd"><div class="mti">Clasificar movimiento</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="v6-txhead">
+        <div><div style="font-weight:600">${esc(t.description || '—')}</div><div class="v6-muted">${V6.short(t.date)} · ${esc(a?.name || 'Sin cuenta')}</div></div>
+        <div style="font-size:18px;font-weight:700;color:${out?'var(--tx)':'var(--gn)'}">${out?'−':'+'}${V6.cur(Math.abs(+t.amount), Mov.cur(t))}</div>
+      </div>
+      <label class="v6-lbl">¿Qué es?</label>
+      <div class="v6-chips" id="v6-kinds">${kinds.map(k => `<button data-k="${k}" class="${curKind===k?'on':''}" onclick="v6PickKind('${k}')">${MOV_KINDS[k].ico} ${MOV_KINDS[k].lbl}</button>`).join('')}</div>
+      <div id="v6-kind-extra"></div>
+      <div class="fg" style="margin-top:10px"><label>Persona o comercio</label><input id="v6-cp" value="${esc(t.counterparty || '')}" placeholder="Ej: Tienda Don Pepe"></div>
+      <div class="fg"><label>Nota</label><input id="v6-note" value="${esc(t.notes || '')}" placeholder="Opcional"></div>
+      <label class="v6-check"><input type="checkbox" id="v6-rule" ${similar ? 'checked' : ''}> Recordar para “${esc(Mov.key(t.description) || 'este texto')}”${similar ? ` y aplicar a ${similar} parecido${similar>1?'s':''}` : ''}</label>
+      <div id="v6-err" class="alrt ae hidden" style="margin-top:8px"></div>
+    </div>
+    <div class="mft">
+      <button class="btn bs" style="margin-right:auto;color:var(--rd)" onclick="v6DeleteTx('${id}')">Eliminar</button>
+      <button class="btn bs" onclick="UI.cm()">Cancelar</button>
+      <button class="btn bp" id="v6-save" onclick="v6SaveTx()">Guardar</button>
+    </div>
+  </div></div>`);
+  v6PickKind(curKind);
+}
+
+function v6PickKind(k) {
+  window._v6tx.kind = k;
+  document.querySelectorAll('#v6-kinds button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  const t = S.mov.tx.find(x => x.id === window._v6tx.id);
+  const box = document.getElementById('v6-kind-extra');
+  if (k === 'gasto' || k === 'ingreso') {
+    const cats = Mov.catsOf(k);
+    if (!window._v6tx.cat || !cats.some(c => c.id === window._v6tx.cat)) window._v6tx.cat = Mov.ruleFor(t.description)?.category_id || null;
+    box.innerHTML = `<label class="v6-lbl">Categoría</label><div class="v6-chips" id="v6-cats">${cats.map(c => `<button data-c="${c.id}" class="${window._v6tx.cat===c.id?'on':''}" onclick="v6PickCat('${c.id}')">${c.icon||''} ${esc(c.name)}</button>`).join('')}<button onclick="v6NewCat('${k}')">+ Nueva</button></div>
+      ${k==='ingreso' && !t.linked_payment ? `<label class="v6-lbl">En DebtOS</label>
+        <label class="v6-check"><input type="radio" name="v6-inc" value="sum" checked> Contarlo como ingreso del mes</label>
+        <label class="v6-check"><input type="radio" name="v6-inc" value="register"> Contarlo y registrarlo también en Ingresos</label>
+        <label class="v6-check"><input type="radio" name="v6-inc" value="already"> Ya está en Ingresos (ej. sueldo recurrente): no sumar otra vez</label>` : ''}`;
+  } else if (k === 'pago_deuda' || k === 'cobro' || k === 'prestamo') {
+    const list = (k === 'pago_deuda' ? [...Fin.outgoingDebts(), ...Fin.thirdPartyDebts()] : Fin.incomingDebts()).filter(d => !DebtFilter.isClosed(d) || d.id === t.debt_id);
+    const ruleDebt = Mov.ruleFor(t.description)?.debt_id;
+    const sel = t.debt_id || ruleDebt || '';
+    const canLink = k !== 'prestamo' && !t.linked_payment;
+    box.innerHTML = `<div class="fg" style="margin-top:8px"><label>${k==='pago_deuda'?'¿Qué deuda pagaste?':k==='cobro'?'¿Quién te pagó?':'¿A quién le prestaste? (opcional)'}</label>
+      <select id="v6-debt"><option value="">— Elegir —</option>${list.map(d => `<option value="${d.id}" ${sel===d.id?'selected':''}>${esc(k==='pago_deuda'?d.name:(d.borrower_name ? d.borrower_name+' · '+d.name : d.name))} · saldo ${Fin.fmtCur(Fin.remaining(d), d.currency||'USD')}</option>`).join('')}</select></div>
+      ${canLink ? `<label class="v6-check"><input type="checkbox" id="v6-link" checked> Registrar el ${k==='pago_deuda'?'pago':'cobro'} en la deuda (marca las cuotas que cubra)</label>` : ''}
+      ${t.linked_payment ? '<div class="v6-muted" style="margin-top:6px">✓ Este movimiento ya se registró en la deuda.</div>' : ''}`;
+  } else {
+    box.innerHTML = k === 'transferencia' ? '<div class="v6-muted" style="margin-top:8px">Movimiento entre tus propias cuentas: no cuenta como gasto ni ingreso.</div>' : '';
+  }
+}
+function v6PickCat(id) { window._v6tx.cat = id; document.querySelectorAll('#v6-cats button[data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === id)); }
+async function v6NewCat(kind) {
+  const name = prompt('Nombre de la nueva categoría'); if (!name) return;
+  const cat = { id: V6.uid('cat'), kind, name: name.trim(), icon: kind === 'gasto' ? '🏷️' : '✨', sort: S.mov.cats.length };
+  try { await Mov.saveCat(cat); window._v6tx.cat = cat.id; v6PickKind(kind); } catch (e) { UI.toast('❌ ' + e.message, 'error'); }
+}
+
+async function v6SaveTx() {
+  const st = window._v6tx; const t = S.mov.tx.find(x => x.id === st.id); if (!t) return;
+  const err = document.getElementById('v6-err'); err.classList.add('hidden');
+  const k = st.kind;
+  const debtId = document.getElementById('v6-debt')?.value || null;
+  const incMode = document.querySelector('input[name="v6-inc"]:checked')?.value;
+  const link = document.getElementById('v6-link')?.checked || incMode === 'register';
+  if ((k === 'pago_deuda' || k === 'cobro') && link && !debtId) { err.textContent = 'Elige la deuda para registrar el pago.'; err.classList.remove('hidden'); return; }
+  const patch = {
+    kind: k,
+    category_id: (k === 'gasto' || k === 'ingreso') ? (st.cat || null) : null,
+    debt_id: (k === 'pago_deuda' || k === 'cobro' || k === 'prestamo') ? debtId : null,
+    counterparty: document.getElementById('v6-cp').value.trim() || null,
+    notes: document.getElementById('v6-note').value.trim() || null,
+  };
+  const btn = document.getElementById('v6-save'); btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    const amt = Math.abs(+t.amount);
+    const acc = Mov.acc(t.account_id)?.name || 'banco';
+    if (link && !t.linked_payment) {
+      if ((k === 'pago_deuda' || k === 'cobro') && debtId) {
+        const dCur = S.debts.find(x => x.id === debtId)?.currency || 'USD';
+        const amtDebt = Mov.cur(t) === dCur ? amt : (Cur.convert(amt, Mov.cur(t), dCur) ?? amt);
+        await DB.applyDistributedPayment(debtId, Math.round(amtDebt * 100) / 100, { date: t.date, notes: `${acc}: ${t.description || ''}`.slice(0, 180), status: 'approved', reported_by: 'owner', user_id: user.id });
+        patch.linked_payment = true;
+      } else if (k === 'ingreso') {
+        const c = Mov.cat(st.cat);
+        const map = { 'Sueldo': 'salary', 'Negocio': 'business' };
+        await DB.createIncome({ amount: amt, date: t.date, month: t.date.slice(0, 7), category: map[c?.name] || 'extra', description: (c?.name ? c.name + ' · ' : '') + (t.description || '') });
+        patch.linked_payment = true;
+      }
+    }
+    if (k === 'ingreso' && incMode === 'already') patch.linked_payment = true;
+    await Mov.updateTx(t.id, patch);
+    if (document.getElementById('v6-rule')?.checked) {
+      const pattern = Mov.key(t.description);
+      if (pattern) {
+        await Mov.addRule({ pattern, kind: k, category_id: patch.category_id, counterparty: patch.counterparty, debt_id: patch.debt_id });
+        const sims = S.mov.tx.filter(x => x.id !== t.id && x.kind === 'pendiente' && Mov.key(x.description) === pattern);
+        for (const x of sims) await Mov.updateTx(x.id, { kind: k, category_id: patch.category_id, counterparty: patch.counterparty, debt_id: patch.debt_id });
+        if (sims.length) UI.toast(`✅ Clasificado + ${sims.length} parecido${sims.length>1?'s':''}`);
+      }
+    }
+    UI.cm();
+    if (patch.linked_payment) { await refreshAndGo(S.view); UI.toast('✅ Guardado y registrado en DebtOS'); }
+    else { go(S.view); }
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Guardar';
+    err.textContent = e.message || 'Error al guardar'; err.classList.remove('hidden');
+  }
+}
+async function v6DeleteTx(id) {
+  const t = S.mov.tx.find(x => x.id === id);
+  if (!confirm('¿Eliminar este movimiento?' + (t?.linked_payment ? '\n\nOjo: el pago que registró en la deuda NO se borra; elimínalo desde Pagos si hace falta.' : ''))) return;
+  try { await Mov.deleteTx(id); UI.cm(); go(S.view); } catch (e) { UI.toast('❌ ' + e.message, 'error'); }
+}
+
+/* ── Movimiento manual (efectivo, etc.) ── */
+function modalNewTx() {
+  const accs = S.mov.accounts;
+  UI.modal(`<div class="mover"><div class="modal v6-sheet" style="max-width:420px">
+    <div class="mhd"><div class="mti">Nuevo movimiento</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="v6-chips" id="v6-dir"><button class="on" data-d="-1" onclick="v6Dir(-1)">− Salió dinero</button><button data-d="1" onclick="v6Dir(1)">+ Entró dinero</button></div>
+      <div class="frow" style="margin-top:10px"><div class="fg"><label>Monto</label><input type="number" step="0.01" min="0" id="nt-amt" inputmode="decimal"></div>
+      <div class="fg"><label>Fecha</label><input type="date" id="nt-date" value="${V6.today()}"></div></div>
+      <div class="fg"><label>Descripción</label><input id="nt-desc" placeholder="Ej: Gasolina, almuerzo, taxi"></div>
+      <div class="frow"><div class="fg"><label>Cuenta</label><select id="nt-acc"><option value="">Efectivo / sin cuenta</option>${accs.map(a => `<option value="${a.id}">${esc(a.name)} · ${esc(a.currency || 'USD')}</option>`).join('')}</select></div>
+      <div class="fg" style="max-width:110px"><label>Moneda</label><select id="nt-cur">${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${c.code===Cur.primary()?'selected':''}>${c.code}</option>`).join('')}</select></div></div>
+      <div id="nt-err" class="alrt ae hidden"></div>
+    </div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bp" onclick="v6CreateTx()">Guardar y clasificar</button></div>
+  </div></div>`);
+  window._v6dir = -1;
+}
+function v6Dir(d) { window._v6dir = d; document.querySelectorAll('#v6-dir button').forEach(b => b.classList.toggle('on', +b.dataset.d === d)); }
+async function v6CreateTx() {
+  const amt = parseFloat(document.getElementById('nt-amt').value);
+  const date = document.getElementById('nt-date').value;
+  const desc = document.getElementById('nt-desc').value.trim();
+  const err = document.getElementById('nt-err');
+  if (!amt || amt <= 0 || !date) { err.textContent = 'Escribe el monto y la fecha.'; err.classList.remove('hidden'); return; }
+  const accId = document.getElementById('nt-acc').value || null;
+  const row = { id: V6.uid('tx'), owner_user_id: Mov.owner(), created_by: user.id, account_id: accId, date, description: desc || 'Movimiento manual', amount: window._v6dir * amt, kind: 'pendiente', source: 'manual', currency: (accId && Mov.acc(accId)?.currency) || document.getElementById('nt-cur')?.value || Cur.primary() };
+  const r = Mov.ruleFor(row.description);
+  if (r) Object.assign(row, { kind: r.kind, category_id: r.category_id, counterparty: r.counterparty, debt_id: r.debt_id });
+  try { await Mov.insertTx([row]); UI.cm(); S.mov.month = date.slice(0, 7); modalClassifyTx(row.id); }
+  catch (e) { err.textContent = e.message; err.classList.remove('hidden'); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IMPORTAR ESTADOS DE CUENTA (CSV / Excel)
+═══════════════════════════════════════════════════════════ */
+function movImportar() {
+  const accs = S.mov.accounts;
+  return `<div class="v6-card">
+    <div class="v6-card-h">📥 Subir estado de cuenta</div>
+    <div class="v6-muted" style="margin-bottom:10px;line-height:1.5">Descarga los movimientos desde la banca web de tu banco en <strong>Excel o CSV</strong> y súbelos aquí. Los movimientos repetidos se descartan solos, así que puedes subir el mismo archivo dos veces sin problema.</div>
+    <div class="fg"><label>Cuenta</label>
+      <div style="display:flex;gap:6px"><select id="im-acc" style="flex:1">${accs.length ? accs.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('') : '<option value="">Primero crea una cuenta →</option>'}</select>
+      <button class="btn bs btn-sm" onclick="modalAccount()">+ Cuenta</button></div></div>
+    <div class="fg"><label>Archivo (.xlsx, .xls, .csv)</label><input type="file" id="im-file" accept=".csv,.txt,.xlsx,.xls"></div>
+    <button class="btn bp" onclick="v6ReadFile()" style="width:100%">Leer archivo</button>
+    <div id="im-out" style="margin-top:12px"></div>
+  </div>`;
+}
+
+async function v6LoadXLSX() {
+  if (window.XLSX) return;
+  await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar el lector de Excel')); document.head.appendChild(s); });
+}
+function v6SplitCSV(text) {
+  const sample = text.split(/\r?\n/).filter(l => l.trim()).slice(0, 25);
+  const seps = [';', '\t', ',', '|'].map(c => [c, Math.max(0, ...sample.map(l => l.split(c).length))]).sort((a, b) => b[1] - a[1]);
+  const sep = seps[0][1] > 1 ? seps[0][0] : ',';
+  return text.split(/\r?\n/).filter(l => l.trim()).map(line => {
+    const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (q && line[i+1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (ch === sep && !q) { out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur); return out.map(s => s.trim());
+  });
+}
+function v6Num(v) {
+  if (v === null || v === undefined) return NaN;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim(); if (!s) return NaN;
+  let neg = /^\(.*\)$/.test(s) || /^-/.test(s) || /-$/.test(s);
+  s = s.replace(/[^0-9.,]/g, '');
+  const lc = s.lastIndexOf(','), ld = s.lastIndexOf('.');
+  if (lc > ld) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, '');
+  const n = parseFloat(s); return isNaN(n) ? NaN : (neg ? -n : n);
+}
+function v6Date(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Math.round((v - 25569) * 86400000)); return d.toISOString().slice(0, 10); }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+  if (m) { let y = m[3].length === 2 ? '20' + m[3] : m[3]; let a = +m[1], b = +m[2]; if (b > 12 && a <= 12) [a, b] = [b, a]; return `${y}-${String(b).padStart(2,'0')}-${String(a).padStart(2,'0')}`; }
+  const months = { ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,set:9,oct:10,nov:11,dic:12,jan:1,apr:4,aug:8,dec:12 };
+  m = s.toLowerCase().match(/^(\d{1,2})[\s\-\/.]*([a-z]{3})[a-z]*[\s\-\/.,]*(\d{2,4})/);
+  if (m && months[m[2]]) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${String(months[m[2]]).padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+  return null;
+}
+async function v6ReadFile() {
+  const f = document.getElementById('im-file').files[0];
+  const out = document.getElementById('im-out');
+  if (!document.getElementById('im-acc').value) { out.innerHTML = '<div class="alrt ae">Primero crea la cuenta (botón “+ Cuenta”).</div>'; return; }
+  if (!f) { out.innerHTML = '<div class="alrt ae">Elige un archivo.</div>'; return; }
+  out.innerHTML = '<div class="v6-muted">Leyendo…</div>';
+  try {
+    let rows;
+    if (/\.xlsx?$/i.test(f.name)) {
+      await v6LoadXLSX();
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: false });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+    } else {
+      let text = await f.text();
+      if (text.includes('�')) { const buf = await f.arrayBuffer(); text = new TextDecoder('windows-1252').decode(buf); }
+      rows = v6SplitCSV(text);
+    }
+    rows = rows.filter(r => r.some(c => String(c).trim() !== ''));
+    // Detectar fila de encabezados
+    const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    let hi = rows.findIndex((r, i) => i < 40 && r.some(c => /fecha|date/.test(norm(c))) && r.some(c => /(monto|valor|importe|debito|credito|cargo|abono|retiro|deposito)/.test(norm(c))));
+    if (hi < 0) hi = 0;
+    const header = rows[hi].map(c => String(c).trim());
+    const find = re => header.findIndex(h => re.test(norm(h)));
+    const map = {
+      date: find(/fecha|date/),
+      desc: (() => { let i = find(/(descrip|concepto|detalle)/); if (i < 0) i = find(/(transacc|movimiento|beneficiario|referencia|observ)/); return i; })(),
+      amount: find(/^(monto|valor|importe|amount)/),
+      debit: find(/(debito|cargo|retiro|egreso)/),
+      credit: find(/(credito|abono|deposito|ingreso)/),
+      type: find(/^(tipo|signo|d\/c|dc)$/),
+    };
+    window._v6imp = { rows: rows.slice(hi + 1), header, map, file: f.name };
+    v6RenderMapping();
+  } catch (e) { out.innerHTML = `<div class="alrt ae">${esc(e.message)}</div>`; }
+}
+function v6RenderMapping() {
+  const { header, map, rows } = window._v6imp;
+  const opt = sel => `<option value="-1">—</option>` + header.map((h, i) => `<option value="${i}" ${sel===i?'selected':''}>${esc(h || 'Columna ' + (i+1))}</option>`).join('');
+  const f = (k, l) => `<div class="fg"><label>${l}</label><select onchange="window._v6imp.map.${k}=+this.value;v6Preview()">${opt(map[k])}</select></div>`;
+  document.getElementById('im-out').innerHTML = `
+    <div class="v6-muted" style="margin-bottom:6px">Revisa qué columna es cada dato (${rows.length} filas detectadas):</div>
+    <div class="frow">${f('date','Fecha')}${f('desc','Descripción')}</div>
+    <div class="frow">${f('amount','Monto (con signo)')}${f('type','Tipo D/C (opcional)')}</div>
+    <div class="frow">${f('debit','Débito / salida')}${f('credit','Crédito / entrada')}</div>
+    <div id="im-prev"></div>`;
+  v6Preview();
+}
+function v6ParsedRows() {
+  const { rows, map } = window._v6imp;
+  const res = [];
+  rows.forEach(r => {
+    const date = v6Date(r[map.date]); if (!date) return;
+    let amt = NaN;
+    if (map.debit >= 0 || map.credit >= 0) {
+      const d = map.debit >= 0 ? Math.abs(v6Num(r[map.debit]) || 0) : 0;
+      const c = map.credit >= 0 ? Math.abs(v6Num(r[map.credit]) || 0) : 0;
+      if (d || c) amt = c - d;
+    }
+    if ((isNaN(amt) || amt === 0) && map.amount >= 0) {
+      amt = v6Num(r[map.amount]);
+      if (map.type >= 0 && !isNaN(amt)) { const t = String(r[map.type]).trim().toUpperCase(); if (/^(D|DEB|DEBITO|DÉBITO|-)/.test(t)) amt = -Math.abs(amt); else if (/^(C|CRED|CREDITO|CRÉDITO|\+)/.test(t)) amt = Math.abs(amt); }
+    }
+    if (isNaN(amt) || amt === 0) return;
+    res.push({ date, desc: String(r[map.desc] ?? '').trim() || '(sin descripción)', amount: Math.round(amt * 100) / 100 });
+  });
+  return res;
+}
+function v6Preview() {
+  const p = v6ParsedRows();
+  const acc = document.getElementById('im-acc').value;
+  const existing = new Set(S.mov.tx.map(t => t.import_hash));
+  const seen = {};
+  let dup = 0, auto = 0;
+  p.forEach(r => {
+    const base = `${acc}|${r.date}|${r.amount.toFixed(2)}|${Mov.key(r.desc)}`;
+    seen[base] = (seen[base] || 0) + 1; r.hash = base + '|' + seen[base];
+    r.dup = existing.has(r.hash); if (r.dup) dup++;
+    r.rule = Mov.ruleFor(r.desc); if (r.rule && !r.dup) auto++;
+  });
+  window._v6imp.parsed = p;
+  const nuevos = p.filter(r => !r.dup);
+  const out = nuevos.filter(r => r.amount < 0).reduce((s, r) => s - r.amount, 0);
+  const inn = nuevos.filter(r => r.amount > 0).reduce((s, r) => s + r.amount, 0);
+  document.getElementById('im-prev').innerHTML = p.length ? `
+    <div class="v6-tiles" style="margin-top:6px">
+      <div class="v6-tile"><div class="v6-tile-l">Nuevos</div><div class="v6-tile-v">${nuevos.length}</div><div class="v6-tile-s">${dup} ya existían</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Salidas / Entradas</div><div class="v6-tile-v" style="font-size:14px">−${V6.money(out)} / +${V6.money(inn)}</div><div class="v6-tile-s">${auto} se clasifican solos</div></div>
+    </div>
+    <div class="v6-card" style="padding:4px 12px;max-height:260px;overflow:auto">${p.slice(0, 30).map(r => `<div class="v6-row" style="${r.dup?'opacity:.4':''}"><div class="v6-row-main"><div class="v6-row-t">${esc(r.desc)}</div><div class="v6-row-s">${r.date}${r.dup?' · repetido':''}${r.rule?' · '+MOV_KINDS[r.rule.kind].lbl:''}</div></div><div class="v6-amt">${r.amount<0?'−':'+'}${V6.money(Math.abs(r.amount))}</div></div>`).join('')}${p.length>30?`<div class="v6-muted" style="padding:6px 0">… y ${p.length-30} más</div>`:''}</div>
+    <button class="btn bp" style="width:100%;margin-top:10px" ${nuevos.length?'':'disabled'} onclick="v6DoImport()">Importar ${nuevos.length} movimiento${nuevos.length!==1?'s':''}</button>`
+    : '<div class="alrt aw">No encontré filas con fecha y monto. Ajusta las columnas de arriba.</div>';
+}
+async function v6DoImport() {
+  const acc = document.getElementById('im-acc').value;
+  const rows = window._v6imp.parsed.filter(r => !r.dup).map(r => ({
+    id: V6.uid('tx'), owner_user_id: Mov.owner(), created_by: user.id, account_id: acc, date: r.date, description: r.desc, amount: r.amount,
+    kind: r.rule ? r.rule.kind : 'pendiente', category_id: r.rule?.category_id || null, counterparty: r.rule?.counterparty || null,
+    debt_id: r.rule?.debt_id || null, source: 'import', import_hash: r.hash, currency: Mov.acc(acc)?.currency || Cur.primary(),
+  }));
+  try {
+    UI.load(true); await Mov.insertTx(rows); UI.load(false);
+    const months = [...new Set(rows.map(r => r.date.slice(0, 7)))].sort();
+    S.mov.month = months[months.length - 1] || S.mov.month;
+    S.mov.tab = 'lista'; S.mov.filter = 'pendiente'; S.mov.account = 'all';
+    UI.toast(`✅ ${rows.length} movimientos importados`);
+    go('movements');
+  } catch (e) { UI.load(false); UI.toast('❌ ' + (e.message || 'Error al importar'), 'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AJUSTES: cuentas, categorías, reglas
+═══════════════════════════════════════════════════════════ */
+function movAjustes() {
+  const accs = S.mov.accounts;
+  const g = Mov.catsOf('gasto'), i = Mov.catsOf('ingreso');
+  const catRow = c => `<div class="v6-row" onclick="modalCat('${c.id}')" style="cursor:pointer"><div class="v6-row-main"><div class="v6-row-t">${c.icon||''} ${esc(c.name)}</div></div><div class="v6-muted">${c.budget ? 'presupuesto ' + V6.money(c.budget) : 'sin presupuesto'}</div></div>`;
+  return `
+  <div class="v6-card"><div class="v6-card-h" style="display:flex;justify-content:space-between">🏦 Mis cuentas <button class="btn bs btn-sm" onclick="modalAccount()">+ Cuenta</button></div>
+    ${accs.length ? accs.map(a => { const n = S.mov.tx.filter(t => t.account_id === a.id).length; return `<div class="v6-row" onclick="modalAccount('${a.id}')" style="cursor:pointer"><div class="v6-row-main"><div class="v6-row-t">${esc(a.name)}</div><div class="v6-row-s">${esc(a.bank || '')} · ${esc(a.currency || 'USD')} · ${n} movimientos</div></div></div>`; }).join('') : '<div class="v6-empty">Crea una cuenta por cada banco (Pichincha, Bolivariano, Pacífico…) y una de Efectivo.</div>'}
+  </div>
+  <div class="v6-card"><div class="v6-card-h" style="display:flex;justify-content:space-between">🛒 Categorías de gasto <button class="btn bs btn-sm" onclick="modalCat(null,'gasto')">+ Categoría</button></div>${g.map(catRow).join('')}</div>
+  <div class="v6-card"><div class="v6-card-h" style="display:flex;justify-content:space-between">💰 Categorías de ingreso <button class="btn bs btn-sm" onclick="modalCat(null,'ingreso')">+ Categoría</button></div>${i.map(catRow).join('')}</div>
+  ${Mov.isMember() ? `<div class="v6-card"><div class="v6-card-h">👨‍👩‍👧 Gastos compartidos</div><div class="v6-muted">Estás registrando en los gastos del hogar de ${esc(((S.allProfiles||[]).find(p=>p.user_id===S.mov.ownerId)||{}).display_name || 'tu familia')}.</div></div>` : `
+  <div class="v6-card"><div class="v6-card-h">👨‍👩‍👧 Gastos compartidos en familia</div>
+    <div class="v6-muted" style="margin-bottom:8px;line-height:1.5">Agrega a tu esposa (u otra persona con cuenta en DebtOS). Verá y registrará estos mismos movimientos, cuentas y categorías. <strong>Tus deudas siguen siendo privadas.</strong></div>
+    ${(S.mov.members||[]).map(m => { const p = (S.allProfiles||[]).find(x => x.user_id === m.member_user_id); return `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${esc(p?.display_name || p?.email || m.member_user_id)}</div><div class="v6-row-s">${esc(p?.email || '')}</div></div><button class="btn bs btn-sm" onclick="v6RemoveMember('${m.member_user_id}')">Quitar</button></div>`; }).join('')}
+    <div style="display:flex;gap:6px;margin-top:8px"><input id="hh-email" type="email" placeholder="correo@ejemplo.com" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--bd2);background:var(--bg3s);color:var(--tx)"><button class="btn bp btn-sm" onclick="v6AddMember()">Agregar</button></div>
+    <div class="v6-muted" style="margin-top:6px">Si aún no tiene cuenta, invítala primero desde Usuarios.</div>
+  </div>`}
+  ${Mov.isMember() ? '' : `<div class="v6-card"><div class="v6-card-h" style="display:flex;justify-content:space-between">🔗 Link para registrar gastos <button class="btn bs btn-sm" onclick="v6NewLink()">+ Crear link</button></div>
+    <div class="v6-muted" style="margin-bottom:6px;line-height:1.5">Compártelo con tu esposa: sin crear cuenta, registra gastos desde su celular y ve el total del mes por categoría. <strong>No ve tus deudas ni tus cobros.</strong></div>
+    ${(S.mov.links || []).filter(l => l.active).map(l => { const url = v6LinkUrl(l.token); return `<div class="v6-row">
+      <div class="v6-row-main"><div class="v6-row-t">${esc(l.label || 'Gastos del hogar')} <span class="v6-muted">· ${esc(l.currency || 'USD')}</span></div><div class="v6-row-s">${esc(url)}</div>
+        <label class="v6-check" style="margin-top:4px" onclick="event.stopPropagation()"><input type="checkbox" ${l.show_debts ? 'checked' : ''} onchange="v6LinkShowDebts('${l.token}', this.checked)"> Mostrar las cuotas del mes (pagadas y pendientes, sin saldos)</label></div>
+      <div class="v6-row-r"><button class="v6-pay" onclick="v6CopyLink('${l.token}')">Copiar</button><a class="v6-pay v6-wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Aquí puedes registrar los gastos de la casa: ' + url)}">Enviar</a><button class="v6-more" onclick="v6RevokeLink('${l.token}')" aria-label="Desactivar">✕</button></div>
+    </div>`; }).join('') || '<div class="v6-empty">Aún no has creado ningún link.</div>'}
+  </div>`}
+  <div class="v6-card"><div class="v6-card-h">🧠 Reglas aprendidas (${S.mov.rules.length})</div>
+    ${S.mov.rules.length ? S.mov.rules.map(r => { const c = Mov.cat(r.category_id); return `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">“${esc(r.pattern)}”</div><div class="v6-row-s">→ ${MOV_KINDS[r.kind]?.lbl || r.kind}${c ? ' · ' + esc(c.name) : ''}${r.counterparty ? ' · ' + esc(r.counterparty) : ''}</div></div><button class="btn bs btn-sm" onclick="Mov.deleteRule('${r.id}').then(()=>go('movements'))">Quitar</button></div>`; }).join('') : '<div class="v6-empty">Cuando clasifiques un movimiento y marques “Recordar”, aparecerá aquí.</div>'}
+  </div>`;
+}
+function v6LinkUrl(token) { return new URL('gastos.html?t=' + token, location.href.split('#')[0]).href; }
+async function v6NewLink() {
+  const label = prompt('Nombre del link (lo verá quien lo abra)', 'Gastos del hogar'); if (label === null) return;
+  const a = new Uint8Array(18); crypto.getRandomValues(a);
+  const token = Array.from(a, b => b.toString(16).padStart(2, '0')).join('');
+  const { error } = await sb.from('fin_share_links').insert({ token, owner_user_id: user.id, label: label.trim() || 'Gastos del hogar', currency: Cur.primary() });
+  if (error) return UI.toast('❌ ' + (/fin_share_links/.test(error.message) ? 'Ejecuta el SQL v6.2 en Supabase' : error.message), 'error');
+  S.mov.links = [...(S.mov.links || []), { token, label, active: true, currency: Cur.primary(), show_debts: false }];
+  v6CopyLink(token); go('movements');
+}
+function v6CopyLink(token) {
+  const url = v6LinkUrl(token);
+  try { navigator.clipboard.writeText(url).then(() => UI.toast('🔗 Link copiado')); } catch (e) { prompt('Copia este link', url); }
+}
+async function v6LinkShowDebts(token, on) {
+  const { error } = await sb.from('fin_share_links').update({ show_debts: on }).eq('token', token);
+  if (error) return UI.toast('❌ ' + (/show_debts/.test(error.message) ? 'Ejecuta el SQL v6.3 en Supabase' : error.message), 'error');
+  S.mov.links = (S.mov.links || []).map(l => l.token === token ? { ...l, show_debts: on } : l);
+  UI.toast(on ? '✅ Ahora el link muestra las cuotas del mes' : 'Cuotas ocultas en el link');
+}
+async function v6RevokeLink(token) {
+  if (!confirm('¿Desactivar este link? Quien lo tenga ya no podrá registrar gastos.')) return;
+  await sb.from('fin_share_links').update({ active: false }).eq('token', token);
+  S.mov.links = (S.mov.links || []).map(l => l.token === token ? { ...l, active: false } : l); go('movements');
+}
+async function v6AddMember() {
+  const email = (document.getElementById('hh-email').value || '').trim().toLowerCase();
+  if (!email) return UI.toast('Escribe el correo', 'warn');
+  try {
+    let p = (S.allProfiles || []).find(x => (x.email || '').toLowerCase() === email);
+    if (!p) { const r = await sb.from('profiles').select('user_id,email,display_name').ilike('email', email).maybeSingle(); p = r.data; }
+    if (!p) return UI.toast('No encontré una cuenta con ese correo. Invítala primero desde Usuarios.', 'warn');
+    if (p.user_id === user.id) return UI.toast('Ese es tu propio correo', 'warn');
+    const { error } = await sb.from('fin_household').insert({ owner_user_id: user.id, member_user_id: p.user_id });
+    if (error) throw error;
+    S.mov.members = [...(S.mov.members || []), { owner_user_id: user.id, member_user_id: p.user_id }];
+    if (!(S.allProfiles || []).some(x => x.user_id === p.user_id)) S.allProfiles = [...(S.allProfiles || []), p];
+    UI.toast('✅ Ahora comparten los gastos'); go('movements');
+  } catch (e) { UI.toast('❌ ' + (/fin_household/.test(e.message || '') ? 'Ejecuta el SQL v6.1 en Supabase' : e.message), 'error'); }
+}
+async function v6RemoveMember(uid) {
+  if (!confirm('¿Dejar de compartir los gastos con esta persona?')) return;
+  await sb.from('fin_household').delete().eq('owner_user_id', user.id).eq('member_user_id', uid);
+  S.mov.members = (S.mov.members || []).filter(m => m.member_user_id !== uid); go('movements');
+}
+
+function modalAccount(id) {
+  const a = id ? Mov.acc(id) : null;
+  UI.modal(`<div class="mover"><div class="modal v6-sheet" style="max-width:400px">
+    <div class="mhd"><div class="mti">${a ? 'Editar cuenta' : 'Nueva cuenta'}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="fg"><label>Nombre</label><input id="ac-name" value="${esc(a?.name || '')}" placeholder="Ej: Pichincha ahorros"></div>
+      <div class="fg"><label>Banco</label><input id="ac-bank" value="${esc(a?.bank || '')}" placeholder="Ej: Banco Pichincha"></div>
+      <div class="fg"><label>Moneda de la cuenta</label><select id="ac-cur">${Cur.SUPPORTED.map(c => `<option value="${c.code}" ${(a?.currency || Cur.primary())===c.code?'selected':''}>${c.code} · ${c.name}</option>`).join('')}</select></div>
+      <div class="fg"><label>Tipo</label><select id="ac-kind">${[['bank','Cuenta bancaria'],['card','Tarjeta de crédito'],['cash','Efectivo'],['other','Otra']].map(([k,l]) => `<option value="${k}" ${a?.kind===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bp" onclick="v6SaveAccount('${id || ''}')">Guardar</button></div>
+  </div></div>`);
+}
+async function v6SaveAccount(id) {
+  const name = document.getElementById('ac-name').value.trim(); if (!name) return UI.toast('Escribe un nombre', 'warn');
+  const prev = id ? Mov.acc(id) : {};
+  try { await Mov.saveAccount({ ...prev, id: id || V6.uid('acc'), name, bank: document.getElementById('ac-bank').value.trim() || null, kind: document.getElementById('ac-kind').value, currency: document.getElementById('ac-cur').value }); UI.cm(); go('movements'); }
+  catch (e) { UI.toast('❌ ' + e.message, 'error'); }
+}
+function modalCat(id, kind) {
+  const c = id ? Mov.cat(id) : null; kind = c?.kind || kind || 'gasto';
+  UI.modal(`<div class="mover"><div class="modal v6-sheet" style="max-width:380px">
+    <div class="mhd"><div class="mti">${c ? 'Editar categoría' : 'Nueva categoría'}</div><button class="mcl" onclick="UI.cm()">✕</button></div>
+    <div class="mbd">
+      <div class="frow"><div class="fg" style="max-width:80px"><label>Ícono</label><input id="ct-icon" value="${esc(c?.icon || '🏷️')}"></div>
+      <div class="fg"><label>Nombre</label><input id="ct-name" value="${esc(c?.name || '')}"></div></div>
+      ${kind === 'gasto' ? `<div class="fg"><label>Presupuesto mensual (opcional)</label><input type="number" step="1" id="ct-bud" value="${c?.budget || ''}" placeholder="Ej: 150"></div>` : ''}
+    </div>
+    <div class="mft"><button class="btn bs" onclick="UI.cm()">Cancelar</button><button class="btn bp" onclick="v6SaveCat('${id || ''}','${kind}')">Guardar</button></div>
+  </div></div>`);
+}
+async function v6SaveCat(id, kind) {
+  const name = document.getElementById('ct-name').value.trim(); if (!name) return UI.toast('Escribe un nombre', 'warn');
+  const prev = id ? Mov.cat(id) : { sort: S.mov.cats.length };
+  const bud = parseFloat(document.getElementById('ct-bud')?.value);
+  try { await Mov.saveCat({ ...prev, id: id || V6.uid('cat'), kind, name, icon: document.getElementById('ct-icon').value.trim() || '🏷️', budget: isNaN(bud) ? null : bud }); UI.cm(); go('movements'); }
+  catch (e) { UI.toast('❌ ' + e.message, 'error'); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   LISTA COMPACTA DE DEUDAS (por defecto en el celular)
+═══════════════════════════════════════════════════════════ */
+S.v6Compact = V6.isMobile();
+function v6CompactList(list, view) {
+  const today = V6.today();
+  if (!list.length) return `<div class="v6-empty" style="padding:30px;text-align:center">${S.debtFilter==='paid' ? 'Aún no tienes deudas pagadas aquí' : 'Sin deudas en esta lista'}</div>`;
+  const items = list.map(d => {
+    const rec = Fin.isRecurring(d);
+    const total = +d.total_amount || 0;
+    const rem = Fin.remaining(d);
+    const closed = DebtFilter.isClosed(d);
+    let next = null, ov = 0, cuota = 0;
+    if (Fin.hasAmort(d)) {
+      const an = Fin.annotated(d.id);
+      next = an.find(a => a.status !== 'paid');
+      ov = an.filter(a => a.status === 'overdue' || a.status === 'partial').length;
+      cuota = next ? +next.total || 0 : 0;
+    } else if (rec) cuota = total;
+    const pct = rec ? null : (total ? Math.min(100, (1 - rem / total) * 100) : 0);
+    const who = view === 'receivables' && d.borrower_name ? esc(d.borrower_name) + ' · ' : '';
+    const sub = closed ? '✓ Pagada'
+      : [cuota ? `${V6.cur(cuota, d.currency)}${rec ? (d.recurring_frequency === 'biweekly' ? '/quincena' : '/mes') : ''}` : '',
+         next ? (next.due < today ? `<span style="color:var(--rd);font-weight:600">${ov} atrasada${ov>1?'s':''}</span>` : 'próx. ' + V6.short(next.due)) : '',
+         +d.interest_rate ? (+d.interest_rate).toLocaleString('es-EC') + '%' : ''].filter(Boolean).join(' · ');
+    return `<div class="v6-row">
+      <div class="v6-row-main" onclick="go('amort','${d.id}')">
+        <div class="v6-row-t">${who}${esc(d.name)}</div>
+        <div class="v6-row-s">${sub || '—'}</div>
+        ${pct !== null ? `<div class="v6-bar" style="height:4px;margin-top:5px"><div style="width:${Math.max(2, pct)}%;background:${closed ? 'var(--gn)' : view === 'receivables' ? 'var(--gn)' : 'var(--bl)'}"></div></div>` : ''}
+      </div>
+      <div class="v6-row-r" style="flex-direction:column;align-items:flex-end;gap:2px">
+        <div class="v6-amt" style="${view==='receivables'&&!closed?'color:var(--gn)':''}">${closed ? V6.cur(total, d.currency) : rec ? V6.cur(total, d.currency) : V6.cur(rem, d.currency)}</div>
+        <div class="v6-muted" style="font-size:10px">${closed ? 'pagado' : rec ? 'recurrente' : 'saldo'}</div>
+      </div>
+      <button class="v6-more" onclick="event.stopPropagation();ctxDebt(event,'${d.id}')" aria-label="Opciones">⋯</button>
+    </div>`;
+  }).join('');
+  const sum = list.reduce((s, d) => s + Fin.toPrimary(DebtFilter.isClosed(d) ? 0 : Fin.remaining(d), d.currency || 'USD'), 0);
+  return `<div class="v6-card" style="padding:4px 14px">
+    ${S.debtFilter !== 'paid' ? `<div class="v6-row" style="border-bottom:1px solid var(--bd)"><div class="v6-row-main"><div class="v6-muted">${list.length} deuda${list.length>1?'s':''}</div></div><div class="v6-amt">${view==='receivables'?'Te deben ':'Saldo '}${V6.money(sum)}</div></div>` : ''}
+    ${items}</div>`;
+}
+function v6ToggleCompact() { S.v6Compact = !S.v6Compact; go(S.view); }
+
+/* ═══════════════════════════════════════════════════════════
+   BARRA INFERIOR (celular)
+═══════════════════════════════════════════════════════════ */
+(function () {
+  const items = [['home','🏠','Mi mes'],['debts','💳','Debo'],['receivables','💚','Me deben'],['movements','🔁','Movimientos']];
+  const ai = document.getElementById('ai-advisor-btn'); if (ai) ai.innerHTML = '🤖<span class="v6-hide-m"> Asesor IA</span>';
+  const nav = document.createElement('nav');
+  nav.id = 'v6-bottomnav';
+  nav.innerHTML = items.map(([v, i, l]) => `<button class="v6-bn-i" data-v="${v}" onclick="go('${v}')"><span>${i}</span>${l}</button>`).join('')
+    + `<button class="v6-bn-i" onclick="toggleSidebar()"><span>☰</span>Más</button>`;
+  document.getElementById('app')?.appendChild(nav);
+  const fab = document.createElement('button');
+  fab.id = 'v6-fab'; fab.innerHTML = '＋ Gasto'; fab.style.display = 'none';
+  fab.onclick = () => modalNewTx();
+  document.getElementById('app')?.appendChild(fab);
+  // App instalable (PWA)
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   DebtOS v6.3 — ¿Cómo estoy? · Plan · Proyección · Primeros pasos
+═══════════════════════════════════════════════════════════ */
+const V63 = {
+  store: { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } },
+  key(k) { return 'v63_' + (user?.id || 'x') + '_' + k; },
+  num(k, def) { const v = parseFloat(V63.store.get(V63.key(k))); return isNaN(v) ? def : v; },
+  lastMonths(n) { const out = []; let m = V6.shiftMonth(Fin.currentMonth(), -1); for (let i = 0; i < n; i++) { out.push(m); m = V6.shiftMonth(m, -1); } return out; },
+  daysIn(m) { const [y, mo] = m.split('-').map(Number); return new Date(y, mo, 0).getDate(); },
+  pct(n) { return (isFinite(n) ? Math.round(n * 100) : 0) + '%'; },
+  light(level) { return level === 'g' ? '🟢' : level === 'y' ? '🟡' : '🔴'; },
+  monthName(m) { const [y, mo] = m.split('-').map(Number); return new Date(y, mo - 1, 15).toLocaleDateString('es-EC', { month: 'short', year: '2-digit' }); },
+  openOutgoing() { return Fin.outgoingDebts().filter(d => !DebtFilter.isClosed(d)); },
+  /* Filas pendientes de una deuda con tabla, en moneda principal */
+  pendingRows(d) {
+    if (!Fin.hasAmort(d)) return [];
+    return Fin.annotated(d.id).filter(a => a.status !== 'paid').map(a => ({
+      due: a.due, n: a.n,
+      total: Fin.toPrimary(Math.max(0, (+a.total || 0) - (+a.instTotal || 0)), d.currency || 'USD'),
+      cap: Fin.toPrimary(+a.cap || 0, d.currency || 'USD'),
+      int: Fin.toPrimary(+a.int || 0, d.currency || 'USD'),
+    }));
+  },
+  isMortgage(d) { return d.type === 'mortgage' || /hipotec/i.test(d.name || ''); },
+};
+
+/* ── Ingreso y gasto "típicos" del usuario (promedio de los últimos meses con datos) ── */
+function v63Baseline() {
+  const months = V63.lastMonths(3);
+  const inc = months.map(m => Fin.totalIncome(m)).filter(v => v > 0);
+  const curInc = Fin.totalIncome(Fin.currentMonth());
+  const autoIncome = inc.length ? inc.reduce((a, b) => a + b, 0) / inc.length : curInc;
+  let autoSpend = 0;
+  if (S.mov.ready) {
+    const g = months.map(m => Mov.sum(Mov.monthTx(m), 'gasto')).filter(v => v > 0);
+    autoSpend = g.length ? g.reduce((a, b) => a + b, 0) / g.length : 0;
+    if (!autoSpend) { const cm = Fin.currentMonth(); const day = new Date().getDate(); const so = Mov.sum(Mov.monthTx(cm), 'gasto'); autoSpend = day >= 5 ? so / day * V63.daysIn(cm) : so; }
+  }
+  const budget = S.mov.ready ? Mov.catsOf('gasto').reduce((s, c) => s + (+c.budget || 0), 0) : 0;
+  return {
+    income: V63.num('income', Math.round(autoIncome * 100) / 100), autoIncome,
+    spend: V63.num('spend', Math.round((autoSpend || budget) * 100) / 100), autoSpend, budget,
+    cash: V63.num('cash', 0),
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INDICADORES DE SALUD FINANCIERA
+═══════════════════════════════════════════════════════════ */
+function v63Health() {
+  const b = v63Baseline();
+  const m = Fin.currentMonth();
+  const h = homeData(m);
+  const debts = V63.openOutgoing();
+  let intMes = 0, capMes = 0, ownOverdue = 0, lastAll = null, lastNoMort = null;
+  debts.forEach(d => {
+    if (!Fin.hasAmort(d)) return;
+    Fin.annotated(d.id).forEach(a => {
+      if ((a.due || '').startsWith(m)) { intMes += Fin.toPrimary(+a.int || 0, d.currency || 'USD'); capMes += Fin.toPrimary(+a.cap || 0, d.currency || 'USD'); }
+      if (a.status === 'overdue' || a.status === 'partial') ownOverdue++;
+    });
+    const rows = V63.pendingRows(d); if (!rows.length) return;
+    const last = rows[rows.length - 1].due;
+    if (!lastAll || last > lastAll) lastAll = last;
+    if (!V63.isMortgage(d) && (!lastNoMort || last > lastNoMort)) lastNoMort = last;
+  });
+  const owed = Fin.totalOwed();
+  const owedMort = debts.filter(V63.isMortgage).reduce((s, d) => s + Fin.toPrimary(Fin.remaining(d), d.currency || 'USD'), 0);
+  const rec = Fin.totalReceivable() + (h.othersTotal || 0);
+  const cuotas = h.cuotas;
+  const income = b.income;
+  const free = income - cuotas - b.spend;
+  const load = income ? cuotas / income : 1;
+  const save = income ? free / income : -1;
+  const dti = income ? (owed - owedMort) / (income * 12) : 9;
+  const monthlyOut = cuotas + b.spend;
+  const cushion = monthlyOut ? b.cash / monthlyOut : 0;
+
+  const ind = [
+    { k: 'load', lbl: 'Carga de cuotas', val: V63.pct(load), lv: load <= .30 ? 'g' : load <= .40 ? 'y' : 'r', hint: 'del ingreso se va en cuotas. Sano: menos de 30%', pts: load <= .30 ? 30 : load <= .40 ? 20 : load <= .50 ? 10 : 0 },
+    { k: 'free', lbl: 'Flujo libre del mes', val: (free < 0 ? '−' : '') + V6.money(Math.abs(free)), lv: free > income * .1 ? 'g' : free >= 0 ? 'y' : 'r', hint: 'ingresos − cuotas − gastos', pts: free > income * .1 ? 25 : free >= 0 ? 15 : 0 },
+    { k: 'save', lbl: 'Tasa de ahorro', val: V63.pct(Math.max(save, -9.99)), lv: save >= .1 ? 'g' : save >= 0 ? 'y' : 'r', hint: 'del ingreso que te queda. Meta: 10% o más', pts: 0 },
+    { k: 'cush', lbl: 'Colchón de emergencia', val: b.cash ? (Math.round(cushion * 10) / 10).toLocaleString('es-EC') + ' meses' : 'sin dato', lv: cushion >= 3 ? 'g' : cushion >= 1 ? 'y' : 'r', hint: b.cash ? 'cuánto aguantas sin ingresos' : 'escribe tu dinero disponible abajo', pts: cushion >= 3 ? 20 : cushion >= 1 ? 10 : 0 },
+    { k: 'dti', lbl: 'Deuda de consumo ÷ ingreso anual', val: (Math.round(dti * 100) / 100).toLocaleString('es-EC') + ' años', lv: dti < 1 ? 'g' : dti < 2 ? 'y' : 'r', hint: 'cuántos años de ingreso debes (sin hipoteca)', pts: dti < 1 ? 10 : dti < 2 ? 5 : 0 },
+    { k: 'late', lbl: 'Cuotas propias atrasadas', val: String(ownOverdue), lv: ownOverdue ? 'r' : 'g', hint: ownOverdue ? 'ponte al día primero: generan mora' : 'estás al día', pts: ownOverdue ? 0 : 15 },
+  ];
+  const score = ind.reduce((s, x) => s + x.pts, 0);
+  return { b, h, ind, score, owed, owedMort, rec, net: rec - owed, intMes, capMes, cuotas, free, lastAll, lastNoMort, income };
+}
+
+function renderHealth() {
+  const x = v63Health();
+  const lvl = x.score >= 70 ? ['Buena', 'var(--gn)', 'var(--gnd)'] : x.score >= 40 ? ['En riesgo', 'var(--am)', 'var(--amd)'] : ['Crítica', 'var(--rd)', 'var(--rdd)'];
+  const fdate = iso => iso ? V6.monthLabel(iso.slice(0, 7)) : '—';
+  document.getElementById('tbactions').innerHTML = `<button class="btn bs btn-sm" onclick="go('plan')">🧭<span class="v6-hide-m"> Ver mi plan</span></button>`;
+  document.getElementById('content').innerHTML = `<div class="v6-wrap">
+    <div class="v6-hero" style="background:${lvl[2]};border-color:transparent">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><div class="v6-hero-l" style="color:${lvl[1]}">Salud financiera</div><div class="v6-hero-v" style="color:${lvl[1]}">${lvl[0]}</div></div>
+        <div class="v63-score" style="border-color:${lvl[1]};color:${lvl[1]}">${x.score}<small>/100</small></div>
+      </div>
+      <div class="v6-hero-s">Calculado con tu ingreso típico de ${V6.money(x.income)}/mes, cuotas de ${V6.money(x.cuotas)} y gastos de ${V6.money(x.b.spend)}.</div>
+    </div>
+
+    <div class="v6-card"><div class="v6-card-h">📊 Tus indicadores</div>
+      ${x.ind.map(i => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${V63.light(i.lv)} ${i.lbl}</div><div class="v6-row-s">${i.hint}</div></div><div class="v6-amt">${i.val}</div></div>`).join('')}
+    </div>
+
+    <div class="v6-tiles">
+      <div class="v6-tile"><div class="v6-tile-l">Debes en total</div><div class="v6-tile-v">${V6.money(x.owed)}</div><div class="v6-tile-s">${x.owedMort ? 'hipoteca ' + V6.money(x.owedMort) : 'sin hipoteca'}</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Te deben</div><div class="v6-tile-v" style="color:var(--gn)">${V6.money(x.rec)}</div><div class="v6-tile-s">cobros y partes de otros</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Balance de deudas</div><div class="v6-tile-v" style="color:${x.net < 0 ? 'var(--rd)' : 'var(--gn)'}">${x.net < 0 ? '−' : ''}${V6.money(Math.abs(x.net))}</div><div class="v6-tile-s">te deben − debes</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Intereses este mes</div><div class="v6-tile-v" style="color:var(--rd)">${V6.money(x.intMes)}</div><div class="v6-tile-s">capital que baja: ${V6.money(x.capMes)}</div></div>
+    </div>
+
+    <div class="v6-card"><div class="v6-card-h">🏁 ¿Cuándo termino?</div>
+      <div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">Sin deudas de consumo</div><div class="v6-row-s">al ritmo actual, sin abonos extra</div></div><div class="v6-amt">${fdate(x.lastNoMort)}</div></div>
+      <div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">Sin ninguna deuda (con hipoteca)</div></div><div class="v6-amt">${fdate(x.lastAll)}</div></div>
+      ${v63FinishList()}
+      <button class="btn bp btn-sm" style="margin-top:8px;width:100%" onclick="S.planTab='sim';go('plan')">¿Cómo termino antes? → Simular abonos</button>
+    </div>
+
+    <div class="v6-card"><div class="v6-card-h">✏️ Tus datos base</div>
+      <div class="v6-muted" style="margin-bottom:8px">Los calculo solos con tus ingresos y movimientos. Si no se parecen a tu realidad, corrígelos aquí (solo se guardan en este dispositivo).</div>
+      ${v63BaseInputs(x.b)}
+    </div>
+  </div>`;
+}
+
+function v63FinishList() {
+  const rows = V63.openOutgoing().filter(d => Fin.hasAmort(d)).map(d => { const p = V63.pendingRows(d); return p.length ? { d, last: p[p.length - 1].due, left: p.length } : null; }).filter(Boolean).sort((a, b) => a.last.localeCompare(b.last));
+  if (!rows.length) return '';
+  return `<div class="v6-lbl">Orden en que se terminan</div>` + rows.map((r, i) => `<div class="v6-row" onclick="go('amort','${r.d.id}')" style="cursor:pointer"><div class="v6-row-main"><div class="v6-row-t">${i + 1}. ${esc(r.d.name)}</div><div class="v6-row-s">${r.left} cuota${r.left > 1 ? 's' : ''} por pagar</div></div><div class="v6-muted">${V6.monthLabel(r.last.slice(0, 7))}</div></div>`).join('');
+}
+
+function v63BaseInputs(b) {
+  const f = (k, lbl, val, auto) => `<div class="fg"><label>${lbl}${auto !== undefined ? ` <span class="v6-muted">(calculado: ${V6.money(auto)})</span>` : ''}</label><input type="number" inputmode="decimal" step="0.01" value="${Math.round(val * 100) / 100 || ''}" placeholder="0" onchange="V63.store.set(V63.key('${k}'), this.value);go(S.view)"></div>`;
+  return `<div class="frow">${f('income', 'Ingreso mensual típico', b.income, b.autoIncome)}${f('spend', 'Gasto mensual típico', b.spend, b.autoSpend || b.budget)}</div>
+    ${f('cash', 'Dinero disponible hoy (colchón)', b.cash)}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PLAN: flujo 12 meses · simulador · estrategias
+═══════════════════════════════════════════════════════════ */
+S.planTab = S.planTab || 'flujo';
+function renderPlan() {
+  const tabs = [['flujo', 'Próximos 12 meses'], ['sim', 'Simular abono'], ['estr', 'Estrategias']];
+  let body = S.planTab === 'sim' ? v63Sim() : S.planTab === 'estr' ? v63Strategies() : v63Flow();
+  document.getElementById('content').innerHTML = `<div class="v6-wrap">
+    <div class="v6-tabs">${tabs.map(([k, l]) => `<button class="${S.planTab === k ? 'on' : ''}" onclick="S.planTab='${k}';go('plan')">${l}</button>`).join('')}</div>
+    ${body}</div>`;
+}
+
+/* ── Flujo proyectado ── */
+function v63Extras() { try { return JSON.parse(V63.store.get(V63.key('extras')) || '[]'); } catch (e) { return []; } }
+function v63AddExtra() {
+  const m = document.getElementById('ex-m').value, v = parseFloat(document.getElementById('ex-v').value), l = document.getElementById('ex-l').value.trim();
+  if (!m || !v) return UI.toast('Elige el mes y el monto', 'warn');
+  const ex = v63Extras(); ex.push({ m, v, l: l || 'Ingreso extra' }); V63.store.set(V63.key('extras'), JSON.stringify(ex)); go('plan');
+}
+function v63DelExtra(i) { const ex = v63Extras(); ex.splice(i, 1); V63.store.set(V63.key('extras'), JSON.stringify(ex)); go('plan'); }
+
+function v63FlowData() {
+  const b = v63Baseline();
+  const countCob = V63.store.get(V63.key('cob')) !== '0';
+  const start = Fin.currentMonth();
+  const months = []; let m = start; for (let i = 0; i < 12; i++) { months.push(m); m = V6.shiftMonth(m, 1); }
+  const pay = {}, cob = {};
+  V63.openOutgoing().forEach(d => {
+    if (Fin.hasAmort(d)) V63.pendingRows(d).forEach(r => { const k = (r.due || '').slice(0, 7); if (k < start) pay[start] = (pay[start] || 0) + r.total; else pay[k] = (pay[k] || 0) + r.total; });
+    else if (Fin.isRecurring(d)) months.forEach(mm => pay[mm] = (pay[mm] || 0) + Fin.toPrimary(+d.total_amount || 0, d.currency || 'USD'));
+  });
+  Fin.incomingDebts().filter(d => !DebtFilter.isClosed(d)).forEach(d => {
+    if (Fin.hasAmort(d)) V63.pendingRows(d).forEach(r => { const k = (r.due || '').slice(0, 7); if (k >= start) cob[k] = (cob[k] || 0) + r.total; });
+    else if (Fin.isRecurring(d)) months.forEach(mm => cob[mm] = (cob[mm] || 0) + Fin.toPrimary(+d.total_amount || 0, d.currency || 'USD'));
+  });
+  const extras = v63Extras();
+  let bal = b.cash, firstNeg = null;
+  const rows = months.map((mm, i) => {
+    const isCur = i === 0;
+    const ex = extras.filter(e => e.m === mm).reduce((s, e) => s + e.v, 0);
+    // mes actual: lo que falta (no lo ya ocurrido)
+    const inc = isCur ? Math.max(0, b.income - Fin.totalIncome(mm)) : b.income;
+    const sp = isCur ? Math.max(0, b.spend - (S.mov.ready ? Mov.sum(Mov.monthTx(mm), 'gasto') : 0)) : b.spend;
+    const c = countCob ? (cob[mm] || 0) : 0;
+    const p = pay[mm] || 0;
+    const net = inc + ex + c - p - sp;
+    bal += net;
+    if (bal < 0 && !firstNeg) firstNeg = mm;
+    return { mm, inc: inc + ex, ex, cob: c, pay: p, sp, net, bal };
+  });
+  return { b, rows, firstNeg, countCob, extras };
+}
+
+function v63Flow() {
+  const f = v63FlowData();
+  const max = Math.max(1, ...f.rows.map(r => Math.abs(r.bal)));
+  const nextMonths = []; let m = Fin.currentMonth(); for (let i = 0; i < 12; i++) { nextMonths.push(m); m = V6.shiftMonth(m, 1); }
+  return `
+  ${f.firstNeg ? `<div class="v6-alert" style="background:var(--rdd);color:var(--rd)">⚠️ Con estos datos te quedas sin dinero en <strong>${V6.monthLabel(f.firstNeg)}</strong>. Revisa abajo qué mes pesa más.</div>`
+    : `<div class="v6-alert" style="background:var(--gnd);color:var(--gn)">✅ Con estos datos llegas a ${V6.monthLabel(f.rows[11].mm)} con ${V6.money(f.rows[11].bal)}.</div>`}
+  <div class="v6-card" style="padding:6px 12px">
+    <div class="v63-flow-h"><span>Mes</span><span>Entra</span><span>Sale</span><span>Te queda</span></div>
+    ${f.rows.map(r => `<div class="v63-flow ${r.bal < 0 ? 'neg' : ''}">
+      <span>${V63.monthName(r.mm)}${r.ex ? ' ⭐' : ''}</span>
+      <span style="color:var(--gn)">${V6.money(r.inc + r.cob)}</span>
+      <span>${V6.money(r.pay + r.sp)}</span>
+      <span class="v63-bal"><i style="width:${Math.max(4, Math.abs(r.bal) / max * 100)}%;background:${r.bal < 0 ? 'var(--rd)' : 'var(--gn)'}"></i><b>${r.bal < 0 ? '−' : ''}${V6.money(Math.abs(r.bal))}</b></span>
+    </div>`).join('')}
+    <div class="v6-muted" style="padding:6px 0">Entra = ingreso típico + extras${f.countCob ? ' + cobros esperados' : ''} · Sale = cuotas de tus tablas + gasto típico</div>
+  </div>
+  <div class="v6-card"><div class="v6-card-h">⭐ Ingresos extra (décimos, bonos, utilidades)</div>
+    ${f.extras.map((e, i) => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${esc(e.l)}</div><div class="v6-row-s">${V6.monthLabel(e.m)}</div></div><div class="v6-amt" style="color:var(--gn)">+${V6.money(e.v)}</div><button class="v6-more" onclick="v63DelExtra(${i})" aria-label="Quitar">✕</button></div>`).join('') || '<div class="v6-empty">Agrega tus décimos u otros ingresos que esperas.</div>'}
+    <div class="frow" style="margin-top:6px"><div class="fg"><label>Mes</label><select id="ex-m">${nextMonths.map(mm => `<option value="${mm}">${V6.monthLabel(mm)}</option>`).join('')}</select></div>
+      <div class="fg"><label>Monto</label><input id="ex-v" type="number" inputmode="decimal" placeholder="0"></div></div>
+    <div class="frow"><div class="fg"><label>Concepto</label><input id="ex-l" placeholder="Décimo tercero"></div><div class="fg" style="max-width:110px;align-self:flex-end"><button class="btn bp" style="width:100%" onclick="v63AddExtra()">Agregar</button></div></div>
+  </div>
+  <div class="v6-card"><div class="v6-card-h">✏️ Datos del cálculo</div>
+    ${v63BaseInputs(f.b)}
+    <label class="v6-check"><input type="checkbox" ${f.countCob ? 'checked' : ''} onchange="V63.store.set(V63.key('cob'), this.checked ? '1' : '0');go('plan')"> Contar los cobros esperados (lo que otros deben pagarte cada mes)</label>
+  </div>`;
+}
+
+/* ── Simulación de deudas (amortización francesa mes a mes) ── */
+function v63DebtState(d) {
+  const rows = V63.pendingRows(d); if (!rows.length) return null;
+  const first = rows[0];
+  const cuota = Math.max(0.01, first.cap + first.int);
+  const bal = Math.max(0, rows.reduce((s, r) => s + r.cap, 0));
+  return { id: d.id, name: d.name, rate: (+d.interest_rate || 0) / 1200, cuota, bal, left: rows.length, mort: V63.isMortgage(d), lastDue: rows[rows.length - 1].due, nextDue: first.due };
+}
+function v63RunOne(st, lump, extra, mode) {
+  let bal = Math.max(0, st.bal - lump), r = st.rate, n = 0, int = 0;
+  let cuota = st.cuota;
+  if (mode === 'cuota' && lump > 0) cuota = r ? bal * r / (1 - Math.pow(1 + r, -st.left)) : bal / st.left;
+  while (bal > 0.005 && n < 600) { const i = bal * r; int += i; const pay = Math.min(cuota + extra, bal + i); bal = bal + i - pay; n++; }
+  return { months: n, interest: int, cuota };
+}
+function v63Sim() {
+  const debts = V63.openOutgoing().filter(d => Fin.hasAmort(d)).map(v63DebtState).filter(Boolean).filter(s => s.rate > 0);
+  if (!debts.length) return `<div class="v6-empty" style="padding:30px;text-align:center">Necesitas al menos una deuda con tabla e interés para simular.</div>`;
+  const sel = S.simDebt && debts.find(x => x.id === S.simDebt) ? S.simDebt : [...debts].sort((a, b) => b.rate - a.rate)[0].id;
+  const st = debts.find(x => x.id === sel);
+  const lump = +S.simLump || 0, extra = +S.simExtra || 0, mode = S.simMode || 'plazo';
+  const base = v63RunOne(st, 0, 0, 'plazo');
+  const sim = v63RunOne(st, lump, extra, mode);
+  const end = n => { const d = new Date(st.nextDue + 'T12:00:00'); d.setMonth(d.getMonth() + Math.max(0, n - 1)); return V6.monthLabel(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); };
+  const saved = base.interest - sim.interest, mSaved = base.months - sim.months;
+  const changed = lump > 0 || extra > 0;
+  return `
+  <div class="v6-card">
+    <div class="fg"><label>¿A qué deuda abonarías?</label><select onchange="S.simDebt=this.value;go('plan')">${debts.map(x => `<option value="${x.id}" ${x.id === sel ? 'selected' : ''}>${esc(x.name)} · ${(x.rate * 1200).toLocaleString('es-EC', { maximumFractionDigits: 2 })}%</option>`).join('')}</select></div>
+    <div class="frow"><div class="fg"><label>Abono único hoy</label><input type="number" inputmode="decimal" value="${lump || ''}" placeholder="0" onchange="S.simLump=this.value;go('plan')"></div>
+      <div class="fg"><label>Extra cada mes</label><input type="number" inputmode="decimal" value="${extra || ''}" placeholder="0" onchange="S.simExtra=this.value;go('plan')"></div></div>
+    ${lump > 0 ? `<div class="v6-segs" style="margin-top:4px"><button class="v6-seg ${mode === 'plazo' ? 'on' : ''}" onclick="S.simMode='plazo';go('plan')">Terminar antes</button><button class="v6-seg ${mode === 'cuota' ? 'on' : ''}" onclick="S.simMode='cuota';go('plan')">Bajar la cuota</button></div>` : ''}
+  </div>
+  <div class="v6-tiles">
+    <div class="v6-tile"><div class="v6-tile-l">Saldo de capital</div><div class="v6-tile-v">${V6.money(st.bal)}</div><div class="v6-tile-s">${st.left} cuotas de ${V6.money(st.cuota)}</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Terminas en</div><div class="v6-tile-v">${end(sim.months)}</div><div class="v6-tile-s">${changed && mSaved > 0 ? `<b style="color:var(--gn)">${mSaved} meses antes</b>` : 'sin abonos: ' + end(base.months)}</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Intereses que pagarás</div><div class="v6-tile-v" style="color:var(--rd)">${V6.money(sim.interest)}</div><div class="v6-tile-s">${changed ? `<b style="color:var(--gn)">ahorras ${V6.money(saved)}</b>` : 'sin abonos'}</div></div>
+    <div class="v6-tile"><div class="v6-tile-l">Tu cuota</div><div class="v6-tile-v">${V6.money(sim.cuota + extra)}</div><div class="v6-tile-s">${mode === 'cuota' && lump > 0 ? `<b style="color:var(--gn)">baja ${V6.money(st.cuota - sim.cuota)}/mes</b>` : 'cuota sin seguros'}</div></div>
+  </div>
+  ${changed ? `<div class="v6-card" style="font-size:13px;line-height:1.6">${lump > 0 && mode === 'cuota'
+      ? `Abonando <b>${V6.money(lump)}</b> y pidiendo <b>bajar la cuota</b>, pagarías <b>${V6.money(sim.cuota + extra)}</b> en vez de ${V6.money(st.cuota)}: <b>${V6.money(st.cuota - sim.cuota)} menos al mes</b>.`
+      : `Con ${lump ? `un abono de <b>${V6.money(lump)}</b>` : ''}${lump && extra ? ' y ' : ''}${extra ? `<b>${V6.money(extra)}</b> extra al mes` : ''}, terminas <b>${mSaved} meses antes</b> y te ahorras <b>${V6.money(saved)}</b> de intereses.`}
+      <div class="v6-muted" style="margin-top:4px">Al abonar, pide al banco que el abono vaya a capital y elige si reduce plazo o cuota. Luego regístralo en la deuda con “Abono extra”.</div></div>` : '<div class="v6-muted" style="text-align:center">Escribe un monto para ver el efecto.</div>'}`;
+}
+
+/* ── Estrategias: avalancha / bola de nieve / alivio de flujo ── */
+function v63Strategy(states, extra, order, roll = true) {
+  const ds = states.map(s => ({ ...s }));
+  let month = 0, interest = 0; const done = {};
+  while (ds.some(d => d.bal > 0.005) && month < 600) {
+    month++;
+    let pool = extra;
+    ds.forEach(d => { if (d.bal <= 0.005) { if (roll) pool += d.cuota; return; } const i = d.bal * d.rate; interest += i; const pay = Math.min(d.cuota, d.bal + i); d.bal = d.bal + i - pay; if (d.bal <= 0.005) { d.bal = 0; done[d.id] = month; if (roll) pool += d.cuota - pay; } });
+    if (!roll && !extra) continue;
+    const targets = ds.filter(d => d.bal > 0.005).sort(order);
+    for (const t of targets) { if (pool <= 0) break; const p = Math.min(pool, t.bal); t.bal -= p; pool -= p; if (t.bal <= 0.005) { t.bal = 0; done[t.id] = month; } }
+  }
+  return { months: month, interest, done };
+}
+function v63Strategies() {
+  const inclMort = S.stratMort === true;
+  // Solo deudas con interés y cuotas mensuales (un pago único sin interés, como un préstamo familiar, no entra en la carrera)
+  const states = V63.openOutgoing().filter(d => Fin.hasAmort(d)).map(v63DebtState).filter(Boolean).filter(s => s.rate > 0 && s.left > 1).filter(s => inclMort || !s.mort);
+  if (!states.length) return `<div class="v6-empty" style="padding:30px;text-align:center">No hay deudas con tabla para comparar.</div>`;
+  const extra = +S.stratExtra || 0;
+  const base = v63Strategy(states, 0, () => 0, false);
+  const strategies = [
+    ['ava', '🏔️ Avalancha', 'Primero la tasa más alta. Ahorras más intereses.', (a, b) => b.rate - a.rate],
+    ['bola', '⛄ Bola de nieve', 'Primero el saldo más pequeño. Ves resultados rápido.', (a, b) => a.bal - b.bal],
+    ['alivio', '🫁 Alivio de flujo', 'Primero la que más cuota libera por dólar. Respiras antes.', (a, b) => (b.cuota / b.bal) - (a.cuota / a.bal)],
+  ].map(([k, n, desc, ord]) => ({ k, n, desc, ord, r: v63Strategy(states, extra, ord) }));
+  const best = [...strategies].sort((a, b) => a.r.interest - b.r.interest)[0].k;
+  const firstFree = r => { const e = Object.entries(r.done).sort((a, b) => a[1] - b[1])[0]; return e ? { name: states.find(s => s.id === e[0])?.name, m: e[1] } : null; };
+  const mLabel = n => { const d = new Date(); d.setMonth(d.getMonth() + n); return V6.monthLabel(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); };
+  return `
+  <div class="v6-card">
+    <div class="fg"><label>¿Cuánto extra podrías poner cada mes para deudas?</label><input type="number" inputmode="decimal" value="${extra || ''}" placeholder="Ej: 100" onchange="S.stratExtra=this.value;go('plan')"></div>
+    <label class="v6-check"><input type="checkbox" ${inclMort ? 'checked' : ''} onchange="S.stratMort=this.checked;go('plan')"> Incluir la hipoteca</label>
+    <div class="v6-muted" style="margin-top:6px">En cada estrategia, cuando terminas una deuda su cuota se suma a la siguiente (no la gastas). Sin hacer nada: terminas en <b>${mLabel(base.months)}</b> pagando <b>${V6.money(base.interest)}</b> de intereses.</div>
+  </div>
+  ${strategies.map(s => { const ff = firstFree(s.r); return `<div class="v6-card" style="${s.k === best ? 'border:2px solid var(--gn)' : ''}">
+    <div class="v6-card-h" style="display:flex;justify-content:space-between">${s.n}${s.k === best ? '<span class="v6-seg-n" style="color:var(--gn)">la que más ahorra</span>' : ''}</div>
+    <div class="v6-muted" style="margin-bottom:6px">${s.desc}</div>
+    <div class="v6-tiles" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:0">
+      <div class="v6-tile"><div class="v6-tile-l">Sin deudas</div><div class="v6-tile-v" style="font-size:13px;white-space:normal">${mLabel(s.r.months)}</div><div class="v6-tile-s">${base.months - s.r.months > 0 ? '<b style="color:var(--gn)">' + (base.months - s.r.months) + ' meses antes</b>' : '—'}</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Intereses</div><div class="v6-tile-v" style="font-size:14px">${V6.money(s.r.interest)}</div><div class="v6-tile-s">${base.interest - s.r.interest > 1 ? 'ahorras ' + V6.money(base.interest - s.r.interest) : '—'}</div></div>
+      <div class="v6-tile"><div class="v6-tile-l">Primera que cae</div><div class="v6-tile-v" style="font-size:12.5px;white-space:normal">${esc(ff?.name || '—')}</div><div class="v6-tile-s">${ff ? mLabel(ff.m) : ''}</div></div>
+    </div>
+    <div class="v6-muted" style="margin-top:6px">Orden: ${[...states].sort(s.ord).map(x => esc(x.name)).join(' → ')}</div>
+  </div>`; }).join('')}`;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MI MES: proyección de cierre, alertas de presupuesto, primeros pasos
+═══════════════════════════════════════════════════════════ */
+function v63MonthExtras(m) {
+  if (!S.mov.ready || m !== Fin.currentMonth()) return '';
+  const day = new Date().getDate(), dim = V63.daysIn(m);
+  const tx = Mov.monthTx(m);
+  const spent = Mov.sum(tx, 'gasto');
+  const proj = day >= 3 ? spent / day * dim : spent;
+  const cats = Mov.catsOf('gasto').filter(c => +c.budget > 0).map(c => {
+    const v = tx.filter(t => t.kind === 'gasto' && t.category_id === c.id).reduce((s, t) => s + Mov.p(t), 0);
+    return { c, v, p: v / c.budget };
+  }).filter(x => x.p >= .8).sort((a, b) => b.p - a.p);
+  const budget = Mov.catsOf('gasto').reduce((s, c) => s + (+c.budget || 0), 0);
+  return `<div class="v6-card"><div class="v6-card-h">🔮 Cierre del mes</div>
+    <div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">A este ritmo gastarás</div><div class="v6-row-s">llevas ${V6.money(spent)} en ${day} de ${dim} días</div></div><div class="v6-amt" style="${budget && proj > budget ? 'color:var(--rd)' : ''}">${V6.money(proj)}</div></div>
+    ${budget ? `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">Presupuesto del mes</div></div><div class="v6-amt">${V6.money(budget)}</div></div>` : ''}
+    ${cats.map(x => `<div class="v6-row"><div class="v6-row-main"><div class="v6-row-t">${x.p >= 1 ? '🔴' : '🟡'} ${esc(x.c.icon || '')} ${esc(x.c.name)}</div><div class="v6-row-s">${x.p >= 1 ? 'te pasaste del presupuesto' : 'llevas el ' + Math.round(x.p * 100) + '% del presupuesto'}</div></div><div class="v6-amt">${V6.money(x.v)} / ${V6.money(x.c.budget)}</div></div>`).join('')}
+    ${!budget ? `<div class="v6-muted" style="margin-top:6px">Ponle presupuesto a tus categorías para recibir alertas: <a href="javascript:void(0)" onclick="S.mov.tab='ajustes';go('movements')">Movimientos → Ajustes</a></div>` : ''}
+  </div>`;
+}
+
+function v63Onboarding() {
+  if (V63.store.get(V63.key('ob_hide')) === '1') return '';
+  const steps = [
+    { ok: (S.incomes || []).length > 0 || (S.incomeSources || []).length > 0, t: 'Registra tu ingreso mensual', a: "go('income')" },
+    { ok: Fin.outgoingDebts().length > 0, t: 'Agrega lo que debes (préstamos, tarjetas, personas)', a: "go('debts')" },
+    { ok: S.mov.accounts.length > 0, t: 'Crea tus cuentas (banco, efectivo) con su moneda', a: "S.mov.tab='ajustes';go('movements')" },
+    { ok: S.mov.tx.length > 0, t: 'Sube un estado de cuenta o registra un gasto', a: "S.mov.tab='importar';go('movements')" },
+    { ok: Mov.catsOf('gasto').some(c => +c.budget > 0), t: 'Ponle presupuesto a tus categorías', a: "S.mov.tab='ajustes';go('movements')" },
+  ];
+  if (!S.mov.ready) steps.splice(2, 3);
+  const done = steps.filter(s => s.ok).length;
+  if (done === steps.length) return '';
+  return `<div class="v6-card" style="border:1px solid var(--am)">
+    <div class="v6-card-h" style="display:flex;justify-content:space-between">🚀 Primeros pasos <span class="v6-seg-n">${done} de ${steps.length}</span></div>
+    ${steps.map(s => `<div class="v6-row" ${s.ok ? '' : `onclick="${s.a}" style="cursor:pointer"`}><div class="v6-row-main"><div class="v6-row-t" style="${s.ok ? 'text-decoration:line-through;color:var(--tx3)' : ''}">${s.ok ? '✅' : '⬜'} ${s.t}</div></div>${s.ok ? '' : '<span class="v6-muted">›</span>'}</div>`).join('')}
+    <button class="btn bs btn-sm" style="margin-top:6px" onclick="V63.store.set(V63.key('ob_hide'),'1');go('home')">Ocultar</button>
+  </div>`;
+}
+
+/* Enganchar en el router y en Mi mes */
+(function () {
+  const _go = go;
+  go = function (view, extra) {
+    if (view === 'health' || view === 'plan') {
+      S.view = view;
+      document.querySelectorAll('.ni').forEach(el => el.classList.toggle('on', el.dataset.v === view));
+      document.getElementById('ptitle').textContent = view === 'health' ? '¿Cómo estoy?' : 'Mi plan';
+      document.getElementById('tbactions').innerHTML = '';
+      document.getElementById('content').innerHTML = '';
+      UI.destroyCharts();
+      if (V6.isMobile()) closeSidebar();
+      (view === 'health' ? renderHealth : renderPlan)();
+      document.querySelectorAll('.v6-bn-i').forEach(el => el.classList.toggle('on', el.dataset.v === view));
+      const fab = document.getElementById('v6-fab'); if (fab) fab.style.display = 'none';
+      const c = document.getElementById('content'); if (c) c.scrollTop = 0;
+      return;
+    }
+    _go(view, extra);
+  };
+  const _renderHome = renderHome;
+  renderHome = function () {
+    _renderHome();
+    const wrap = document.querySelector('#content .v6-wrap'); if (!wrap) return;
+    const m = S.homeMonth || Fin.currentMonth();
+    const hero = wrap.querySelector('.v6-hero');
+    let score = null; try { score = v63Health().score; } catch (e) {}
+    const badge = score === null ? '' : `<div class="v63-health-link" onclick="go('health')"><span>${score >= 70 ? '🟢' : score >= 40 ? '🟡' : '🔴'} Salud financiera <b>${score}/100</b></span><span>¿Cómo estoy? ›</span></div>`;
+    if (hero) hero.insertAdjacentHTML('afterend', badge + v63MonthExtras(m));
+    wrap.insertAdjacentHTML('afterbegin', v63Onboarding());
+  };
+})();
+
 
 /* ═══════════════════════════════════════════════════════════
    SESSION
